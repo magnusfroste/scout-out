@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface CompanySearchResult {
   id: string;
@@ -47,12 +48,19 @@ const CompanySearch = () => {
     setIsLoading(true);
 
     try {
+      console.log("Calling edge function with:", { companyName, userId: user.id });
+      
       // Call the Supabase Edge Function
       const { data, error } = await supabase.functions.invoke("trigger-n8n-workflow", {
         body: { companyName, userId: user.id },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw error;
+      }
+
+      console.log("Edge function response:", data);
 
       toast({
         title: "Success",
@@ -60,9 +68,9 @@ const CompanySearch = () => {
       });
 
       // Fetch the latest search results
-      fetchSearchResults();
+      await fetchSearchResults();
       setCompanyName('');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error searching company:", error);
       toast({
         title: "Error",
@@ -78,18 +86,22 @@ const CompanySearch = () => {
     if (!user) return;
 
     try {
-      // Using 'company_searches' table instead of 'profiles'
+      console.log("Fetching search results for user:", user.id);
+      
       const { data, error } = await supabase
         .from('company_searches')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from Supabase query:", error);
+        throw error;
+      }
 
-      // Ensuring we're using the correct type for the results
+      console.log("Fetched search results:", data);
       setSearchResults(data as CompanySearchResult[] || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching search results:", error);
       toast({
         title: "Error",
@@ -100,8 +112,10 @@ const CompanySearch = () => {
   };
 
   // Fetch search results on component mount
-  React.useEffect(() => {
-    fetchSearchResults();
+  useEffect(() => {
+    if (user) {
+      fetchSearchResults();
+    }
   }, [user]);
 
   const handleResultClick = (result: CompanySearchResult) => {
@@ -134,8 +148,15 @@ const CompanySearch = () => {
               disabled={isLoading}
             />
           </div>
-          <Button type="submit" isLoading={isLoading}>
-            Search
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              "Search"
+            )}
           </Button>
         </form>
       </div>
