@@ -7,14 +7,12 @@ import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CompanySearch = () => {
   const [companyName, setCompanyName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState(localStorage.getItem('webhookUrl') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [proxyMethod, setProxyMethod] = useState('direct'); // 'direct', 'allorigins', 'corsanywhere'
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -50,8 +48,6 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      let response;
-      
       // Format the URL with query parameter
       const queryParam = `company=${encodeURIComponent(companyName)}`;
       const fullUrl = webhookUrl.includes('?') 
@@ -60,44 +56,21 @@ const CompanySearch = () => {
       
       console.log("Full URL:", fullUrl);
       
-      // Different proxy approaches with GET method
-      if (proxyMethod === 'direct') {
-        // Direct approach (will likely fail due to CORS)
-        response = await fetch(fullUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-      } else if (proxyMethod === 'allorigins') {
-        // Using allorigins proxy
-        const encodedUrl = encodeURIComponent(fullUrl);
-        response = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-      } else if (proxyMethod === 'corsanywhere') {
-        // Using CORS Anywhere proxy
-        response = await fetch(`https://cors-anywhere.herokuapp.com/${fullUrl}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Origin': window.location.origin
-          }
-        });
-      } else {
-        throw new Error('Invalid proxy method selected');
-      }
+      // Direct approach for GET request
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
       console.log("Webhook response status:", response.status);
       
-      let responseData;
       // Get the response text first
       const responseText = await response.text();
       
       // Try to parse as JSON, fall back to text if not JSON
+      let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
@@ -146,24 +119,6 @@ const CompanySearch = () => {
               <p className="text-xs text-muted-foreground">
                 Example: https://agent.froste.eu/webhook/lovable
               </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="proxyMethod">CORS Method</Label>
-              <Select 
-                value={proxyMethod} 
-                onValueChange={setProxyMethod}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select CORS method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="direct">Direct (No Proxy)</SelectItem>
-                  <SelectItem value="allorigins">AllOrigins Proxy</SelectItem>
-                  <SelectItem value="corsanywhere">CORS Anywhere</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             
             <div className="space-y-2">
