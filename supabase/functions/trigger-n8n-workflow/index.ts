@@ -3,8 +3,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const n8nApiKey = Deno.env.get('N8N_API_KEY');
-// Updated webhook URL based on user input
-const n8nWebhookUrl = "https://agent.froste.eu/webhook/saas";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,8 +16,8 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, userId } = await req.json();
-    console.log(`Triggering n8n workflow for company: ${companyName}, userId: ${userId}`);
+    const { companyName, userId, webhookUrl } = await req.json();
+    console.log(`Triggering n8n workflow for company: ${companyName}, userId: ${userId}, webhook: ${webhookUrl}`);
 
     if (!companyName) {
       throw new Error("Company name is required");
@@ -29,14 +27,18 @@ serve(async (req) => {
       throw new Error("User ID is required");
     }
 
+    if (!webhookUrl) {
+      throw new Error("Webhook URL is required");
+    }
+
     // Create a Supabase client with the auth context of the user
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://pqskutdrekcinpymvigm.supabase.co';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Call the n8n webhook with the company name
-    console.log(`Calling n8n webhook at: ${n8nWebhookUrl}`);
-    const response = await fetch(n8nWebhookUrl, {
+    console.log(`Calling n8n webhook at: ${webhookUrl}`);
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,28 +62,28 @@ serve(async (req) => {
       
       // If we get a 404, give a more specific error
       if (response.status === 404) {
-        throw new Error(`n8n webhook not found at ${n8nWebhookUrl}. Please check the URL.`);
+        throw new Error(`Webhook not found at ${webhookUrl}. Please check the URL.`);
       } else {
-        throw new Error(`n8n workflow failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}`);
       }
     }
 
     // Parse the response from n8n
-    let n8nData;
+    let responseData;
     try {
-      n8nData = await response.json();
+      responseData = await response.json();
     } catch (e) {
       console.log('Response is not JSON, using text response');
       const textResponse = await response.text();
-      n8nData = { response: textResponse };
+      responseData = { response: textResponse };
     }
     
-    console.log('n8n workflow response:', n8nData);
+    console.log('webhook response:', responseData);
 
-    // Mock data for test if n8n response doesn't have useful data
-    if (!n8nData || Object.keys(n8nData).length === 0) {
+    // Mock data for test if response doesn't have useful data
+    if (!responseData || Object.keys(responseData).length === 0) {
       console.log('Using mock data as response is empty');
-      n8nData = { 
+      responseData = { 
         company: companyName,
         info: "This is test data as the real API returned an empty response",
         status: "Test"
@@ -94,7 +96,7 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         company_name: companyName,
-        result: n8nData,
+        result: responseData,
         created_at: new Date().toISOString()
       })
       .select()
