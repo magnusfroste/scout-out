@@ -94,13 +94,15 @@ const CompanySearch = () => {
       console.log("Webhook response status:", response.status);
       
       let responseData;
+      // Get the response text first
+      const responseText = await response.text();
+      
       // Try to parse as JSON, fall back to text if not JSON
       try {
-        responseData = await response.json();
+        responseData = JSON.parse(responseText);
       } catch (e) {
-        // If not JSON, get as text
-        const text = await response.text();
-        responseData = { response: text };
+        // If not valid JSON, use text as is
+        responseData = { response: responseText };
       }
 
       console.log("Response data:", responseData);
