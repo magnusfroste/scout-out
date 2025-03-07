@@ -7,10 +7,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   children: React.ReactNode;
+  as?: React.ElementType;
+  to?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading = false, children, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', isLoading = false, children, as, to, ...props }, ref) => {
     const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
     
     const variants = {
@@ -27,8 +29,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'h-11 px-6 text-lg'
     };
     
+    const Component = as || 'button';
+    
     return (
-      <button
+      <Component
         ref={ref}
         className={cn(
           baseStyles,
@@ -38,13 +42,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         disabled={isLoading || props.disabled}
+        {...(to && { to })}
         {...props}
       >
         {isLoading ? (
           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
         ) : null}
         {children}
-      </button>
+      </Component>
     );
   }
 );

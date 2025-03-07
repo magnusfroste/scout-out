@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import Button from './Button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
   
   const links = [
     { name: 'Home', path: '/' },
@@ -33,6 +35,10 @@ const Navigation: React.FC = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
+  
+  const handleSignOut = async () => {
+    await signOut();
+  };
   
   return (
     <header 
@@ -70,12 +76,26 @@ const Navigation: React.FC = () => {
           
           {/* Call to action */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-            <Button size="sm">
-              Get Started
-            </Button>
+            {user ? (
+              <>
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{user.email}</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" as={Link} to="/auth">
+                  Sign In
+                </Button>
+                <Button size="sm" as={Link} to="/auth">
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -113,12 +133,26 @@ const Navigation: React.FC = () => {
             ))}
           </nav>
           <div className="mt-auto flex flex-col space-y-4">
-            <Button variant="outline" className="w-full justify-center">
-              Sign In
-            </Button>
-            <Button className="w-full justify-center">
-              Get Started
-            </Button>
+            {user ? (
+              <>
+                <div className="flex items-center py-2">
+                  <User className="h-5 w-5 mr-2" />
+                  <span>{user.email}</span>
+                </div>
+                <Button variant="outline" className="w-full justify-center" onClick={handleSignOut}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" className="w-full justify-center" as={Link} to="/auth">
+                  Sign In
+                </Button>
+                <Button className="w-full justify-center" as={Link} to="/auth">
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
