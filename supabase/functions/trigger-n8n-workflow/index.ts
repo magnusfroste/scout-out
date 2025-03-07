@@ -38,14 +38,25 @@ serve(async (req) => {
 
     // Call the n8n webhook with the company name
     console.log(`Calling n8n webhook at: ${webhookUrl}`);
-    const response = await fetch(webhookUrl, {
+    
+    // Set appropriate timeout and don't use Authorization header unless needed
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${n8nApiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ companyName })
-    });
+    };
+    
+    // Only add Authorization header if we have an API key
+    if (n8nApiKey) {
+      fetchOptions.headers = {
+        ...fetchOptions.headers,
+        'Authorization': `Bearer ${n8nApiKey}`
+      };
+    }
+    
+    const response = await fetch(webhookUrl, fetchOptions);
 
     console.log(`n8n response status: ${response.status} ${response.statusText}`);
     
@@ -72,13 +83,33 @@ serve(async (req) => {
     let responseData;
     try {
       responseData = await response.json();
+      console.log('Parsed JSON response:', responseData);
     } catch (e) {
       console.log('Response is not JSON, using text response');
-      const textResponse = await response.text();
-      responseData = { response: textResponse };
+      try {
+        const textResponse = await response.text();
+        console.log('Text response:', textResponse);
+        
+        // If the response contains "workflow completed", create a simple object
+        if (textResponse.includes('workflow completed')) {
+          responseData = { 
+            status: "success", 
+            message: textResponse,
+            company: companyName
+          };
+        } else {
+          responseData = { response: textResponse };
+        }
+      } catch (textError) {
+        console.error('Error reading response text:', textError);
+        responseData = { 
+          status: "unknown",
+          message: "Could not parse webhook response"
+        };
+      }
     }
     
-    console.log('webhook response:', responseData);
+    console.log('Final webhook response to be stored:', responseData);
 
     // Mock data for test if response doesn't have useful data
     if (!responseData || Object.keys(responseData).length === 0) {
