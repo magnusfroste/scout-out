@@ -20,15 +20,42 @@ serve(async (req) => {
     console.log(`Triggering n8n workflow for company: ${companyName}, userId: ${userId}, webhook: ${webhookUrl}`);
 
     if (!companyName) {
-      throw new Error("Company name is required");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Company name is required" 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
     if (!userId) {
-      throw new Error("User ID is required");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "User ID is required" 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
     if (!webhookUrl) {
-      throw new Error("Webhook URL is required");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Webhook URL is required" 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
     // Create a Supabase client with the auth context of the user
@@ -56,9 +83,24 @@ serve(async (req) => {
       };
     }
     
-    const response = await fetch(webhookUrl, fetchOptions);
-
-    console.log(`n8n response status: ${response.status} ${response.statusText}`);
+    let response;
+    try {
+      response = await fetch(webhookUrl, fetchOptions);
+      console.log(`n8n response status: ${response.status} ${response.statusText}`);
+    } catch (fetchError) {
+      console.error('Network error when fetching from webhook:', fetchError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: `Network error: ${fetchError.message}`,
+          error: 'network_error'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 502 // Bad Gateway
+        }
+      );
+    }
     
     if (!response.ok) {
       // For non-200 responses, try to get error details
@@ -69,13 +111,36 @@ serve(async (req) => {
         errorText = "Could not read response body";
       }
       
-      console.error('Error response from n8n:', errorText);
+      console.error(`Error response from n8n (${response.status}):`, errorText);
       
       // If we get a 404, give a more specific error
       if (response.status === 404) {
-        throw new Error(`Webhook not found at ${webhookUrl}. Please check the URL.`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: `Webhook not found at ${webhookUrl}. Please check the URL.`,
+            error: 'webhook_not_found',
+            status: response.status
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404
+          }
+        );
       } else {
-        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: `Webhook request failed: ${response.status} ${response.statusText}`,
+            error: 'webhook_error',
+            status: response.status,
+            details: errorText
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 502 // We return a 502 Bad Gateway
+          }
+        );
       }
     }
 
@@ -122,27 +187,47 @@ serve(async (req) => {
     }
 
     // Store the result in the database
-    const { data, error } = await supabase
-      .from('company_searches')
-      .insert({
-        user_id: userId,
-        company_name: companyName,
-        result: responseData,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+    let dbResult;
+    try {
+      const { data, error } = await supabase
+        .from('company_searches')
+        .insert({
+          user_id: userId,
+          company_name: companyName,
+          result: responseData,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error storing company search result:', error);
-      throw error;
+      if (error) {
+        console.error('Error storing company search result:', error);
+        throw error;
+      }
+      
+      dbResult = data;
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError);
+      // Even if DB operation fails, we want to return the API result to the user
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Company information retrieved but could not be stored',
+          data: responseData,
+          databaseError: dbError.message
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 207 // Partial success
+        }
+      );
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Company information retrieved successfully',
-        data: data
+        message: 'Company information retrieved and stored successfully',
+        data: dbResult
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -156,7 +241,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        message: error.message || 'An unexpected error occurred' 
+        message: error.message || 'An unexpected error occurred',
+        error: 'server_error'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
