@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User } from 'lucide-react';
@@ -15,7 +14,8 @@ const Navigation: React.FC = () => {
     { name: 'Home', path: '/' },
     { name: 'Features', path: '/features' },
     { name: 'Pricing', path: '/pricing' },
-    { name: 'About', path: '/about' }
+    { name: 'About', path: '/about' },
+    ...(user ? [{ name: 'Dashboard', path: '/dashboard' }] : [])
   ];
   
   useEffect(() => {
@@ -31,7 +31,6 @@ const Navigation: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Close mobile menu when location changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
@@ -48,7 +47,6 @@ const Navigation: React.FC = () => {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          {/* Logo */}
           <Link 
             to="/" 
             className="flex items-center"
@@ -56,7 +54,6 @@ const Navigation: React.FC = () => {
             <span className="font-semibold text-xl tracking-tight">SaaS</span>
           </Link>
           
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             {links.map(link => (
               <Link
@@ -74,7 +71,6 @@ const Navigation: React.FC = () => {
             ))}
           </nav>
           
-          {/* Call to action */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
@@ -98,7 +94,6 @@ const Navigation: React.FC = () => {
             )}
           </div>
           
-          {/* Mobile menu button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden flex items-center p-2 rounded-md text-foreground"
@@ -112,7 +107,6 @@ const Navigation: React.FC = () => {
         </div>
       </div>
       
-      {/* Mobile menu */}
       <div
         className={`md:hidden fixed inset-0 z-40 bg-background transition-transform duration-350 ease-in-out transform ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
@@ -132,6 +126,7 @@ const Navigation: React.FC = () => {
               </Link>
             ))}
           </nav>
+          
           <div className="mt-auto flex flex-col space-y-4">
             {user ? (
               <>
