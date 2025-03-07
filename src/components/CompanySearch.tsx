@@ -52,35 +52,40 @@ const CompanySearch = () => {
     try {
       let response;
       
-      // Different proxy approaches
+      // Format the URL with query parameter
+      const queryParam = `company=${encodeURIComponent(companyName)}`;
+      const fullUrl = webhookUrl.includes('?') 
+        ? `${webhookUrl}&${queryParam}`
+        : `${webhookUrl}?${queryParam}`;
+      
+      console.log("Full URL:", fullUrl);
+      
+      // Different proxy approaches with GET method
       if (proxyMethod === 'direct') {
         // Direct approach (will likely fail due to CORS)
-        response = await fetch(webhookUrl, {
-          method: 'POST',
+        response = await fetch(fullUrl, {
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ companyName })
+            'Accept': 'application/json'
+          }
         });
       } else if (proxyMethod === 'allorigins') {
         // Using allorigins proxy
-        const encodedUrl = encodeURIComponent(webhookUrl);
+        const encodedUrl = encodeURIComponent(fullUrl);
         response = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`, {
-          method: 'POST',
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ companyName })
+            'Accept': 'application/json'
+          }
         });
       } else if (proxyMethod === 'corsanywhere') {
         // Using CORS Anywhere proxy
-        response = await fetch(`https://cors-anywhere.herokuapp.com/${webhookUrl}`, {
-          method: 'POST',
+        response = await fetch(`https://cors-anywhere.herokuapp.com/${fullUrl}`, {
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'Origin': window.location.origin
-          },
-          body: JSON.stringify({ companyName })
+          }
         });
       } else {
         throw new Error('Invalid proxy method selected');
@@ -136,6 +141,9 @@ const CompanySearch = () => {
                 placeholder="Enter your webhook URL"
                 disabled={isLoading}
               />
+              <p className="text-xs text-muted-foreground">
+                Example: https://agent.froste.eu/webhook/lovable
+              </p>
             </div>
             
             <div className="space-y-2">
@@ -165,6 +173,9 @@ const CompanySearch = () => {
                 placeholder="Enter company name"
                 disabled={isLoading}
               />
+              <p className="text-xs text-muted-foreground">
+                Will be sent as "?company=yourCompanyName" parameter
+              </p>
             </div>
             
             <Button type="submit" disabled={isLoading}>
