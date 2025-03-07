@@ -12,6 +12,7 @@ interface CompanySearchResult {
   company_name: string;
   result: any;
   created_at: string;
+  user_id: string;
 }
 
 const CompanySearch = () => {
@@ -77,6 +78,7 @@ const CompanySearch = () => {
     if (!user) return;
 
     try {
+      // Using 'company_searches' table instead of 'profiles'
       const { data, error } = await supabase
         .from('company_searches')
         .select('*')
@@ -85,7 +87,8 @@ const CompanySearch = () => {
 
       if (error) throw error;
 
-      setSearchResults(data || []);
+      // Ensuring we're using the correct type for the results
+      setSearchResults(data as CompanySearchResult[] || []);
     } catch (error) {
       console.error("Error fetching search results:", error);
       toast({

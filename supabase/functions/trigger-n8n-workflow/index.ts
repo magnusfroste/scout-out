@@ -3,8 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const n8nApiKey = Deno.env.get('N8N_API_KEY');
-// This URL would need to be updated with the actual n8n webhook URL
-const n8nWebhookUrl = "https://your-n8n-instance.com/webhook/company-info";
+// Using the production webhook URL provided by the user
+const n8nWebhookUrl = "https://agent.froste.eu/webhook/saas";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
