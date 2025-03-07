@@ -7,22 +7,13 @@ import Button from '@/components/Button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-
-interface CompanySearchResult {
-  id: string;
-  company_name: string;
-  result: any;
-  created_at: string;
-  user_id: string;
-}
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const CompanySearch = () => {
   const [companyName, setCompanyName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState(localStorage.getItem('webhookUrl') || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<CompanySearchResult[]>([]);
-  const [selectedResult, setSelectedResult] = useState<CompanySearchResult | null>(null);
+  const [result, setResult] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -54,101 +45,40 @@ const CompanySearch = () => {
       return;
     }
 
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "You must be logged in to search for companies",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
+    setResult(null);
 
     try {
-      console.log("Calling edge function with:", { companyName, userId: user.id, webhookUrl });
-      
       // Call the Supabase Edge Function with webhook URL
       const { data, error } = await supabase.functions.invoke("trigger-n8n-workflow", {
-        body: { companyName, userId: user.id, webhookUrl },
+        body: { 
+          companyName, 
+          userId: user?.id, 
+          webhookUrl 
+        },
       });
 
       if (error) {
-        console.error("Error from edge function:", error);
         throw error;
       }
 
       console.log("Edge function response:", data);
-
+      setResult(data);
+      
       toast({
         title: "Success",
-        description: "Company information retrieved successfully",
+        description: "Webhook called successfully",
       });
-
-      // Fetch the latest search results
-      await fetchSearchResults();
-      setCompanyName('');
     } catch (error: any) {
-      console.error("Error searching company:", error);
+      console.error("Error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to retrieve company information",
+        description: error.message || "Failed to call webhook",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fetchSearchResults = async () => {
-    if (!user) return;
-
-    try {
-      console.log("Fetching search results for user:", user.id);
-      
-      const { data, error } = await supabase
-        .from('company_searches')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error from Supabase query:", error);
-        throw error;
-      }
-
-      console.log("Fetched search results:", data);
-      setSearchResults(data as CompanySearchResult[] || []);
-    } catch (error: any) {
-      console.error("Error fetching search results:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load your previous searches",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Fetch search results on component mount
-  useEffect(() => {
-    if (user) {
-      fetchSearchResults();
-    }
-  }, [user]);
-
-  const handleResultClick = (result: CompanySearchResult) => {
-    setSelectedResult(result);
-  };
-
-  // Format timestamp to a readable date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  // Helper function to determine if an object has any content
-  const hasContent = (obj: any): boolean => {
-    if (!obj) return false;
-    return Object.keys(obj).length > 0;
   };
 
   return (
@@ -168,9 +98,6 @@ const CompanySearch = () => {
                 placeholder="Enter your webhook URL"
                 disabled={isLoading}
               />
-              <p className="text-sm text-muted-foreground">
-                This is the URL of your webhook that will process the company name.
-              </p>
             </div>
             
             <div className="space-y-2">
@@ -198,55 +125,20 @@ const CompanySearch = () => {
         </CardContent>
       </Card>
 
-      {searchResults.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Recent Searches</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              {searchResults.map((result) => (
-                <div
-                  key={result.id}
-                  className={`p-4 rounded-md border cursor-pointer transition-colors ${
-                    selectedResult?.id === result.id ? 'bg-accent' : 'hover:bg-accent/50'
-                  }`}
-                  onClick={() => handleResultClick(result)}
-                >
-                  <h4 className="font-medium">{result.company_name}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(result.created_at)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {selectedResult && hasContent(selectedResult.result) && (
+      {result && (
         <Card>
           <CardHeader>
             <CardTitle>
-              Results for {selectedResult.company_name}
+              Results
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-auto max-h-[500px]">
               <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
-                {JSON.stringify(selectedResult.result, null, 2)}
+                {JSON.stringify(result, null, 2)}
               </pre>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedResult(null)}
-              size="sm"
-            >
-              Close
-            </Button>
-          </CardFooter>
         </Card>
       )}
     </div>
