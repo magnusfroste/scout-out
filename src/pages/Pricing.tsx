@@ -27,7 +27,7 @@ const PricingPage = () => {
     },
     {
       question: 'Can I upgrade or downgrade my plan later?',
-      answer: 'Yes, you can change your plan at any time. When upgrading, you'll be prorated for the remainder of your billing cycle.'
+      answer: 'Yes, you can change your plan at any time. When upgrading, you\'ll be prorated for the remainder of your billing cycle.'
     },
     {
       question: 'Do you offer a free trial?',
