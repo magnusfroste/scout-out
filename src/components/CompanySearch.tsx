@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -49,28 +48,38 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      // Call the Supabase Edge Function with webhook URL
-      const { data, error } = await supabase.functions.invoke("trigger-n8n-workflow", {
-        body: { 
-          companyName, 
-          userId: user?.id, 
-          webhookUrl 
+      // Direct webhook call without using Supabase edge function
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ companyName })
       });
-
-      if (error) {
-        throw error;
+      
+      console.log("Webhook response status:", response.status);
+      
+      let responseData;
+      // Try to parse as JSON, fall back to text if not JSON
+      try {
+        responseData = await response.json();
+      } catch (e) {
+        // If not JSON, get as text
+        const text = await response.text();
+        responseData = { response: text };
       }
 
-      console.log("Edge function response:", data);
-      setResult(data);
+      console.log("Response data:", responseData);
+      setResult(responseData);
       
       toast({
         title: "Success",
         description: "Webhook called successfully",
       });
     } catch (error: any) {
-      console.error("Error:", error);
+      console.error("Error calling webhook:", error);
+      setResult({ error: error.message || "Failed to call webhook" });
+      
       toast({
         title: "Error",
         description: error.message || "Failed to call webhook",
