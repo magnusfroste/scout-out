@@ -48,8 +48,13 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      // Direct webhook call without using Supabase edge function
-      const response = await fetch(webhookUrl, {
+      // Using CORS proxy to avoid CORS issues
+      // For demo purposes, we'll use a public CORS proxy
+      // In production, you should use your own proxy or a properly configured API
+      const corsProxy = "https://corsproxy.io/?";
+      const targetUrl = encodeURIComponent(webhookUrl);
+      
+      const response = await fetch(`${corsProxy}${targetUrl}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
