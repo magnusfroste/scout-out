@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CompanySearch from '@/components/CompanySearch';
 import AgentQuestions from '@/components/AgentQuestions';
+import CompanySearchesTab from '@/components/CompanySearchesTab';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -30,6 +31,7 @@ const Dashboard = () => {
             <TabsList className="mb-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="company-search">Company Search</TabsTrigger>
+              <TabsTrigger value="company-searches">Company Searches</TabsTrigger>
               <TabsTrigger value="agent-questions">Agent Questions</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -86,6 +88,10 @@ const Dashboard = () => {
             
             <TabsContent value="company-search">
               <CompanySearch />
+            </TabsContent>
+            
+            <TabsContent value="company-searches">
+              <CompanySearchesTab />
             </TabsContent>
             
             <TabsContent value="agent-questions">
