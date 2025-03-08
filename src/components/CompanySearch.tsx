@@ -70,8 +70,53 @@ const CompanySearch = () => {
   };
 
   const saveSearchToDatabase = async (companyName: string, result: any) => {
-    console.log('Database save handled by edge function');
-    return null;
+    if (!user) return;
+    
+    try {
+      const { data: searchData, error: searchError } = await supabase
+        .from('company_searches')
+        .insert({
+          user_id: user.id,
+          company_name: companyName,
+          result: result
+        })
+        .select('id')
+        .single();
+        
+      if (searchError) throw searchError;
+      
+      console.log('Search saved to database with ID:', searchData.id);
+      
+      if (agentQuestions.length > 0 && result && result.results) {
+        const answersToSave = result.results.map((item: any) => {
+          return {
+            company_search_id: searchData.id,
+            question_id: item.question_id,
+            answer: item.answer || JSON.stringify(item)
+          };
+        });
+        
+        if (answersToSave.length > 0) {
+          const { error: answersError } = await supabase
+            .from('company_question_answers')
+            .insert(answersToSave);
+            
+          if (answersError) throw answersError;
+          
+          console.log('Answers saved for all questions');
+        }
+      }
+      
+      return searchData.id;
+    } catch (error: any) {
+      console.error('Error saving search to database:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save search history",
+        variant: "destructive",
+      });
+      return null;
+    }
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -104,8 +149,6 @@ const CompanySearch = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token;
       
-      console.log('Sending search request for company:', companyName);
-      
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -123,23 +166,31 @@ const CompanySearch = () => {
       
       console.log("Function response status:", response.status);
       
-      const responseData = await response.json();
-      console.log("Response data:", responseData);
+      const responseText = await response.text();
       
-      if (responseData.success) {
-        setResult(responseData.output);
-        toast({
-          title: "Success",
-          description: "Webhook called successfully",
-        });
-      } else {
-        setResult(responseData);
-        toast({
-          title: "Error",
-          description: responseData.message || "Failed to call webhook",
-          variant: "destructive",
-        });
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log("Response data:", responseData);
+        
+        if (responseData.success && responseData.data) {
+          setResult(responseData.data);
+          
+          if (user && responseData.data) {
+            await saveSearchToDatabase(companyName, responseData.data);
+          }
+        } else {
+          setResult(responseData);
+        }
+      } catch (e) {
+        console.error("Error parsing JSON:", e);
+        setResult({ response: responseText });
       }
+
+      toast({
+        title: "Success",
+        description: "Webhook called successfully",
+      });
     } catch (error: any) {
       console.error("Error calling webhook:", error);
       setResult({ error: error.message || "Failed to call webhook" });
@@ -157,12 +208,10 @@ const CompanySearch = () => {
   const renderResults = () => {
     if (!result) return null;
     
-    const data = result.data;
-    
-    if (data && data.results && Array.isArray(data.results)) {
+    if (result.results && Array.isArray(result.results)) {
       return (
         <div className="space-y-4">
-          {data.results.map((item: any, index: number) => {
+          {result.results.map((item: any, index: number) => {
             const questionObj = agentQuestions.find(q => q.id === item.question_id);
             const questionText = questionObj ? questionObj.question : `Question ${index + 1}`;
             

@@ -94,10 +94,6 @@ const CompanySearchDetail = ({ searchId, onBack }: CompanySearchDetailProps) => 
     );
   }
 
-  // Determine if we have the new format (result.output) or old format
-  const searchResult = companySearch.result.output || companySearch.result;
-  const resultData = searchResult.data || searchResult;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2">
@@ -118,7 +114,7 @@ const CompanySearchDetail = ({ searchId, onBack }: CompanySearchDetailProps) => 
           <h3 className="text-lg font-medium mb-2">Company Information</h3>
           <div className="overflow-auto max-h-[300px] mb-6">
             <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
-              {JSON.stringify(searchResult, null, 2)}
+              {JSON.stringify(companySearch.result, null, 2)}
             </pre>
           </div>
         </CardContent>
