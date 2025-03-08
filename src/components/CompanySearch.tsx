@@ -15,6 +15,7 @@ const CompanySearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [agentQuestions, setAgentQuestions] = useState<any[]>([]);
+  const [fullWebhookUrl, setFullWebhookUrl] = useState<string>('');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -29,6 +30,32 @@ const CompanySearch = () => {
   useEffect(() => {
     fetchAgentQuestions();
   }, [user]);
+
+  // Update the full webhook URL whenever dependencies change
+  useEffect(() => {
+    if (webhookUrl && companyName) {
+      // Format the URL with query parameter
+      const queryParam = `company=${encodeURIComponent(companyName)}`;
+      const baseUrl = webhookUrl.includes('?') 
+        ? `${webhookUrl}&${queryParam}`
+        : `${webhookUrl}?${queryParam}`;
+      
+      // Add agent questions as URL parameters if available
+      let fullUrl = baseUrl;
+      if (agentQuestions.length > 0) {
+        agentQuestions.forEach((question, index) => {
+          const questionParam = `question${index + 1}=${encodeURIComponent(question.question)}`;
+          fullUrl = fullUrl.includes('?') 
+            ? `${fullUrl}&${questionParam}`
+            : `${fullUrl}?${questionParam}`;
+        });
+      }
+      
+      setFullWebhookUrl(fullUrl);
+    } else {
+      setFullWebhookUrl('');
+    }
+  }, [webhookUrl, companyName, agentQuestions]);
 
   const fetchAgentQuestions = async () => {
     if (!user) return;
@@ -163,16 +190,11 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      // Format the URL with query parameter
-      const queryParam = `company=${encodeURIComponent(companyName)}`;
-      const fullUrl = webhookUrl.includes('?') 
-        ? `${webhookUrl}&${queryParam}`
-        : `${webhookUrl}?${queryParam}`;
-      
-      console.log("Full URL:", fullUrl);
+      // Use the full webhook URL that includes questions
+      console.log("Full URL:", fullWebhookUrl);
       
       // Direct approach for GET request
-      const response = await fetch(fullUrl, {
+      const response = await fetch(fullWebhookUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
@@ -299,6 +321,36 @@ const CompanySearch = () => {
               <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
                 {JSON.stringify(result, null, 2)}
               </pre>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {(webhookUrl && companyName) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Developer Log</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Complete Webhook URI</Label>
+                <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
+                  <code className="text-xs break-all text-slate-700 dark:text-slate-300">
+                    {fullWebhookUrl}
+                  </code>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This is the complete URL being called, including company name and all agent questions as parameters.
+                </p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium">Total Questions</Label>
+                <div className="mt-1">
+                  <span className="text-sm">{agentQuestions.length}</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
