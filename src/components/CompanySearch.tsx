@@ -7,6 +7,7 @@ import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
 const CompanySearch = () => {
   const [companyName, setCompanyName] = useState('');
@@ -22,6 +23,31 @@ const CompanySearch = () => {
       localStorage.setItem('webhookUrl', webhookUrl);
     }
   }, [webhookUrl]);
+
+  const saveSearchToDatabase = async (companyName: string, result: any) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('company_searches')
+        .insert({
+          user_id: user.id,
+          company_name: companyName,
+          result: result
+        });
+        
+      if (error) throw error;
+      
+      console.log('Search saved to database');
+    } catch (error: any) {
+      console.error('Error saving search to database:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save search history",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +106,11 @@ const CompanySearch = () => {
 
       console.log("Response data:", responseData);
       setResult(responseData);
+      
+      // Save search to database
+      if (user) {
+        await saveSearchToDatabase(companyName, responseData);
+      }
       
       toast({
         title: "Success",
