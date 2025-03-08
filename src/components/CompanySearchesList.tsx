@@ -77,9 +77,14 @@ const CompanySearchesList = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting company search:', error);
+        throw error;
+      }
 
+      // Remove the deleted search from the local state
       setSearches(searches.filter((search) => search.id !== id));
+      
       toast({
         title: 'Success',
         description: 'Company search deleted successfully',
@@ -88,7 +93,7 @@ const CompanySearchesList = () => {
       console.error('Error deleting company search:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete company search',
+        description: `Failed to delete company search: ${error.message || 'Unknown error'}`,
         variant: 'destructive',
       });
     } finally {
