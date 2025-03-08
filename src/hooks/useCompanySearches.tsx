@@ -71,14 +71,13 @@ export function useCompanySearches() {
       
       console.log('Related answers deleted (if any)');
 
-      // Then delete the company search itself
+      // Then delete the company search itself - Fix: remove .single() which was causing the 406 error
       const { error } = await supabase
         .from('company_searches')
         .delete()
-        .eq('id', id)
-        .single();
+        .eq('id', id);
 
-      if (error && error.code !== 'PGRST116') {  // PGRST116 is "No rows returned" which is OK
+      if (error) {
         console.error('Error deleting company search:', error);
         throw error;
       }
