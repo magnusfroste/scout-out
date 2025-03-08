@@ -63,6 +63,15 @@ const CompanySearchesList = () => {
 
     setIsDeleting(id);
     try {
+      // First delete related answers if they exist
+      const { error: answersError } = await supabase
+        .from('company_question_answers')
+        .delete()
+        .eq('company_search_id', id);
+      
+      if (answersError) throw answersError;
+
+      // Then delete the company search
       const { error } = await supabase
         .from('company_searches')
         .delete()
