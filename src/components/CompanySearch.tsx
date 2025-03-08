@@ -153,19 +153,24 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      // Use POST request with JSON body
-      console.log("Request body:", JSON.stringify(requestBody, null, 2));
+      // Call the Supabase Edge Function to handle the webhook
+      const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
       
-      const response = await fetch(webhookUrl, {
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          company: companyName,
+          questions: requestBody.questions,
+          webhookUrl,
+          userId: user?.id
+        })
       });
       
-      console.log("Webhook response status:", response.status);
+      console.log("Function response status:", response.status);
       
       // Get the response text first
       const responseText = await response.text();
@@ -174,19 +179,25 @@ const CompanySearch = () => {
       let responseData;
       try {
         responseData = JSON.parse(responseText);
+        console.log("Response data:", responseData);
+        
+        // If response contains data.data, use that as our result
+        if (responseData.success && responseData.data) {
+          setResult(responseData.data);
+          
+          // Save search to database (if we have a structured response)
+          if (user && responseData.data) {
+            await saveSearchToDatabase(companyName, responseData.data);
+          }
+        } else {
+          setResult(responseData);
+        }
       } catch (e) {
         // If not valid JSON, use text as is
-        responseData = { response: responseText };
+        console.error("Error parsing JSON:", e);
+        setResult({ response: responseText });
       }
 
-      console.log("Response data:", responseData);
-      setResult(responseData);
-      
-      // Save search to database
-      if (user) {
-        await saveSearchToDatabase(companyName, responseData);
-      }
-      
       toast({
         title: "Success",
         description: "Webhook called successfully",
@@ -203,6 +214,38 @@ const CompanySearch = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Render function to display results in a structured way
+  const renderResults = () => {
+    if (!result) return null;
+    
+    // If we have a structured response with results array
+    if (result.results && Array.isArray(result.results)) {
+      return (
+        <div className="space-y-4">
+          {result.results.map((item: any, index: number) => {
+            // Find the original question text
+            const questionObj = agentQuestions.find(q => q.id === item.question_id);
+            const questionText = questionObj ? questionObj.question : `Question ${index + 1}`;
+            
+            return (
+              <div key={item.question_id || index} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
+                <h3 className="font-medium text-lg mb-2">{questionText}</h3>
+                <p className="text-sm whitespace-pre-wrap">{item.answer || "No answer provided"}</p>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+    
+    // Fallback to showing raw JSON
+    return (
+      <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
+        {JSON.stringify(result, null, 2)}
+      </pre>
+    );
   };
 
   return (
@@ -282,9 +325,7 @@ const CompanySearch = () => {
           </CardHeader>
           <CardContent>
             <div className="overflow-auto max-h-[500px]">
-              <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
-                {JSON.stringify(result, null, 2)}
-              </pre>
+              {renderResults()}
             </div>
           </CardContent>
         </Card>

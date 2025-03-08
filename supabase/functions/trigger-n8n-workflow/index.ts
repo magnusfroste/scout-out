@@ -83,6 +83,12 @@ serve(async (req) => {
     try {
       responseData = await response.json();
       console.log('Response data:', responseData);
+      
+      // Handle the case where responseData is an array with a single object containing results
+      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].results) {
+        responseData = responseData[0];
+      }
+      
     } catch (e) {
       // If not JSON, try to get text
       try {
