@@ -18,7 +18,6 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
   onCancel,
 }) => {
   const [question, setQuestion] = useState('');
-  const [response, setResponse] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -26,10 +25,8 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
   useEffect(() => {
     if (editingQuestion) {
       setQuestion(editingQuestion.question || '');
-      setResponse(editingQuestion.response || '');
     } else {
       setQuestion('');
-      setResponse('');
     }
   }, [editingQuestion]);
 
@@ -63,7 +60,6 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
           .from('agent_questions')
           .update({
             question,
-            response,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingQuestion.id);
@@ -79,7 +75,6 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
         const { error } = await supabase.from('agent_questions').insert({
           user_id: user.id,
           question,
-          response,
         });
 
         if (error) throw error;
@@ -92,7 +87,6 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
 
       // Reset form
       setQuestion('');
-      setResponse('');
       onCancel();
     } catch (error: any) {
       console.error('Error submitting question:', error);
@@ -115,17 +109,6 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Enter your question"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="response">Response (Optional)</Label>
-        <Input
-          id="response"
-          value={response}
-          onChange={(e) => setResponse(e.target.value)}
-          placeholder="Enter response if available"
           disabled={isSubmitting}
         />
       </div>

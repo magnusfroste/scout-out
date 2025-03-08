@@ -123,7 +123,6 @@ const AgentQuestionsList: React.FC<AgentQuestionsListProps> = ({
           <TableHeader>
             <TableRow>
               <TableHead>Question</TableHead>
-              <TableHead>Response</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
@@ -132,13 +131,6 @@ const AgentQuestionsList: React.FC<AgentQuestionsListProps> = ({
             {questions.map((question) => (
               <TableRow key={question.id}>
                 <TableCell className="font-medium">{question.question}</TableCell>
-                <TableCell>
-                  {question.response ? (
-                    question.response
-                  ) : (
-                    <span className="text-muted-foreground italic">No response</span>
-                  )}
-                </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
                   {formatDate(question.created_at)}
                 </TableCell>
