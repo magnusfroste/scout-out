@@ -63,15 +63,39 @@ const CompanySearchesList = () => {
 
     setIsDeleting(id);
     try {
-      // First delete related answers if they exist
-      const { error: answersError } = await supabase
+      console.log('Deleting company search with ID:', id);
+      
+      // First, check if there are any related answers
+      const { data: answerCount, error: countError } = await supabase
         .from('company_question_answers')
-        .delete()
+        .select('id', { count: 'exact', head: true })
         .eq('company_search_id', id);
       
-      if (answersError) throw answersError;
+      if (countError) {
+        console.error('Error checking for answers:', countError);
+        throw countError;
+      }
+      
+      console.log('Related answers count:', answerCount);
+      
+      // If there are related answers, delete them first
+      if (answerCount && answerCount.length > 0) {
+        console.log('Deleting related answers...');
+        const { error: answersError } = await supabase
+          .from('company_question_answers')
+          .delete()
+          .eq('company_search_id', id);
+        
+        if (answersError) {
+          console.error('Error deleting answers:', answersError);
+          throw answersError;
+        }
+        
+        console.log('Related answers deleted successfully');
+      }
 
-      // Then delete the company search
+      // Now delete the company search
+      console.log('Now deleting the company search...');
       const { error } = await supabase
         .from('company_searches')
         .delete()
@@ -81,9 +105,11 @@ const CompanySearchesList = () => {
         console.error('Error deleting company search:', error);
         throw error;
       }
+      
+      console.log('Company search deleted successfully');
 
       // Remove the deleted search from the local state
-      setSearches(searches.filter((search) => search.id !== id));
+      setSearches(prevSearches => prevSearches.filter(search => search.id !== id));
       
       toast({
         title: 'Success',
