@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Label } from '@/components/ui/label';
@@ -34,24 +33,23 @@ const CompanySearch = () => {
   // Update the full webhook URL whenever dependencies change
   useEffect(() => {
     if (webhookUrl && companyName) {
-      // Format the URL with query parameter
-      const queryParam = `company=${encodeURIComponent(companyName)}`;
-      const baseUrl = webhookUrl.includes('?') 
-        ? `${webhookUrl}&${queryParam}`
-        : `${webhookUrl}?${queryParam}`;
+      // Format the URL with company parameter
+      const companyParam = `company=${encodeURIComponent(companyName)}`;
+      let baseUrl = webhookUrl.includes('?') 
+        ? `${webhookUrl}&${companyParam}`
+        : `${webhookUrl}?${companyParam}`;
       
-      // Add agent questions as URL parameters if available
-      let fullUrl = baseUrl;
+      // Add agent questions as a single "question" parameter if available
+      // For now, we'll just use the first question
       if (agentQuestions.length > 0) {
-        agentQuestions.forEach((question, index) => {
-          const questionParam = `question${index + 1}=${encodeURIComponent(question.question)}`;
-          fullUrl = fullUrl.includes('?') 
-            ? `${fullUrl}&${questionParam}`
-            : `${fullUrl}?${questionParam}`;
-        });
+        const firstQuestion = agentQuestions[0];
+        const questionParam = `question=${encodeURIComponent(firstQuestion.question)}`;
+        baseUrl = baseUrl.includes('?') 
+          ? `${baseUrl}&${questionParam}`
+          : `${baseUrl}?${questionParam}`;
       }
       
-      setFullWebhookUrl(fullUrl);
+      setFullWebhookUrl(baseUrl);
     } else {
       setFullWebhookUrl('');
     }
@@ -341,7 +339,7 @@ const CompanySearch = () => {
                   </code>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  This is the complete URL being called, including company name and all agent questions as parameters.
+                  This is the complete URL being called, including company name and question parameter.
                 </p>
               </div>
               
