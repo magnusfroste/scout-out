@@ -25,9 +25,11 @@ export function useCompanySearches() {
 
     setIsLoading(true);
     try {
+      console.log('Fetching searches for user:', user.id);
       const { data, error } = await supabase
         .from('company_searches')
         .select('*, company_question_answers(id)')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -38,6 +40,7 @@ export function useCompanySearches() {
         answer_count: search.company_question_answers?.length || 0
       })) || [];
       
+      console.log('Fetched searches:', searchesWithCounts);
       setSearches(searchesWithCounts);
     } catch (error: any) {
       console.error('Error fetching company searches:', error);
@@ -56,7 +59,7 @@ export function useCompanySearches() {
 
     setIsDeleting(id);
     try {
-      console.log('Deleting company search with ID:', id);
+      console.log('Deleting company search with ID:', id, 'for user:', user.id);
       
       // First delete any related answers
       const { error: answersError } = await supabase
@@ -71,11 +74,11 @@ export function useCompanySearches() {
       
       console.log('Related answers deleted (if any)');
 
-      // Then delete the company search itself - Fix: remove .single() which was causing the 406 error
+      // Then delete the company search itself - ensuring it belongs to the current user
       const { error } = await supabase
         .from('company_searches')
         .delete()
-        .eq('id', id);
+        .match({ id: id, user_id: user.id });
 
       if (error) {
         console.error('Error deleting company search:', error);
@@ -104,7 +107,9 @@ export function useCompanySearches() {
   };
 
   useEffect(() => {
-    fetchSearches();
+    if (user) {
+      fetchSearches();
+    }
   }, [user]);
 
   return {
