@@ -65,50 +65,34 @@ const CompanySearchesList = () => {
     try {
       console.log('Deleting company search with ID:', id);
       
-      // First, check if there are any related answers
-      const { data: answerCount, error: countError } = await supabase
+      // First delete any related answers
+      const { error: answersError } = await supabase
         .from('company_question_answers')
-        .select('id', { count: 'exact', head: true })
+        .delete()
         .eq('company_search_id', id);
       
-      if (countError) {
-        console.error('Error checking for answers:', countError);
-        throw countError;
+      if (answersError) {
+        console.error('Error deleting related answers:', answersError);
+        throw answersError;
       }
       
-      console.log('Related answers count:', answerCount);
-      
-      // If there are related answers, delete them first
-      if (answerCount && answerCount.length > 0) {
-        console.log('Deleting related answers...');
-        const { error: answersError } = await supabase
-          .from('company_question_answers')
-          .delete()
-          .eq('company_search_id', id);
-        
-        if (answersError) {
-          console.error('Error deleting answers:', answersError);
-          throw answersError;
-        }
-        
-        console.log('Related answers deleted successfully');
-      }
+      console.log('Related answers deleted (if any)');
 
-      // Now delete the company search
-      console.log('Now deleting the company search...');
+      // Then delete the company search itself
       const { error } = await supabase
         .from('company_searches')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {  // PGRST116 is "No rows returned" which is OK
         console.error('Error deleting company search:', error);
         throw error;
       }
       
       console.log('Company search deleted successfully');
 
-      // Remove the deleted search from the local state
+      // Update the local state
       setSearches(prevSearches => prevSearches.filter(search => search.id !== id));
       
       toast({
@@ -116,7 +100,7 @@ const CompanySearchesList = () => {
         description: 'Company search deleted successfully',
       });
     } catch (error: any) {
-      console.error('Error deleting company search:', error);
+      console.error('Error in deletion process:', error);
       toast({
         title: 'Error',
         description: `Failed to delete company search: ${error.message || 'Unknown error'}`,
