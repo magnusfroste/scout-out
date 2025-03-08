@@ -1,120 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from 'react';
+import { useCompanySearches } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { Loader2, RefreshCw, Trash2, Eye } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { RefreshCw } from 'lucide-react';
+import CompanySearchesLoadingState from './company-searches/CompanySearchesLoadingState';
+import CompanySearchesEmptyState from './company-searches/CompanySearchesEmptyState';
+import CompanySearchesListView from './company-searches/CompanySearchesListView';
 import CompanySearchDetail from './CompanySearchDetail';
 
 const CompanySearchesList = () => {
-  const [searches, setSearches] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  const fetchSearches = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('company_searches')
-        .select('*, company_question_answers(id)')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Add a count of answers for each search
-      const searchesWithCounts = data?.map(search => ({
-        ...search,
-        answer_count: search.company_question_answers?.length || 0
-      })) || [];
-      
-      setSearches(searchesWithCounts);
-    } catch (error: any) {
-      console.error('Error fetching company searches:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load company searches',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSearches();
-  }, [user]);
-
-  const handleDeleteSearch = async (id: string) => {
-    if (!user) return;
-
-    setIsDeleting(id);
-    try {
-      console.log('Deleting company search with ID:', id);
-      
-      // First delete any related answers
-      const { error: answersError } = await supabase
-        .from('company_question_answers')
-        .delete()
-        .eq('company_search_id', id);
-      
-      if (answersError) {
-        console.error('Error deleting related answers:', answersError);
-        throw answersError;
-      }
-      
-      console.log('Related answers deleted (if any)');
-
-      // Then delete the company search itself
-      const { error } = await supabase
-        .from('company_searches')
-        .delete()
-        .eq('id', id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {  // PGRST116 is "No rows returned" which is OK
-        console.error('Error deleting company search:', error);
-        throw error;
-      }
-      
-      console.log('Company search deleted successfully');
-
-      // Update the local state
-      setSearches(prevSearches => prevSearches.filter(search => search.id !== id));
-      
-      toast({
-        title: 'Success',
-        description: 'Company search deleted successfully',
-      });
-    } catch (error: any) {
-      console.error('Error in deletion process:', error);
-      toast({
-        title: 'Error',
-        description: `Failed to delete company search: ${error.message || 'Unknown error'}`,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsDeleting(null);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-  };
+  const { searches, isLoading, isDeleting, fetchSearches, handleDeleteSearch } = useCompanySearches();
 
   // Show company search detail if a search is selected
   if (selectedSearchId) {
@@ -127,23 +23,11 @@ const CompanySearchesList = () => {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <CompanySearchesLoadingState />;
   }
 
   if (searches.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground mb-4">No company searches found</p>
-        <Button variant="outline" onClick={fetchSearches} size="sm">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
-      </div>
-    );
+    return <CompanySearchesEmptyState onRefresh={fetchSearches} />;
   }
 
   return (
@@ -156,52 +40,12 @@ const CompanySearchesList = () => {
       </div>
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Company Name</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Answers</TableHead>
-              <TableHead className="w-[150px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {searches.map((search) => (
-              <TableRow key={search.id}>
-                <TableCell className="font-medium">{search.company_name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {formatDate(search.created_at)}
-                </TableCell>
-                <TableCell>{search.answer_count}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedSearchId(search.id)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Eye className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteSearch(search.id)}
-                      disabled={isDeleting === search.id}
-                      className="h-8 w-8 p-0"
-                    >
-                      {isDeleting === search.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      )}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <CompanySearchesListView
+          searches={searches}
+          isDeleting={isDeleting}
+          onViewDetail={setSelectedSearchId}
+          onDeleteSearch={handleDeleteSearch}
+        />
       </div>
     </div>
   );
