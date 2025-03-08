@@ -90,40 +90,101 @@ serve(async (req) => {
       );
     }
     
-    // Get the response data
+    // Parse the response data properly
     let responseData;
+    let responseBody;
+    
     try {
-      responseData = await response.json();
-      console.log('Response data:', responseData);
+      // First try to get the response as text
+      responseBody = await response.text();
+      console.log('Response body:', responseBody);
       
-      // Handle the case where responseData is an array with a single object containing results
-      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].results) {
-        responseData = responseData[0];
-      }
-      
-    } catch (e) {
-      // If not JSON, try to get text
       try {
-        const text = await response.text();
-        console.log('Text response:', text);
-        responseData = { response: text };
-      } catch (textError) {
-        console.error('Error reading response:', textError);
-        responseData = { message: "Could not parse response" };
+        // Try to parse as JSON - this may throw an error if not valid JSON
+        responseData = JSON.parse(responseBody);
+        console.log('Parsed JSON response:', responseData);
+        
+        // Handle the case where responseData is an array with a single object containing results
+        if (Array.isArray(responseData) && responseData.length > 0) {
+          responseData = responseData[0];
+        }
+        
+      } catch (jsonError) {
+        console.error('Error parsing JSON:', jsonError);
+        // If JSON parsing fails, create an object with the text response
+        responseData = { 
+          response: responseBody,
+          error: "Response is not valid JSON"
+        };
       }
+    } catch (textError) {
+      console.error('Error reading response body:', textError);
+      responseData = { 
+        error: "Could not read response body",
+        details: textError.message
+      };
     }
+    
+    // Prepare a standardized output format
+    const output = {
+      company: company,
+      timestamp: new Date().toISOString(),
+      data: responseData
+    };
     
     // Store the result if we have a user ID
     if (userId) {
       try {
-        await supabase
+        // Only store one entry per search
+        const { data: existingSearch, error: searchError } = await supabase
           .from('company_searches')
-          .insert({
-            user_id: userId,
-            company_name: company,
-            result: responseData,
-            created_at: new Date().toISOString()
-          });
+          .select('id')
+          .eq('user_id', userId)
+          .eq('company_name', company)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (searchError) {
+          console.error('Error checking existing searches:', searchError);
+        }
+        
+        // Only insert if there's no recent search for this company by this user
+        if (!existingSearch || existingSearch.length === 0 || 
+            (new Date().getTime() - new Date(existingSearch[0].created_at).getTime() > 5000)) {
+          
+          const { data: insertData, error: insertError } = await supabase
+            .from('company_searches')
+            .insert({
+              user_id: userId,
+              company_name: company,
+              result: output
+            })
+            .select('id')
+            .single();
+            
+          if (insertError) {
+            console.error('Database insertion error:', insertError);
+          } else if (insertData && responseData && responseData.results) {
+            // If we have question results, store them as answers
+            const answers = responseData.results.map((item: any) => ({
+              company_search_id: insertData.id,
+              question_id: item.question_id,
+              answer: item.answer || JSON.stringify(item)
+            }));
+            
+            if (answers.length > 0) {
+              const { error: answersError } = await supabase
+                .from('company_question_answers')
+                .insert(answers);
+                
+              if (answersError) {
+                console.error('Error inserting answers:', answersError);
+              }
+            }
+          }
+        } else {
+          console.log('Skipping duplicate company search storage (within 5 seconds)');
+        }
       } catch (dbError) {
         console.error('Database error:', dbError);
         // Continue even if DB storage fails
@@ -133,7 +194,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: responseData
+        output: output
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
