@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ const CompanySearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [agentQuestions, setAgentQuestions] = useState<any[]>([]);
-  const [fullWebhookUrl, setFullWebhookUrl] = useState<string>('');
+  const [requestBody, setRequestBody] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -30,30 +31,26 @@ const CompanySearch = () => {
     fetchAgentQuestions();
   }, [user]);
 
-  // Update the full webhook URL whenever dependencies change
+  // Update the request body whenever dependencies change
   useEffect(() => {
-    if (webhookUrl && companyName) {
-      // Format the URL with company parameter
-      const companyParam = `company=${encodeURIComponent(companyName)}`;
-      let baseUrl = webhookUrl.includes('?') 
-        ? `${webhookUrl}&${companyParam}`
-        : `${webhookUrl}?${companyParam}`;
+    if (companyName) {
+      const body: any = {
+        company: companyName
+      };
       
-      // Add agent questions as a single "question" parameter if available
-      // For now, we'll just use the first question
+      // Add agent questions if available
       if (agentQuestions.length > 0) {
-        const firstQuestion = agentQuestions[0];
-        const questionParam = `question=${encodeURIComponent(firstQuestion.question)}`;
-        baseUrl = baseUrl.includes('?') 
-          ? `${baseUrl}&${questionParam}`
-          : `${baseUrl}?${questionParam}`;
+        body.questions = agentQuestions.map(q => ({
+          id: q.id,
+          text: q.question
+        }));
       }
       
-      setFullWebhookUrl(baseUrl);
+      setRequestBody(body);
     } else {
-      setFullWebhookUrl('');
+      setRequestBody(null);
     }
-  }, [webhookUrl, companyName, agentQuestions]);
+  }, [companyName, agentQuestions]);
 
   const fetchAgentQuestions = async () => {
     if (!user) return;
@@ -96,46 +93,14 @@ const CompanySearch = () => {
       
       console.log('Search saved to database with ID:', searchData.id);
       
-      // If we have agent questions and results to save
-      if (agentQuestions.length > 0 && result) {
-        // Extract answers for each question if available
-        const answersToSave = agentQuestions.map(question => {
-          // Try to find answer in result - the exact structure depends on your webhook response
-          // Assuming result might contain answers in a format like {questionId: 'answer'}
-          // or maybe in an array format. Adjust this logic based on your actual data structure
-          let answer = null;
-          
-          // This is a simplistic approach - you'll need to adjust according to your response structure
-          if (result.answers && result.answers[question.id]) {
-            answer = result.answers[question.id];
-          } else if (typeof result === 'object' && result !== null) {
-            // Try to find an answer by looking for question text in the keys or looking for question id
-            // This is just a fallback, ideally your webhook response would have a more predictable structure
-            const questionKey = Object.keys(result).find(key => 
-              key === question.id || 
-              key === question.question || 
-              (typeof result[key] === 'object' && result[key]?.question === question.question)
-            );
-            
-            if (questionKey) {
-              answer = typeof result[questionKey] === 'object' 
-                ? result[questionKey].answer || result[questionKey].response 
-                : result[questionKey];
-            }
-          }
-          
-          // If no specific answer found, store the entire result for now
-          // In a real app, you'd have a more structured answer extraction
-          if (answer === null && typeof result === 'string') {
-            answer = result;
-          } else if (answer === null) {
-            answer = JSON.stringify(result);
-          }
-          
+      // If we have agent questions and structured results to save
+      if (agentQuestions.length > 0 && result && result.results) {
+        // Extract answers for each question from structured response
+        const answersToSave = result.results.map((item: any) => {
           return {
             company_search_id: searchData.id,
-            question_id: question.id,
-            answer: answer
+            question_id: item.question_id,
+            answer: item.answer || JSON.stringify(item)
           };
         });
         
@@ -188,15 +153,16 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      // Use the full webhook URL that includes questions
-      console.log("Full URL:", fullWebhookUrl);
+      // Use POST request with JSON body
+      console.log("Request body:", JSON.stringify(requestBody, null, 2));
       
-      // Direct approach for GET request
-      const response = await fetch(fullWebhookUrl, {
-        method: 'GET',
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
-        }
+        },
+        body: JSON.stringify(requestBody)
       });
       
       console.log("Webhook response status:", response.status);
@@ -271,7 +237,7 @@ const CompanySearch = () => {
                 disabled={isLoading}
               />
               <p className="text-xs text-muted-foreground">
-                Will be sent as "?company=yourCompanyName" parameter
+                Will be sent in the request body as "company"
               </p>
             </div>
             
@@ -332,14 +298,14 @@ const CompanySearch = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">Complete Webhook URI</Label>
+                <Label className="text-sm font-medium">Request Body</Label>
                 <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
                   <code className="text-xs break-all text-slate-700 dark:text-slate-300">
-                    {fullWebhookUrl}
+                    {requestBody ? JSON.stringify(requestBody, null, 2) : 'No request body yet'}
                   </code>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  This is the complete URL being called, including company name and question parameter.
+                  This is the complete request body being sent, including company name and all questions.
                 </p>
               </div>
               

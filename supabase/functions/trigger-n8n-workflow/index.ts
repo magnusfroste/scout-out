@@ -14,10 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, userId, webhookUrl } = await req.json();
-    console.log(`Calling webhook for company: ${companyName}, webhook: ${webhookUrl}`);
+    // Parse the request body as JSON
+    const { company, questions, userId, webhookUrl } = await req.json();
+    console.log(`Calling webhook for company: ${company}, webhook: ${webhookUrl}`);
+    console.log(`Questions: ${JSON.stringify(questions)}`);
 
-    if (!companyName || !webhookUrl) {
+    if (!company || !webhookUrl) {
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -35,7 +37,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Call the webhook with the company name
+    // Call the webhook with the company name and questions using POST
     let response;
     try {
       response = await fetch(webhookUrl, {
@@ -43,7 +45,7 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ companyName })
+        body: JSON.stringify({ company, questions })
       });
       
       console.log(`Webhook response status: ${response.status}`);
@@ -100,7 +102,7 @@ serve(async (req) => {
           .from('company_searches')
           .insert({
             user_id: userId,
-            company_name: companyName,
+            company_name: company,
             result: responseData,
             created_at: new Date().toISOString()
           });
