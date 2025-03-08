@@ -96,9 +96,11 @@ serve(async (req) => {
       responseData = await response.json();
       console.log('Response data:', responseData);
       
-      // Handle the case where responseData is an array with a single object containing results
-      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].results) {
-        responseData = responseData[0];
+      // Handle the new response format which is an array with one object containing 'output' array
+      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+        // Extract the output array from the first item in the response array
+        const results = responseData[0].output;
+        responseData = { results };
       }
       
     } catch (e) {

@@ -69,53 +69,36 @@ const CompanySearch = () => {
     }
   };
 
-  const saveSearchToDatabase = async (companyName: string, result: any) => {
-    if (!user) return;
+  const saveSearchResults = async (searchId: string, results: any[]) => {
+    if (!user || !results || !results.length) return;
     
     try {
-      const { data: searchData, error: searchError } = await supabase
-        .from('company_searches')
-        .insert({
-          user_id: user.id,
-          company_name: companyName,
-          result: result
-        })
-        .select('id')
-        .single();
-        
-      if (searchError) throw searchError;
+      console.log('Saving answers for search ID:', searchId);
       
-      console.log('Search saved to database with ID:', searchData.id);
+      const answersToSave = results.map((item: any) => {
+        return {
+          company_search_id: searchId,
+          question_id: item.question_id,
+          answer: item.answer || JSON.stringify(item)
+        };
+      });
       
-      if (agentQuestions.length > 0 && result && result.results) {
-        const answersToSave = result.results.map((item: any) => {
-          return {
-            company_search_id: searchData.id,
-            question_id: item.question_id,
-            answer: item.answer || JSON.stringify(item)
-          };
-        });
-        
-        if (answersToSave.length > 0) {
-          const { error: answersError } = await supabase
-            .from('company_question_answers')
-            .insert(answersToSave);
-            
-          if (answersError) throw answersError;
+      if (answersToSave.length > 0) {
+        const { error: answersError } = await supabase
+          .from('company_question_answers')
+          .insert(answersToSave);
           
-          console.log('Answers saved for all questions');
-        }
+        if (answersError) throw answersError;
+        
+        console.log('Answers saved for all questions');
       }
-      
-      return searchData.id;
     } catch (error: any) {
-      console.error('Error saving search to database:', error);
+      console.error('Error saving answers to database:', error);
       toast({
         title: "Error",
-        description: "Failed to save search history",
+        description: "Failed to save answers",
         variant: "destructive",
       });
-      return null;
     }
   };
 
@@ -176,9 +159,8 @@ const CompanySearch = () => {
         if (responseData.success && responseData.data) {
           setResult(responseData.data);
           
-          if (user && responseData.data) {
-            await saveSearchToDatabase(companyName, responseData.data);
-          }
+          // We don't need to save to the database here anymore
+          // since the edge function handles it
         } else {
           setResult(responseData);
         }
