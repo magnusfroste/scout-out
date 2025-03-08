@@ -36,6 +36,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_question_answers: {
+        Row: {
+          answer: string | null
+          company_search_id: string
+          created_at: string
+          id: string
+          question_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer?: string | null
+          company_search_id: string
+          created_at?: string
+          id?: string
+          question_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string | null
+          company_search_id?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_question_answers_company_search_id_fkey"
+            columns: ["company_search_id"]
+            isOneToOne: false
+            referencedRelation: "company_searches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "agent_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_searches: {
         Row: {
           company_name: string

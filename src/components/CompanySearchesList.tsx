@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Button from '@/components/Button';
-import { Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2, Eye } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -13,11 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import CompanySearchDetail from './CompanySearchDetail';
 
 const CompanySearchesList = () => {
   const [searches, setSearches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -28,11 +30,18 @@ const CompanySearchesList = () => {
     try {
       const { data, error } = await supabase
         .from('company_searches')
-        .select('*')
+        .select('*, company_question_answers(id)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSearches(data || []);
+      
+      // Add a count of answers for each search
+      const searchesWithCounts = data?.map(search => ({
+        ...search,
+        answer_count: search.company_question_answers?.length || 0
+      })) || [];
+      
+      setSearches(searchesWithCounts);
     } catch (error: any) {
       console.error('Error fetching company searches:', error);
       toast({
@@ -83,6 +92,16 @@ const CompanySearchesList = () => {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
+  // Show company search detail if a search is selected
+  if (selectedSearchId) {
+    return (
+      <CompanySearchDetail 
+        searchId={selectedSearchId}
+        onBack={() => setSelectedSearchId(null)}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
@@ -118,7 +137,8 @@ const CompanySearchesList = () => {
             <TableRow>
               <TableHead>Company Name</TableHead>
               <TableHead>Created</TableHead>
-              <TableHead className="w-[120px]">Actions</TableHead>
+              <TableHead>Answers</TableHead>
+              <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,13 +148,23 @@ const CompanySearchesList = () => {
                 <TableCell className="text-muted-foreground text-sm">
                   {formatDate(search.created_at)}
                 </TableCell>
+                <TableCell>{search.answer_count}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => setSelectedSearchId(search.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Eye className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleDeleteSearch(search.id)}
                       disabled={isDeleting === search.id}
+                      className="h-8 w-8 p-0"
                     >
                       {isDeleting === search.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

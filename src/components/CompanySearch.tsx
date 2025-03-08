@@ -14,6 +14,7 @@ const CompanySearch = () => {
   const [webhookUrl, setWebhookUrl] = useState(localStorage.getItem('webhookUrl') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [agentQuestions, setAgentQuestions] = useState<any[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -24,21 +25,108 @@ const CompanySearch = () => {
     }
   }, [webhookUrl]);
 
+  // Fetch agent questions when component mounts
+  useEffect(() => {
+    fetchAgentQuestions();
+  }, [user]);
+
+  const fetchAgentQuestions = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('agent_questions')
+        .select('*')
+        .order('created_at', { ascending: true });
+        
+      if (error) throw error;
+      
+      setAgentQuestions(data || []);
+    } catch (error: any) {
+      console.error('Error fetching agent questions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load agent questions",
+        variant: "destructive",
+      });
+    }
+  };
+
   const saveSearchToDatabase = async (companyName: string, result: any) => {
     if (!user) return;
     
     try {
-      const { error } = await supabase
+      // First, save the company search
+      const { data: searchData, error: searchError } = await supabase
         .from('company_searches')
         .insert({
           user_id: user.id,
           company_name: companyName,
           result: result
+        })
+        .select('id')
+        .single();
+        
+      if (searchError) throw searchError;
+      
+      console.log('Search saved to database with ID:', searchData.id);
+      
+      // If we have agent questions and results to save
+      if (agentQuestions.length > 0 && result) {
+        // Extract answers for each question if available
+        const answersToSave = agentQuestions.map(question => {
+          // Try to find answer in result - the exact structure depends on your webhook response
+          // Assuming result might contain answers in a format like {questionId: 'answer'}
+          // or maybe in an array format. Adjust this logic based on your actual data structure
+          let answer = null;
+          
+          // This is a simplistic approach - you'll need to adjust according to your response structure
+          if (result.answers && result.answers[question.id]) {
+            answer = result.answers[question.id];
+          } else if (typeof result === 'object' && result !== null) {
+            // Try to find an answer by looking for question text in the keys or looking for question id
+            // This is just a fallback, ideally your webhook response would have a more predictable structure
+            const questionKey = Object.keys(result).find(key => 
+              key === question.id || 
+              key === question.question || 
+              (typeof result[key] === 'object' && result[key]?.question === question.question)
+            );
+            
+            if (questionKey) {
+              answer = typeof result[questionKey] === 'object' 
+                ? result[questionKey].answer || result[questionKey].response 
+                : result[questionKey];
+            }
+          }
+          
+          // If no specific answer found, store the entire result for now
+          // In a real app, you'd have a more structured answer extraction
+          if (answer === null && typeof result === 'string') {
+            answer = result;
+          } else if (answer === null) {
+            answer = JSON.stringify(result);
+          }
+          
+          return {
+            company_search_id: searchData.id,
+            question_id: question.id,
+            answer: answer
+          };
         });
         
-      if (error) throw error;
+        // Save all the answers
+        if (answersToSave.length > 0) {
+          const { error: answersError } = await supabase
+            .from('company_question_answers')
+            .insert(answersToSave);
+            
+          if (answersError) throw answersError;
+          
+          console.log('Answers saved for all questions');
+        }
+      }
       
-      console.log('Search saved to database');
+      return searchData.id;
     } catch (error: any) {
       console.error('Error saving search to database:', error);
       toast({
@@ -46,6 +134,7 @@ const CompanySearch = () => {
         description: "Failed to save search history",
         variant: "destructive",
       });
+      return null;
     }
   };
 
@@ -179,6 +268,24 @@ const CompanySearch = () => {
           </form>
         </CardContent>
       </Card>
+
+      {agentQuestions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Agent Questions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground mb-4">
+              These questions will be answered when you search for a company.
+            </div>
+            <ul className="space-y-2 list-disc pl-5">
+              {agentQuestions.map(question => (
+                <li key={question.id}>{question.question}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {result && (
         <Card>
