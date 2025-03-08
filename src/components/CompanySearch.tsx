@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Label } from '@/components/ui/label';
@@ -19,26 +18,22 @@ const CompanySearch = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Save webhook URL to localStorage when it changes
   useEffect(() => {
     if (webhookUrl) {
       localStorage.setItem('webhookUrl', webhookUrl);
     }
   }, [webhookUrl]);
 
-  // Fetch agent questions when component mounts
   useEffect(() => {
     fetchAgentQuestions();
   }, [user]);
 
-  // Update the request body whenever dependencies change
   useEffect(() => {
     if (companyName) {
       const body: any = {
         company: companyName
       };
       
-      // Add agent questions if available
       if (agentQuestions.length > 0) {
         body.questions = agentQuestions.map(q => ({
           id: q.id,
@@ -78,7 +73,6 @@ const CompanySearch = () => {
     if (!user) return;
     
     try {
-      // First, save the company search
       const { data: searchData, error: searchError } = await supabase
         .from('company_searches')
         .insert({
@@ -93,9 +87,7 @@ const CompanySearch = () => {
       
       console.log('Search saved to database with ID:', searchData.id);
       
-      // If we have agent questions and structured results to save
       if (agentQuestions.length > 0 && result && result.results) {
-        // Extract answers for each question from structured response
         const answersToSave = result.results.map((item: any) => {
           return {
             company_search_id: searchData.id,
@@ -104,7 +96,6 @@ const CompanySearch = () => {
           };
         });
         
-        // Save all the answers
         if (answersToSave.length > 0) {
           const { error: answersError } = await supabase
             .from('company_question_answers')
@@ -153,14 +144,17 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      // Call the Supabase Edge Function to handle the webhook
       const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token;
       
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           company: companyName,
@@ -172,20 +166,16 @@ const CompanySearch = () => {
       
       console.log("Function response status:", response.status);
       
-      // Get the response text first
       const responseText = await response.text();
       
-      // Try to parse as JSON, fall back to text if not JSON
       let responseData;
       try {
         responseData = JSON.parse(responseText);
         console.log("Response data:", responseData);
         
-        // If response contains data.data, use that as our result
         if (responseData.success && responseData.data) {
           setResult(responseData.data);
           
-          // Save search to database (if we have a structured response)
           if (user && responseData.data) {
             await saveSearchToDatabase(companyName, responseData.data);
           }
@@ -193,7 +183,6 @@ const CompanySearch = () => {
           setResult(responseData);
         }
       } catch (e) {
-        // If not valid JSON, use text as is
         console.error("Error parsing JSON:", e);
         setResult({ response: responseText });
       }
@@ -216,16 +205,13 @@ const CompanySearch = () => {
     }
   };
 
-  // Render function to display results in a structured way
   const renderResults = () => {
     if (!result) return null;
     
-    // If we have a structured response with results array
     if (result.results && Array.isArray(result.results)) {
       return (
         <div className="space-y-4">
           {result.results.map((item: any, index: number) => {
-            // Find the original question text
             const questionObj = agentQuestions.find(q => q.id === item.question_id);
             const questionText = questionObj ? questionObj.question : `Question ${index + 1}`;
             
@@ -240,7 +226,6 @@ const CompanySearch = () => {
       );
     }
     
-    // Fallback to showing raw JSON
     return (
       <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
         {JSON.stringify(result, null, 2)}

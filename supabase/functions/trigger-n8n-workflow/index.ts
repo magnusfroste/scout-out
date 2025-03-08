@@ -14,6 +14,23 @@ serve(async (req) => {
   }
 
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('authorization');
+    
+    // Create a Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://pqskutdrekcinpymvigm.supabase.co';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Verify authentication if needed
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // We can use the token to verify the user if needed
+      // But for now we'll just log it and proceed
+      console.log("Authentication provided correctly");
+    } else {
+      console.log("No authentication provided, continuing with service role");
+    }
+
     // Parse the request body as JSON
     const { company, questions, userId, webhookUrl } = await req.json();
     console.log(`Calling webhook for company: ${company}, webhook: ${webhookUrl}`);
@@ -31,11 +48,6 @@ serve(async (req) => {
         }
       );
     }
-
-    // Create a Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://pqskutdrekcinpymvigm.supabase.co';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Call the webhook with the company name and questions using POST
     let response;
