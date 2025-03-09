@@ -131,14 +131,50 @@ serve(async (req) => {
     // Store the result if we have a user ID
     if (userId) {
       try {
-        await supabase
+        // First, store the company search
+        const { data: searchData, error: searchError } = await supabase
           .from('company_searches')
           .insert({
             user_id: userId,
             company_name: company,
             result: responseData,
             created_at: new Date().toISOString()
-          });
+          })
+          .select('id')
+          .single();
+        
+        if (searchError) {
+          console.error('Error storing company search:', searchError);
+          throw searchError;
+        }
+        
+        console.log('Company search stored with ID:', searchData.id);
+        
+        // If we have results array, store individual answers
+        if (responseData.results && Array.isArray(responseData.results) && responseData.results.length > 0) {
+          const answersToInsert = responseData.results.map(result => ({
+            company_search_id: searchData.id,
+            question_id: result.question_id,
+            answer: result.answer,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+          
+          console.log('Inserting answers:', JSON.stringify(answersToInsert));
+          
+          const { error: answersError } = await supabase
+            .from('company_question_answers')
+            .insert(answersToInsert);
+          
+          if (answersError) {
+            console.error('Error storing answers:', answersError);
+            // Continue even if answer storage fails
+          } else {
+            console.log('Successfully stored answers for all questions');
+          }
+        } else {
+          console.log('No results array found in the response data or it was empty.');
+        }
       } catch (dbError) {
         console.error('Database error:', dbError);
         // Continue even if DB storage fails
