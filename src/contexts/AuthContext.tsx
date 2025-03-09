@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
@@ -60,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } as UserProfile;
       }
       
-      // If profile doesn't exist, create one (fixed the error by using normal supabase client with upsert)
+      // If profile doesn't exist, create one
       console.log('Profile not found, creating new profile for user:', userId);
       
       const { data: newProfile, error: insertError } = await supabase
