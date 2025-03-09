@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
-import Button from './Button';
 import { useAuth } from '@/contexts/AuthContext';
-import CreditDisplay from './dashboard/CreditDisplay';
+import { Button } from '@/components/ui/button';
+import { Menu, X, User, LogOut, CreditCard } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import CreditDisplay from '@/components/dashboard/CreditDisplay';
 
 const Navigation: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
