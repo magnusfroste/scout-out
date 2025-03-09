@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -123,8 +122,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
       return;
     }
 
-    const SEARCH_COST = 5;
-    const creditSuccess = await deductCredits(SEARCH_COST, `Company search: ${companyName}`);
+    const questionsCount = questions.length;
+    const CREDIT_COST = Math.max(1, Math.ceil(questionsCount / 10));
+    
+    const creditSuccess = await deductCredits(CREDIT_COST, `Company search: ${companyName}`);
     
     if (!creditSuccess) {
       return;
@@ -251,7 +252,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
             <div className="flex items-center justify-between">
               <Button 
                 type="submit" 
-                disabled={isLoading || questions.length === 0 || isDeductingCredit || (userProfile && userProfile.credits < 5)}
+                disabled={isLoading || questions.length === 0 || isDeductingCredit || (userProfile && userProfile.credits < CREDIT_COST)}
               >
                 {isLoading ? (
                   <>
@@ -269,7 +270,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
               </Button>
               
               <div className="text-sm text-muted-foreground">
-                Cost: <span className="font-medium text-foreground">5 credits</span>
+                <span>Cost: <span className="font-medium text-foreground">{CREDIT_COST} {CREDIT_COST === 1 ? 'credit' : 'credits'}</span></span>
+                <p className="text-xs text-muted-foreground mt-1">({questionsCount} questions, 10 questions per credit)</p>
               </div>
             </div>
           </form>

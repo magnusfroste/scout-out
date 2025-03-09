@@ -45,8 +45,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
-      // Type cast the data to match the UserProfile interface
-      return data as UserProfile;
+      // Transform the profile data to include the credits field
+      return {
+        id: data.id,
+        credits: data.credits || 0, // Ensure we have a default value
+        first_name: data.first_name,
+        last_name: data.last_name,
+        avatar_url: data.avatar_url
+      } as UserProfile;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
       return null;

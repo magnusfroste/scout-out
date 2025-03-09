@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, CreditCard } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import Button from './Button';
 import { useAuth } from '@/contexts/AuthContext';
+import CreditDisplay from './dashboard/CreditDisplay';
 
 const Navigation: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,7 +16,10 @@ const Navigation: React.FC = () => {
     { name: 'Features', path: '/features' },
     { name: 'Pricing', path: '/pricing' },
     { name: 'About', path: '/about' },
-    ...(user ? [{ name: 'Dashboard', path: '/dashboard' }] : [])
+    ...(user ? [
+      { name: 'Dashboard', path: '/dashboard' },
+      { name: 'Profile', path: '/profile' }
+    ] : [])
   ];
   
   useEffect(() => {
@@ -52,7 +55,7 @@ const Navigation: React.FC = () => {
             to="/" 
             className="flex items-center"
           >
-            <span className="font-semibold text-xl tracking-tight">SaaS</span>
+            <span className="font-semibold text-xl tracking-tight">Business Agent</span>
           </Link>
           
           <nav className="hidden md:flex space-x-8">
@@ -76,14 +79,13 @@ const Navigation: React.FC = () => {
             {user ? (
               <>
                 {userProfile && (
-                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-                    <CreditCard className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">{userProfile.credits}</span>
-                  </div>
+                  <CreditDisplay credits={userProfile.credits} size="sm" />
                 )}
                 <div className="flex items-center">
-                  <User className="h-4 w-4 mr-2" />
-                  <span className="text-sm">{user.email}</span>
+                  <Link to="/profile" className="flex items-center hover:text-primary transition-colors">
+                    <User className="h-4 w-4 mr-2" />
+                    <span className="text-sm">{user.email}</span>
+                  </Link>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   Sign Out
