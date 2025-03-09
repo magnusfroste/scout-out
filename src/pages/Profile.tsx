@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
 
 const Profile = () => {
-  const { user, loading, userProfile, refreshUserProfile } = useAuth();
+  const { user, loading, userProfile, refreshUserProfile, updateProfile } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {

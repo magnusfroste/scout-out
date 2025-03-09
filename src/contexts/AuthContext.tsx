@@ -12,7 +12,7 @@ interface AuthContextProps {
   userProfile: UserProfile | null;
   signOut: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
-  updateProfile: (updates: Partial<Omit<UserProfile, 'id'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, 'id'>>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
