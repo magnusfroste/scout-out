@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { toast } from '@/hooks/use-toast';
 
 interface UserProfile {
   id: string;
@@ -34,24 +35,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      // Try to get the existing profile
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching user profile:', error);
         return null;
       }
 
-      // Transform the profile data to include the credits field
+      // If profile exists, return it
+      if (data) {
+        return {
+          id: data.id,
+          credits: data.credits || 0,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          avatar_url: data.avatar_url
+        } as UserProfile;
+      }
+      
+      // If profile doesn't exist, create one
+      console.log('Profile not found, creating new profile for user:', userId);
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          credits: 50,
+          first_name: null,
+          last_name: null,
+          avatar_url: null
+        })
+        .select('*')
+        .single();
+        
+      if (insertError) {
+        console.error('Error creating user profile:', insertError);
+        toast({
+          title: "Profile Error",
+          description: "Could not create user profile. Please try again later.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
       return {
-        id: data.id,
-        credits: data.credits || 0, // Ensure we have a default value
-        first_name: data.first_name,
-        last_name: data.last_name,
-        avatar_url: data.avatar_url
+        id: newProfile.id,
+        credits: newProfile.credits || 0,
+        first_name: newProfile.first_name,
+        last_name: newProfile.last_name,
+        avatar_url: newProfile.avatar_url
       } as UserProfile;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
