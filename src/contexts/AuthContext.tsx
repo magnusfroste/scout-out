@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
+      // Type cast the data to match the UserProfile interface
       return data as UserProfile;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
