@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -94,12 +95,16 @@ const Navigation: React.FC = () => {
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" as={Link} to="/auth">
-                  Sign In
-                </Button>
-                <Button size="sm" as={Link} to="/auth">
-                  Get Started
-                </Button>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="sm">
+                    Get Started
+                  </Button>
+                </Link>
               </>
             )}
           </div>
@@ -156,12 +161,16 @@ const Navigation: React.FC = () => {
               </>
             ) : (
               <>
-                <Button variant="outline" className="w-full justify-center" as={Link} to="/auth">
-                  Sign In
-                </Button>
-                <Button className="w-full justify-center" as={Link} to="/auth">
-                  Get Started
-                </Button>
+                <Link to="/auth" className="w-full">
+                  <Button variant="outline" className="w-full justify-center">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/auth" className="w-full">
+                  <Button className="w-full justify-center">
+                    Get Started
+                  </Button>
+                </Link>
               </>
             )}
           </div>

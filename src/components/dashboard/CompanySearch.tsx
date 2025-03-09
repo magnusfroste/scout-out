@@ -25,7 +25,7 @@ type Answer = {
   answer: string;
 };
 
-type SearchResults = {
+type SearchResultType = {
   results?: Answer[];
 };
 
@@ -38,7 +38,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
   const [companyName, setCompanyName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState(localStorage.getItem('webhookUrl') || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<SearchResults | null>(null);
+  const [result, setResult] = useState<SearchResultType | null>(null);
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
   
   const { user, userProfile, refreshUserProfile } = useAuth();

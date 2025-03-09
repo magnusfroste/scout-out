@@ -9,11 +9,11 @@ export const logCreditTransaction = async (userId: string, amount: number, descr
   try {
     const { error } = await supabase
       .from('credit_transactions')
-      .insert([{
+      .insert({
         user_id: userId,
         amount: amount,
         description: description
-      }]);
+      });
       
     if (error) throw error;
   } catch (error: any) {

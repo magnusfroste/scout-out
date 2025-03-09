@@ -12,12 +12,12 @@ type Answer = {
   answer: string;
 };
 
-type SearchResults = {
+type SearchResultType = {
   results?: Answer[];
 };
 
 interface SearchResultsProps {
-  result: SearchResults | null;
+  result: SearchResultType | null;
   companyName: string;
   questions: Question[];
 }
