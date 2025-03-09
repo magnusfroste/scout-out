@@ -13,65 +13,77 @@ export interface UserProfile {
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     console.log('Fetching profile for user:', userId);
+    
     // Try to get the existing profile
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .maybeSingle();
+      .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error fetching user profile:', error);
-      return null;
-    }
-
-    // If profile exists, return it
-    if (data) {
-      console.log('Profile found:', data);
+      // If it's not a "not found" error, return null
+      if (error.code !== 'PGRST116') {
+        toast({
+          title: "Profile Error",
+          description: "Could not load your profile. Please try again later.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      // Profile doesn't exist, create one
+      console.log('Profile not found, creating new profile for user:', userId);
+      
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          credits: 50,
+          first_name: null,
+          last_name: null,
+          avatar_url: null
+        })
+        .select('*')
+        .single();
+        
+      if (insertError) {
+        console.error('Error creating user profile:', insertError);
+        toast({
+          title: "Profile Error",
+          description: "Could not create user profile. Please try again later.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      console.log('New profile created:', newProfile);
       return {
-        id: data.id,
-        credits: data.credits || 0,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        avatar_url: data.avatar_url
+        id: newProfile.id,
+        credits: newProfile.credits || 0,
+        first_name: newProfile.first_name,
+        last_name: newProfile.last_name,
+        avatar_url: newProfile.avatar_url
       } as UserProfile;
     }
     
-    // If profile doesn't exist, create one
-    console.log('Profile not found, creating new profile for user:', userId);
-    
-    const { data: newProfile, error: insertError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        credits: 50,
-        first_name: null,
-        last_name: null,
-        avatar_url: null
-      })
-      .select('*')
-      .single();
-      
-    if (insertError) {
-      console.error('Error creating user profile:', insertError);
-      toast({
-        title: "Profile Error",
-        description: "Could not create user profile. Please try again later.",
-        variant: "destructive",
-      });
-      return null;
-    }
-    
-    console.log('New profile created:', newProfile);
+    // Profile exists, return it
+    console.log('Profile found:', data);
     return {
-      id: newProfile.id,
-      credits: newProfile.credits || 0,
-      first_name: newProfile.first_name,
-      last_name: newProfile.last_name,
-      avatar_url: newProfile.avatar_url
+      id: data.id,
+      credits: data.credits || 0,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      avatar_url: data.avatar_url
     } as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
+    toast({
+      title: "Profile Error",
+      description: "An unexpected error occurred. Please try again later.",
+      variant: "destructive",
+    });
     return null;
   }
 };
@@ -84,7 +96,13 @@ export const updateUserProfile = async (userId: string, updates: Partial<Omit<Us
       .eq('id', userId);
       
     if (error) {
-      throw error;
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update your profile. Please try again.",
+        variant: "destructive",
+      });
+      return false;
     }
     
     toast({
