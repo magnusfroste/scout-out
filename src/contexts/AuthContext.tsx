@@ -19,6 +19,7 @@ interface AuthContextProps {
   userProfile: UserProfile | null;
   signOut: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, 'id'>>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -60,11 +61,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } as UserProfile;
       }
       
-      // If profile doesn't exist, create one
+      // If profile doesn't exist, create one using the service role client or upsert
       console.log('Profile not found, creating new profile for user:', userId);
-      const { data: newProfile, error: insertError } = await supabase
+      
+      const { data: newProfile, error: insertError } = await supabase.auth.admin
         .from('profiles')
-        .insert({
+        .upsert({
           id: userId,
           credits: 50,
           first_name: null,
@@ -102,9 +104,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!user) return;
     
     console.log('Refreshing user profile for:', user.id);
-    const profile = await fetchUserProfile(user.id);
-    if (profile) {
-      setUserProfile(profile);
+    setLoading(true);
+    try {
+      const profile = await fetchUserProfile(user.id);
+      if (profile) {
+        setUserProfile(profile);
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh your profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id'>>) => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      await refreshUserProfile();
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update your profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,6 +221,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     userProfile,
     signOut,
     refreshUserProfile,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

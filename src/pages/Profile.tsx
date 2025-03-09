@@ -1,17 +1,20 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { User, Mail, CreditCard } from 'lucide-react';
+import { User, Mail, CreditCard, RefreshCw } from 'lucide-react';
 import CreditDisplay from '@/components/dashboard/CreditDisplay';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const { user, loading, userProfile, refreshUserProfile } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     // Ensure profile is up to date when component mounts
@@ -19,6 +22,21 @@ const Profile = () => {
       refreshUserProfile();
     }
   }, [user, userProfile, refreshUserProfile]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshUserProfile();
+      toast({
+        title: "Profile Refreshed",
+        description: "Your profile has been refreshed successfully.",
+      });
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
@@ -30,7 +48,27 @@ const Profile = () => {
       
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Your Profile</h1>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh} 
+              disabled={isRefreshing || loading}
+            >
+              {isRefreshing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </>
+              )}
+            </Button>
+          </div>
           
           {loading ? (
             <div className="flex justify-center p-8">
