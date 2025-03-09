@@ -2,15 +2,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
-import { toast } from '@/hooks/use-toast';
-
-interface UserProfile {
-  id: string;
-  credits: number;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-}
+import { useProfile } from '@/hooks/useProfile';
+import { UserProfile } from '@/services/profileService';
 
 interface AuthContextProps {
   user: User | null;
@@ -31,152 +24,38 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  
+  // Use our new profile hook
+  const { 
+    userProfile, 
+    loading: profileLoading, 
+    refreshUserProfile, 
+    updateProfile 
+  } = useProfile(user?.id);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log('Fetching profile for user:', userId);
-      // Try to get the existing profile
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user profile:', error);
-        return null;
-      }
-
-      // If profile exists, return it
-      if (data) {
-        console.log('Profile found:', data);
-        return {
-          id: data.id,
-          credits: data.credits || 0,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          avatar_url: data.avatar_url
-        } as UserProfile;
-      }
-      
-      // If profile doesn't exist, create one
-      console.log('Profile not found, creating new profile for user:', userId);
-      
-      const { data: newProfile, error: insertError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: userId,
-          credits: 50,
-          first_name: null,
-          last_name: null,
-          avatar_url: null
-        })
-        .select('*')
-        .single();
-        
-      if (insertError) {
-        console.error('Error creating user profile:', insertError);
-        toast({
-          title: "Profile Error",
-          description: "Could not create user profile. Please try again later.",
-          variant: "destructive",
-        });
-        return null;
-      }
-      
-      console.log('New profile created:', newProfile);
-      return {
-        id: newProfile.id,
-        credits: newProfile.credits || 0,
-        first_name: newProfile.first_name,
-        last_name: newProfile.last_name,
-        avatar_url: newProfile.avatar_url
-      } as UserProfile;
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      return null;
-    }
-  };
-
-  const refreshUserProfile = async () => {
-    if (!user) return;
-    
-    console.log('Refreshing user profile for:', user.id);
-    setLoading(true);
-    try {
-      const profile = await fetchUserProfile(user.id);
-      if (profile) {
-        setUserProfile(profile);
-      }
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to refresh your profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id'>>) => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-        
-      if (error) {
-        throw error;
-      }
-      
-      await refreshUserProfile();
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Update Failed",
-        description: "Could not update your profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Combine loading states
+  const loading = authLoading || profileLoading;
 
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        setLoading(true);
+        setAuthLoading(true);
         const { data } = await supabase.auth.getSession();
         setSession(data.session);
         
         if (data.session?.user) {
           console.log('Initial session found with user:', data.session.user.id);
           setUser(data.session.user);
-          const profile = await fetchUserProfile(data.session.user.id);
-          setUserProfile(profile);
         } else {
           console.log('No initial session found');
           setUser(null);
-          setUserProfile(null);
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {
-        setLoading(false);
+        setAuthLoading(false);
       }
     };
 
@@ -190,14 +69,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         if (session?.user) {
           setUser(session.user);
-          const profile = await fetchUserProfile(session.user.id);
-          setUserProfile(profile);
         } else {
           setUser(null);
-          setUserProfile(null);
         }
         
-        setLoading(false);
+        setAuthLoading(false);
       }
     );
 
@@ -205,6 +81,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Refresh profile when user changes
+  useEffect(() => {
+    if (user) {
+      refreshUserProfile();
+    }
+  }, [user]);
 
   const signOut = async () => {
     try {
