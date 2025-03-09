@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -9,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Pencil, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, ChevronDown, ChevronRight, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,19 +44,16 @@ type CompanyAnswer = {
 };
 
 const Dashboard = () => {
-  // Question state
   const [questions, setQuestions] = useState<Question[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
 
-  // Search state
   const [companyName, setCompanyName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState(localStorage.getItem('webhookUrl') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SearchResults | null>(null);
-  
-  // Searches history state
+
   const [searches, setSearches] = useState<CompanySearch[]>([]);
   const [isLoadingSearches, setIsLoadingSearches] = useState(false);
   const [isDeletingSearch, setIsDeletingSearch] = useState<string | null>(null);
@@ -65,10 +61,11 @@ const Dashboard = () => {
   const [searchAnswers, setSearchAnswers] = useState<{[key: string]: CompanyAnswer[]}>({});
   const [isLoadingAnswers, setIsLoadingAnswers] = useState<{[key: string]: boolean}>({});
 
-  const { user, loading } = useAuth();
+  const [isDeductingCredit, setIsDeductingCredit] = useState(false);
+
+  const { user, loading, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
-  // If not loading and no user, redirect to auth page
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
   }
@@ -135,11 +132,9 @@ const Dashboard = () => {
   const fetchAnswersForSearch = async (searchId: string) => {
     if (!user) return;
     
-    // Set loading state for this specific search
     setIsLoadingAnswers(prev => ({ ...prev, [searchId]: true }));
     
     try {
-      // Fetch answers for this search
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
         .select('*')
@@ -147,7 +142,6 @@ const Dashboard = () => {
         
       if (answersError) throw answersError;
       
-      // If we have questions loaded, join with the question text
       const answersWithQuestions = (answersData || []).map(answer => {
         const question = questions.find(q => q.id === answer.question_id);
         return {
@@ -156,7 +150,6 @@ const Dashboard = () => {
         };
       });
       
-      // Update the state with the fetched answers
       setSearchAnswers(prev => ({
         ...prev,
         [searchId]: answersWithQuestions
@@ -171,6 +164,64 @@ const Dashboard = () => {
       });
     } finally {
       setIsLoadingAnswers(prev => ({ ...prev, [searchId]: false }));
+    }
+  };
+
+  const logCreditTransaction = async (amount: number, description: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('credit_transactions')
+        .insert([{
+          user_id: user.id,
+          amount: amount,
+          description: description
+        }]);
+        
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error logging credit transaction:', error);
+    }
+  };
+
+  const deductCredits = async (amount: number, reason: string) => {
+    if (!user || !userProfile) return false;
+    
+    setIsDeductingCredit(true);
+    
+    try {
+      if (userProfile.credits < amount) {
+        toast({
+          title: "Insufficient Credits",
+          description: `You need ${amount} credits for this action. You currently have ${userProfile.credits} credits.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ credits: userProfile.credits - amount })
+        .eq('id', user.id);
+        
+      if (error) throw error;
+      
+      await logCreditTransaction(-amount, reason);
+      
+      await refreshUserProfile();
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error deducting credits:', error);
+      toast({
+        title: "Error",
+        description: "Failed to deduct credits. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsDeductingCredit(false);
     }
   };
 
@@ -284,6 +335,13 @@ const Dashboard = () => {
       return;
     }
 
+    const SEARCH_COST = 5;
+    const creditSuccess = await deductCredits(SEARCH_COST, `Company search: ${companyName}`);
+    
+    if (!creditSuccess) {
+      return;
+    }
+
     setIsLoading(true);
     setResult(null);
 
@@ -321,7 +379,6 @@ const Dashboard = () => {
           title: "Success",
           description: "Questions answered successfully",
         });
-        // Refresh the searches list
         fetchSearches();
       } else {
         setResult(responseData);
@@ -347,7 +404,6 @@ const Dashboard = () => {
     
     setIsDeletingSearch(id);
     try {
-      // First delete related answers
       const { error: answersError } = await supabase
         .from('company_question_answers')
         .delete()
@@ -355,7 +411,6 @@ const Dashboard = () => {
       
       if (answersError) throw answersError;
       
-      // Then delete the search
       const { error } = await supabase
         .from('company_searches')
         .delete()
@@ -387,7 +442,6 @@ const Dashboard = () => {
       setExpandedSearch(null);
     } else {
       setExpandedSearch(id);
-      // Fetch answers if not already loaded
       if (!searchAnswers[id]) {
         fetchAnswersForSearch(id);
       }
@@ -433,7 +487,19 @@ const Dashboard = () => {
       
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Company Intelligence Dashboard</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Company Intelligence Dashboard</h1>
+            
+            {userProfile && (
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <div className="text-sm font-medium">
+                  <span>{userProfile.credits}</span>
+                  <span className="ml-1 text-muted-foreground">credits</span>
+                </div>
+              </div>
+            )}
+          </div>
           
           <Tabs defaultValue="search" className="w-full mb-10">
             <TabsList className="mb-6">
@@ -474,16 +540,30 @@ const Dashboard = () => {
                       />
                     </div>
                     
-                    <Button type="submit" disabled={isLoading || questions.length === 0}>
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Searching...
-                        </>
-                      ) : (
-                        "Search"
-                      )}
-                    </Button>
+                    <div className="flex items-center justify-between">
+                      <Button 
+                        type="submit" 
+                        disabled={isLoading || questions.length === 0 || isDeductingCredit || (userProfile && userProfile.credits < 5)}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Searching...
+                          </>
+                        ) : isDeductingCredit ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "Search"
+                        )}
+                      </Button>
+                      
+                      <div className="text-sm text-muted-foreground">
+                        Cost: <span className="font-medium text-foreground">5 credits</span>
+                      </div>
+                    </div>
                   </form>
                 </CardContent>
               </Card>

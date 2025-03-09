@@ -3,11 +3,21 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
+interface UserProfile {
+  id: string;
+  credits: number;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
 interface AuthContextProps {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userProfile: UserProfile | null;
   signOut: () => Promise<void>;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -20,6 +30,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data as UserProfile;
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      return null;
+    }
+  };
+
+  const refreshUserProfile = async () => {
+    if (!user) return;
+    
+    const profile = await fetchUserProfile(user.id);
+    if (profile) {
+      setUserProfile(profile);
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -27,7 +67,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const { data } = await supabase.auth.getSession();
         setSession(data.session);
-        setUser(data.session?.user ?? null);
+        
+        if (data.session?.user) {
+          setUser(data.session.user);
+          const profile = await fetchUserProfile(data.session.user.id);
+          setUserProfile(profile);
+        } else {
+          setUser(null);
+          setUserProfile(null);
+        }
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {
@@ -39,9 +87,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setUser(session.user);
+          const profile = await fetchUserProfile(session.user.id);
+          setUserProfile(profile);
+        } else {
+          setUser(null);
+          setUserProfile(null);
+        }
+        
         setLoading(false);
       }
     );
@@ -63,7 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     session,
     loading,
+    userProfile,
     signOut,
+    refreshUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
