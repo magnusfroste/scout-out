@@ -35,6 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       // Try to get the existing profile
       const { data, error } = await supabase
         .from('profiles')
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // If profile exists, return it
       if (data) {
+        console.log('Profile found:', data);
         return {
           id: data.id,
           credits: data.credits || 0,
@@ -82,6 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
       
+      console.log('New profile created:', newProfile);
       return {
         id: newProfile.id,
         credits: newProfile.credits || 0,
@@ -98,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUserProfile = async () => {
     if (!user) return;
     
+    console.log('Refreshing user profile for:', user.id);
     const profile = await fetchUserProfile(user.id);
     if (profile) {
       setUserProfile(profile);
@@ -108,14 +112,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        setLoading(true);
         const { data } = await supabase.auth.getSession();
         setSession(data.session);
         
         if (data.session?.user) {
+          console.log('Initial session found with user:', data.session.user.id);
           setUser(data.session.user);
           const profile = await fetchUserProfile(data.session.user.id);
           setUserProfile(profile);
         } else {
+          console.log('No initial session found');
           setUser(null);
           setUserProfile(null);
         }
@@ -131,6 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log('Auth state changed:', _event, session?.user?.id);
         setSession(session);
         
         if (session?.user) {

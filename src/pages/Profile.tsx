@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -8,9 +8,17 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { User, Mail, CreditCard } from 'lucide-react';
 import CreditDisplay from '@/components/dashboard/CreditDisplay';
+import { Button } from '@/components/ui/button';
 
 const Profile = () => {
-  const { user, loading, userProfile } = useAuth();
+  const { user, loading, userProfile, refreshUserProfile } = useAuth();
+
+  useEffect(() => {
+    // Ensure profile is up to date when component mounts
+    if (user && !userProfile) {
+      refreshUserProfile();
+    }
+  }, [user, userProfile, refreshUserProfile]);
 
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
@@ -24,7 +32,16 @@ const Profile = () => {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
           
-          {userProfile ? (
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-pulse text-muted-foreground">Loading profile...</div>
+            </div>
+          ) : !userProfile ? (
+            <div className="text-center space-y-4 p-8">
+              <div className="text-muted-foreground">Could not load your profile.</div>
+              <Button onClick={refreshUserProfile}>Try Again</Button>
+            </div>
+          ) : (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -74,10 +91,6 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          ) : (
-            <div className="flex justify-center p-8">
-              <div className="animate-pulse text-muted-foreground">Loading profile...</div>
             </div>
           )}
         </div>
