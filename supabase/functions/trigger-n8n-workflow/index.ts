@@ -96,11 +96,24 @@ serve(async (req) => {
       responseData = await response.json();
       console.log('Response data:', responseData);
       
-      // Handle the new response format which is an array with one object containing 'output' array
-      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
-        // Extract the output array from the first item in the response array
-        const results = responseData[0].output;
-        responseData = { results };
+      // Handle the complex nested structure of the new response format
+      if (Array.isArray(responseData) && responseData.length > 0) {
+        // Check for output array at first level
+        if (responseData[0].output) {
+          const outputData = responseData[0].output;
+          
+          if (Array.isArray(outputData) && outputData.length > 0) {
+            // Check if results array exists within the first item of output
+            if (outputData[0].results) {
+              // Extract the final results array
+              const results = outputData[0].results;
+              responseData = { results };
+            } else {
+              // If output doesn't contain results array, use it directly
+              responseData = { results: outputData };
+            }
+          }
+        }
       }
       
     } catch (e) {
