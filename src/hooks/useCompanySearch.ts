@@ -98,14 +98,15 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token;
-      
+
+      // Use the simpler/original format for questions that was working
       const questionsToSend = questions.map(q => ({
         id: q.id,
-        text: q.question
+        question: q.question
       }));
 
       // Log the request payload for debugging
-      console.log("Sending request with payload:", {
+      console.log("Sending webhook request with payload:", {
         company: companyName,
         questions: questionsToSend,
         webhookUrl,
@@ -126,15 +127,18 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
           userId: user?.id
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const responseData = await response.json();
       console.log("Raw webhook response:", responseData);
       
       if (responseData.success) {
-        // Simple and direct approach - just store what we get
         setResult({
-          results: responseData.data?.results,
-          contact_info: responseData.contact_info || responseData.data?.contact_info
+          results: responseData.data,
+          contact_info: responseData.contact_info
         });
         
         toast({
@@ -143,9 +147,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         });
         onSearch(); // Trigger refetch of searches
       } else {
-        // If success is false but we still got a response, store it
-        setResult(responseData);
-        
         toast({
           title: "Warning",
           description: responseData.message || "Got a response, but it may not contain answers",

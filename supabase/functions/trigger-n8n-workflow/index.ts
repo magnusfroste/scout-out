@@ -22,9 +22,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Verify authentication if needed
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      // We can use the token to verify the user if needed
       console.log("Authentication provided correctly");
     } else {
       console.log("No authentication provided, continuing with service role");
@@ -48,10 +46,9 @@ serve(async (req) => {
       );
     }
 
-    // Call the webhook with the company name and questions using POST
+    // Call the webhook
     let response;
     try {
-      // Simplified webhook call - only send what's needed
       console.log(`Sending webhook request to: ${webhookUrl}`);
       
       response = await fetch(webhookUrl, {
@@ -59,15 +56,11 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          company, 
-          questions: questions.map(q => ({ id: q.id, question: q.text }))
-        })
+        body: JSON.stringify({ company, questions })
       });
       
       console.log(`Webhook response status: ${response.status}`);
       
-      // Check for non-200 responses
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Webhook error response: ${errorText}`);
@@ -106,20 +99,16 @@ serve(async (req) => {
       responseData = await response.json();
       console.log('Response data:', JSON.stringify(responseData));
       
-      // Handle various response formats more simply
-      // Extract contact info if available at the root level
+      // Extract contact info if available
       if (responseData.contact_info) {
         contactInfo = responseData.contact_info;
       }
       
-      // Extract results from data property if it exists
-      const results = responseData.results || 
-                     (responseData.data && responseData.data.results) || 
-                     responseData.data || 
-                     [];
-                     
-      // Simplify the response structure
-      responseData = { results };
+      // Extract results
+      if (!Array.isArray(responseData.results)) {
+        // If results is not an array, check if responseData itself is an array
+        responseData = Array.isArray(responseData) ? { results: responseData } : { results: [responseData] };
+      }
       
     } catch (e) {
       console.error('Error parsing response JSON:', e);
@@ -127,10 +116,10 @@ serve(async (req) => {
       try {
         const text = await response.text();
         console.log('Text response:', text);
-        responseData = { response: text };
+        responseData = { results: [{ answer: text }] };
       } catch (textError) {
         console.error('Error reading response:', textError);
-        responseData = { message: "Could not parse response" };
+        responseData = { results: [{ answer: "Could not parse response" }] };
       }
     }
     
@@ -202,10 +191,10 @@ serve(async (req) => {
       }
     }
 
-    // Include contact_info in the response if available
+    // Return successful response
     const responseObject = { 
       success: true, 
-      data: responseData
+      data: responseData.results,
     };
     
     if (contactInfo) {
