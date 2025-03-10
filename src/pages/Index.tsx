@@ -6,6 +6,8 @@ import Features from '@/components/Features';
 import Pricing from '@/components/Pricing';
 import Testimonials from '@/components/Testimonials';
 import Footer from '@/components/Footer';
+import HowItWorks from '@/components/HowItWorks';
+import Benefits from '@/components/Benefits';
 
 const Index = () => {
   // Scroll to top on page load
@@ -18,6 +20,8 @@ const Index = () => {
       <Navigation />
       <main>
         <Hero />
+        <HowItWorks />
+        <Benefits />
         <Features />
         <Pricing />
         <Testimonials />

@@ -1,50 +1,50 @@
 
 import React from 'react';
-import { ArrowRight, Layers, Zap, Shield, Users, BarChart, Globe } from 'lucide-react';
+import { ArrowRight, Layers, Zap, Shield, Users, BarChart, Search, Database, Bot, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Features: React.FC = () => {
   const featureCards = [
     {
-      icon: <Layers className="h-6 w-6" />,
-      title: 'Intuitive Dashboard',
-      description: 'Command your data with a clean, thoughtfully designed interface that puts everything at your fingertips.'
+      icon: <Search className="h-6 w-6" />,
+      title: 'Advanced Research',
+      description: 'Leverage AI to conduct comprehensive research on potential clients, uncovering insights you might otherwise miss.'
     },
     {
-      icon: <Zap className="h-6 w-6" />,
-      title: 'Lightning Fast',
-      description: 'Experience remarkable speed with our optimized platform that responds instantly to every interaction.'
+      icon: <Bot className="h-6 w-6" />,
+      title: 'Intelligent Questions',
+      description: 'Our AI automatically generates relevant sales questions by analyzing the client\'s web presence and industry.'
     },
     {
-      icon: <Shield className="h-6 w-6" />,
-      title: 'Enterprise Security',
-      description: 'Rest easy with bank-level encryption, regular security audits, and comprehensive compliance measures.'
+      icon: <Database className="h-6 w-6" />,
+      title: 'Multiple Knowledge Bases',
+      description: 'Access information from various sources to ensure you have the most comprehensive view of potential clients.'
     },
     {
       icon: <Users className="h-6 w-6" />,
-      title: 'Team Collaboration',
-      description: 'Work together seamlessly with intuitive sharing tools, real-time updates, and role-based permissions.'
+      title: 'Contact Discovery',
+      description: 'Identify the right decision-makers and get verified contact information to reach out directly.'
+    },
+    {
+      icon: <Mail className="h-6 w-6" />,
+      title: 'Email Drafting',
+      description: 'Receive personalized email templates that highlight relevant pain points and solutions for each prospect.'
     },
     {
       icon: <BarChart className="h-6 w-6" />,
-      title: 'Advanced Analytics',
-      description: 'Make data-driven decisions with customizable reports and insightful visualizations of your metrics.'
-    },
-    {
-      icon: <Globe className="h-6 w-6" />,
-      title: 'Global Scaling',
-      description: 'Grow without limits using our infrastructure designed to handle worldwide traffic with minimal latency.'
+      title: 'Strategic Insights',
+      description: 'Get recommendations on how to approach each prospect based on their specific business challenges and goals.'
     }
   ];
   
   return (
-    <section id="features" className="py-20 md:py-32 bg-background">
+    <section id="features" className="py-20 md:py-32 bg-secondary/10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <p className="text-sm font-medium text-primary mb-3">Features</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Everything you need to succeed</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Everything You Need to Close More Deals</h2>
           <p className="text-xl text-muted-foreground">
-            Our platform provides all the tools necessary to streamline your workflow, enhance collaboration, and deliver exceptional results.
+            Our platform provides powerful tools to help you research, connect with, and convert potential clients more effectively.
           </p>
         </div>
         
