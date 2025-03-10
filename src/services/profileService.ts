@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -8,6 +7,7 @@ export interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   avatar_url: string | null;
+  is_admin: boolean;
 }
 
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -43,7 +43,8 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
           credits: 50,
           first_name: null,
           last_name: null,
-          avatar_url: null
+          avatar_url: null,
+          is_admin: false
         })
         .select('*')
         .single();
@@ -64,7 +65,8 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         credits: newProfile.credits || 0,
         first_name: newProfile.first_name,
         last_name: newProfile.last_name,
-        avatar_url: newProfile.avatar_url
+        avatar_url: newProfile.avatar_url,
+        is_admin: newProfile.is_admin
       } as UserProfile;
     }
     
@@ -75,7 +77,8 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       credits: data.credits || 0,
       first_name: data.first_name,
       last_name: data.last_name,
-      avatar_url: data.avatar_url
+      avatar_url: data.avatar_url,
+      is_admin: data.is_admin
     } as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
