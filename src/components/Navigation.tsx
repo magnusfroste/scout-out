@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,49 +32,55 @@ const Navigation = () => {
     }
   };
   
+  const handleSignIn = () => {
+    navigate('/auth');
+  };
+  
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container flex h-14 items-center">
-        <Link to="/" className="mr-6 font-bold text-2xl">
-          Master Business Agent
-        </Link>
+        <div className="mr-6 font-bold text-2xl">
+          <Link to="/" className="hover:text-primary transition-colors">
+            Master Business Agent
+          </Link>
+        </div>
         
         {/* Only show navigation links when user is not logged in */}
         {!user && (
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link to="/features">Features</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link to="/pricing">Pricing</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link to="/about">About</Link>
-            </Button>
+            <Link to="/features" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+              Features
+            </Link>
+            <Link to="/pricing" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+              Pricing
+            </Link>
+            <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+              About
+            </Link>
           </div>
         )}
         
         <div className="flex items-center gap-4 ml-auto">
           {user ? (
             <>
-              <Button variant="ghost" asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
+              <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+                Dashboard
+              </Link>
               {userProfile?.is_admin && (
-                <Button variant="ghost" asChild>
-                  <Link to="/settings">Settings</Link>
-                </Button>
+                <Link to="/settings" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+                  Settings
+                </Link>
               )}
-              <Button variant="ghost" asChild>
-                <Link to="/profile">Profile</Link>
-              </Button>
+              <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+                Profile
+              </Link>
               <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
               </Button>
             </>
           ) : (
-            <Button asChild>
-              <Link to="/auth">Sign In</Link>
+            <Button onClick={handleSignIn}>
+              Sign In
             </Button>
           )}
         </div>
