@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 const Navigation = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -11,9 +12,19 @@ const Navigation = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
+      // Ensure we navigate after successful sign out
       navigate('/auth');
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
     } catch (error) {
       console.error('Error signing out:', error);
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   
