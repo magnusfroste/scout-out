@@ -11,9 +11,13 @@ const Navigation = () => {
   
   const handleSignOut = async () => {
     try {
+      console.log('Navigation: Handling sign out...');
       await signOut();
-      // Ensure we navigate after successful sign out
-      navigate('/auth');
+      console.log('Navigation: Sign out successful, navigating...');
+      
+      // Force navigation to auth page
+      navigate('/auth', { replace: true });
+      
       toast({
         title: "Signed out successfully",
         description: "You have been signed out of your account.",
