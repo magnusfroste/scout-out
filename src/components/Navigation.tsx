@@ -35,9 +35,22 @@ const Navigation = () => {
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container flex h-14 items-center">
-        <Link to="/" className="mr-auto font-bold text-2xl">
+        <Link to="/" className="mr-6 font-bold text-2xl">
           Lovable
         </Link>
+        
+        {/* Always show main navigation links regardless of auth state */}
+        <div className="hidden md:flex items-center space-x-4">
+          <Button variant="ghost" asChild>
+            <Link to="/features">Features</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/pricing">Pricing</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/about">About</Link>
+          </Button>
+        </div>
         
         <div className="flex items-center gap-4 ml-auto">
           {user ? (
