@@ -1,11 +1,16 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { cn } from "@/lib/utils";
 
 const Navigation = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
+  
+  const handleSignOut = (e: React.MouseEvent) => {
+    e.preventDefault();
+    signOut();
+  };
   
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -28,8 +33,8 @@ const Navigation = () => {
               <Button variant="ghost" asChild>
                 <Link to="/profile">Profile</Link>
               </Button>
-              <Button variant="outline" onClick={() => {}}>
-                <a href="#" onClick={useAuth().signOut}>Sign Out</a>
+              <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
               </Button>
             </>
           ) : (
