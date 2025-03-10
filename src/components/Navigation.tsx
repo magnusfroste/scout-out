@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 const Navigation = () => {
   const { user, userProfile, signOut } = useAuth();
   
-  const handleSignOut = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleSignOut = () => {
     signOut();
   };
   
