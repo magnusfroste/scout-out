@@ -104,10 +104,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         text: q.question
       }));
 
-      // Add timeout to the fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -120,11 +116,8 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
           questions: questionsToSend,
           webhookUrl,
           userId: user?.id
-        }),
-        signal: controller.signal
+        })
       });
-      
-      clearTimeout(timeoutId);
       
       const responseData = await response.json();
       
@@ -150,12 +143,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } catch (error: any) {
       console.error("Error calling webhook:", error);
       
-      // Handle different error types with more specific messages
+      // Better error message based on the error type
       let errorMessage = "Failed to call webhook";
       
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timed out. The webhook might be temporarily unavailable.";
-      } else if (error.message === 'Failed to fetch') {
+      if (error.message === 'Failed to fetch') {
         errorMessage = "Network error. Please check your internet connection or the webhook URL.";
       } else {
         errorMessage = error.message || "An unexpected error occurred";
@@ -166,26 +157,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         description: errorMessage,
         variant: "destructive",
       });
-      
-      // Refund the credits since the search failed
-      if (user && userProfile) {
-        try {
-          await deductCredits(
-            user.id,
-            userProfile.credits - creditCost, // Current credits after deduction
-            -creditCost, // Negative value to add credits back
-            `Refund for failed search: ${companyName}`,
-            refreshUserProfile
-          );
-          
-          toast({
-            title: "Credits Refunded",
-            description: `${creditCost} credits have been refunded due to the failed search.`,
-          });
-        } catch (refundError) {
-          console.error("Failed to refund credits:", refundError);
-        }
-      }
     } finally {
       setIsLoading(false);
     }
