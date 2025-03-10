@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import CompanyInput from './CompanyInput';
 import SearchButton from './SearchButton';
+import WebhookForm from './WebhookForm';
 import { calculateCreditCost } from '@/utils/creditUtils';
 
 interface SearchFormProps {
@@ -42,6 +43,13 @@ const SearchForm: React.FC<SearchFormProps> = ({
             companyName={companyName}
             setCompanyName={setCompanyName}
             isDisabled={isLoading}
+          />
+          
+          <WebhookForm
+            webhookUrl={webhookUrl}
+            setWebhookUrl={setWebhookUrl}
+            isDisabled={isLoading}
+            showDescription={true}
           />
           
           <SearchButton 

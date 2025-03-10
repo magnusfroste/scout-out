@@ -94,40 +94,30 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setResult(null);
 
     try {
-      const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
+      // DIRECT WEBHOOK CALL - Bypassing the edge function
+      console.log("Sending direct webhook request to:", webhookUrl);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token;
-
-      // Use the simpler/original format for questions that was working
-      const questionsToSend = questions.map(q => ({
-        id: q.id,
-        question: q.question
-      }));
-
-      // Log the request payload for debugging
-      console.log("Sending webhook request with payload:", {
+      // Prepare a simplified payload for the webhook
+      const payload = {
         company: companyName,
-        questions: questionsToSend,
-        webhookUrl,
-        userId: user?.id
-      });
-
-      const response = await fetch(functionUrl, {
+        questions: questions.map(q => ({
+          id: q.id,
+          question: q.question
+        })),
+        userId: user.id
+      };
+      
+      console.log("Direct webhook payload:", payload);
+      
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${authToken}`
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          company: companyName,
-          questions: questionsToSend,
-          webhookUrl,
-          userId: user?.id
-        })
+        body: JSON.stringify(payload)
       });
-
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -153,7 +143,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         });
       }
     } catch (error: any) {
-      console.error("Error calling webhook:", error);
+      console.error("Error calling webhook directly:", error);
       
       let errorMessage = "Failed to call webhook";
       
