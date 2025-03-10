@@ -54,7 +54,7 @@ const Settings = () => {
                 webhookUrl={webhookUrl}
                 setWebhookUrl={handleWebhookUpdate}
                 isDisabled={isLoading}
-                showDescription={true}
+                showDescription={false}
               />
             </CardContent>
           </Card>
