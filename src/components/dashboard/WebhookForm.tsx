@@ -7,12 +7,14 @@ interface WebhookFormProps {
   webhookUrl: string;
   setWebhookUrl: (url: string) => void;
   isDisabled: boolean;
+  showDescription?: boolean;
 }
 
 const WebhookForm: React.FC<WebhookFormProps> = ({
   webhookUrl,
   setWebhookUrl,
-  isDisabled
+  isDisabled,
+  showDescription = false
 }) => {
   return (
     <div className="space-y-2">
@@ -24,9 +26,11 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
         placeholder="Enter your webhook URL"
         disabled={isDisabled}
       />
-      <p className="text-xs text-muted-foreground">
-        Example: https://agent.froste.eu/webhook/lovable
-      </p>
+      {showDescription && (
+        <p className="text-xs text-muted-foreground">
+          Example: https://agent.froste.eu/webhook/lovable
+        </p>
+      )}
     </div>
   );
 };
