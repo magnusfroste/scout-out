@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,7 +35,7 @@ const Navigation = () => {
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container flex h-14 items-center">
         <Link to="/" className="mr-6 font-bold text-2xl">
-          Lovable
+          Master Business Agent
         </Link>
         
         {/* Only show navigation links when user is not logged in */}
