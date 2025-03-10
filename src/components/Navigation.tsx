@@ -9,7 +9,9 @@ const Navigation = () => {
   const { user, userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isLandingPage = location.pathname === '/';
+  
+  // Pages where we always want to show main navigation links
+  const isPublicPage = ['/', '/features', '/pricing', '/about'].includes(location.pathname);
   
   const handleSignOut = async () => {
     try {
@@ -47,8 +49,8 @@ const Navigation = () => {
           </Link>
         </div>
         
-        {/* Always show navigation links on landing page */}
-        {(isLandingPage || !user) && (
+        {/* Show main navigation on public pages or when logged out */}
+        {(isPublicPage || !user) && (
           <div className="hidden md:flex items-center space-x-4">
             <Link to="/features" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
               Features
@@ -62,26 +64,34 @@ const Navigation = () => {
           </div>
         )}
         
+        {/* Right side navigation */}
         <div className="flex items-center gap-4 ml-auto">
           {user ? (
             <>
-              <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-                Dashboard
-              </Link>
+              {/* Show dashboard link on non-dashboard pages */}
+              {location.pathname !== '/dashboard' && (
+                <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+                  Dashboard
+                </Link>
+              )}
+              {/* Show admin settings only for admins */}
               {userProfile?.is_admin && (
                 <Link to="/settings" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
                   Settings
                 </Link>
               )}
-              <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-                Profile
-              </Link>
+              {/* Show profile link on non-profile pages */}
+              {location.pathname !== '/profile' && (
+                <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
+                  Profile
+                </Link>
+              )}
               <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
               </Button>
             </>
           ) : (
-            <Button onClick={handleSignIn}>
+            <Button onClick={handleSignIn} className="z-50">
               Sign In
             </Button>
           )}
