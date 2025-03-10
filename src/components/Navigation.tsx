@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -8,6 +8,8 @@ import { toast } from '@/hooks/use-toast';
 const Navigation = () => {
   const { user, userProfile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
   
   const handleSignOut = async () => {
     try {
@@ -45,8 +47,8 @@ const Navigation = () => {
           </Link>
         </div>
         
-        {/* Only show navigation links when user is not logged in */}
-        {!user && (
+        {/* Always show navigation links on landing page */}
+        {(isLandingPage || !user) && (
           <div className="hidden md:flex items-center space-x-4">
             <Link to="/features" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
               Features
