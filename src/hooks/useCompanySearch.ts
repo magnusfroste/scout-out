@@ -28,6 +28,19 @@ type SearchResultType = {
   contact_info?: ContactInfo;
 };
 
+// Define a type for the search record
+type CompanySearchRecord = {
+  user_id: string;
+  company_name: string;
+  result: any;
+  created_at: string;
+  contact_info?: ContactInfo;
+  website?: string | null;
+  contact_person?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
 export const useCompanySearch = (questions: Question[], onSearch: () => void) => {
   const [companyName, setCompanyName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -54,7 +67,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     
     try {
       // Store the company search
-      const searchData = {
+      const searchRecord: CompanySearchRecord = {
         user_id: user.id,
         company_name: company,
         result: responseData,
@@ -63,16 +76,16 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       
       // Add contact info if available
       if (contactInfo) {
-        searchData.contact_info = contactInfo;
-        searchData.website = contactInfo.www || null;
-        searchData.contact_person = contactInfo.contact || null;
-        searchData.email = contactInfo.email || null;
-        searchData.phone = contactInfo.phone || null;
+        searchRecord.contact_info = contactInfo;
+        searchRecord.website = contactInfo.www || null;
+        searchRecord.contact_person = contactInfo.contact || null;
+        searchRecord.email = contactInfo.email || null;
+        searchRecord.phone = contactInfo.phone || null;
       }
       
-      const { data: searchData, error: searchError } = await supabase
+      const { data: insertedRecord, error: searchError } = await supabase
         .from('company_searches')
-        .insert(searchData)
+        .insert(searchRecord)
         .select('id')
         .single();
       
@@ -81,14 +94,14 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         throw searchError;
       }
       
-      console.log('Company search stored with ID:', searchData.id);
+      console.log('Company search stored with ID:', insertedRecord.id);
       
       // Store individual answers if available
       if (processedResults && Array.isArray(processedResults)) {
         const answersToInsert = processedResults
           .filter(result => result.question_id && result.answer) // Only valid results
           .map(result => ({
-            company_search_id: searchData.id,
+            company_search_id: insertedRecord.id,
             question_id: result.question_id,
             answer: result.answer,
             created_at: new Date().toISOString(),
