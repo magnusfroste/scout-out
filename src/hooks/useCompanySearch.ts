@@ -48,6 +48,78 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     loadWebhookUrl();
   }, []);
 
+  // Helper function to store search results in database
+  const storeSearchResults = async (company: string, responseData: any, processedResults: Answer[], contactInfo?: ContactInfo) => {
+    if (!user || !user.id) return;
+    
+    try {
+      // Store the company search
+      const searchData = {
+        user_id: user.id,
+        company_name: company,
+        result: responseData,
+        created_at: new Date().toISOString()
+      };
+      
+      // Add contact info if available
+      if (contactInfo) {
+        searchData.contact_info = contactInfo;
+        searchData.website = contactInfo.www || null;
+        searchData.contact_person = contactInfo.contact || null;
+        searchData.email = contactInfo.email || null;
+        searchData.phone = contactInfo.phone || null;
+      }
+      
+      const { data: searchData, error: searchError } = await supabase
+        .from('company_searches')
+        .insert(searchData)
+        .select('id')
+        .single();
+      
+      if (searchError) {
+        console.error('Error storing company search:', searchError);
+        throw searchError;
+      }
+      
+      console.log('Company search stored with ID:', searchData.id);
+      
+      // Store individual answers if available
+      if (processedResults && Array.isArray(processedResults)) {
+        const answersToInsert = processedResults
+          .filter(result => result.question_id && result.answer) // Only valid results
+          .map(result => ({
+            company_search_id: searchData.id,
+            question_id: result.question_id,
+            answer: result.answer,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+        
+        if (answersToInsert.length > 0) {
+          console.log('Inserting answers:', JSON.stringify(answersToInsert));
+          
+          const { error: answersError } = await supabase
+            .from('company_question_answers')
+            .insert(answersToInsert);
+          
+          if (answersError) {
+            console.error('Error storing answers:', answersError);
+            // Continue even if answer storage fails
+          } else {
+            console.log('Successfully stored answers for all questions');
+          }
+        } else {
+          console.log('No valid answers found to store');
+        }
+      }
+      
+      return true;
+    } catch (dbError) {
+      console.error('Database error storing search results:', dbError);
+      return false;
+    }
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -138,6 +210,17 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
             if (firstOutput.contact_info) {
               contactInfo = firstOutput.contact_info;
             }
+          }
+        }
+        
+        // Store search results in database
+        if (processedData) {
+          const storageSuccess = await storeSearchResults(companyName, responseData, processedData, contactInfo);
+          
+          if (storageSuccess) {
+            console.log("Successfully stored search results to database");
+          } else {
+            console.warn("Failed to store search results to database");
           }
         }
         
