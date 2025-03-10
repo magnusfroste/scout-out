@@ -120,13 +120,25 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       });
       
       const responseData = await response.json();
+      console.log("Raw webhook response:", responseData);
       
       if (responseData.success) {
-        // Store both the results and contact_info if available
-        setResult({
-          results: responseData.data.results,
-          contact_info: responseData.contact_info || responseData.data.contact_info
-        });
+        // Create a structured result object
+        const formattedResult: SearchResultType = {};
+        
+        // Handle results array
+        if (responseData.data && responseData.data.results) {
+          formattedResult.results = responseData.data.results;
+        }
+        
+        // Handle contact info - check all possible locations
+        if (responseData.contact_info) {
+          formattedResult.contact_info = responseData.contact_info;
+        } else if (responseData.data && responseData.data.contact_info) {
+          formattedResult.contact_info = responseData.data.contact_info;
+        }
+        
+        setResult(formattedResult);
         
         toast({
           title: "Success",
@@ -134,16 +146,27 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         });
         onSearch(); // Trigger refetch of searches
       } else {
-        setResult(responseData);
+        // If the success flag is false but we still got a response
+        // Try to extract any useful information
+        const formattedResult: SearchResultType = {};
+        
+        if (responseData.data) {
+          formattedResult.results = Array.isArray(responseData.data) 
+            ? responseData.data 
+            : [{ question_id: "general", answer: JSON.stringify(responseData.data) }];
+        }
+        
+        setResult(formattedResult);
+        
         toast({
           title: "Warning",
-          description: "Got a response, but it may not contain answers",
+          description: "Got a response, but it may not contain all answers",
+          variant: "destructive"
         });
       }
     } catch (error: any) {
       console.error("Error calling webhook:", error);
       
-      // Better error message based on the error type
       let errorMessage = "Failed to call webhook";
       
       if (error.message === 'Failed to fetch') {
