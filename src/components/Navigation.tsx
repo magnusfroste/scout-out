@@ -39,18 +39,20 @@ const Navigation = () => {
           Lovable
         </Link>
         
-        {/* Always show main navigation links regardless of auth state */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Button variant="ghost" asChild>
-            <Link to="/features">Features</Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/pricing">Pricing</Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/about">About</Link>
-          </Button>
-        </div>
+        {/* Only show navigation links when user is not logged in */}
+        {!user && (
+          <div className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" asChild>
+              <Link to="/features">Features</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/pricing">Pricing</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/about">About</Link>
+            </Button>
+          </div>
+        )}
         
         <div className="flex items-center gap-4 ml-auto">
           {user ? (
@@ -71,7 +73,7 @@ const Navigation = () => {
               </Button>
             </>
           ) : (
-            <Button variant="outline" asChild>
+            <Button asChild>
               <Link to="/auth">Sign In</Link>
             </Button>
           )}
