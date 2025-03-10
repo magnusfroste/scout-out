@@ -94,6 +94,74 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setResult(null);
 
     try {
+      // =====================================================================
+      // Try direct webhook call first as a fallback
+      // =====================================================================
+      console.log("First trying direct webhook approach as a fallback...");
+      
+      const directResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          company: companyName, 
+          questions: questions.map(q => ({
+            id: q.id,
+            question: q.question
+          }))
+        })
+      });
+      
+      if (directResponse.ok) {
+        console.log("Direct webhook call successful!");
+        
+        const responseData = await directResponse.json();
+        console.log("Direct webhook raw response:", responseData);
+        
+        // Process the response
+        let processedData = null;
+        let contactInfo = null;
+        
+        // Handle the new format: [{ output: [{ results: [...], contact_info: {...} }] }]
+        if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+          const output = responseData[0].output;
+          
+          if (Array.isArray(output) && output.length > 0) {
+            const firstOutput = output[0];
+            
+            if (firstOutput.results) {
+              processedData = firstOutput.results;
+            }
+            
+            if (firstOutput.contact_info) {
+              contactInfo = firstOutput.contact_info;
+            }
+          }
+        }
+        
+        // Set the result
+        setResult({
+          results: processedData || [],
+          contact_info: contactInfo || undefined
+        });
+        
+        toast({
+          title: "Success",
+          description: "Questions answered successfully (direct method)",
+        });
+        
+        onSearch();
+        setIsLoading(false);
+        return;
+      } else {
+        console.log("Direct webhook call failed, falling back to edge function...");
+      }
+      
+      // =====================================================================
+      // Fall back to edge function
+      // =====================================================================
       const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
       
       const { data: { session } } = await supabase.auth.getSession();
@@ -112,6 +180,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         userId: user?.id
       });
 
+      // Use AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+      
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -124,8 +196,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
           questions: questionsToSend,
           webhookUrl,
           userId: user?.id
-        })
+        }),
+        signal: controller.signal
       });
+      
+      // Clear the timeout
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -156,7 +232,9 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       
       let errorMessage = "Failed to call webhook";
       
-      if (error.message === 'Failed to fetch') {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timed out. The server took too long to respond.";
+      } else if (error.message === 'Failed to fetch') {
         errorMessage = "Network error. Please check your internet connection or the webhook URL.";
       } else {
         errorMessage = error.message || "An unexpected error occurred";
