@@ -123,22 +123,11 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       console.log("Raw webhook response:", responseData);
       
       if (responseData.success) {
-        // Create a structured result object
-        const formattedResult: SearchResultType = {};
-        
-        // Handle results array
-        if (responseData.data && responseData.data.results) {
-          formattedResult.results = responseData.data.results;
-        }
-        
-        // Handle contact info - check all possible locations
-        if (responseData.contact_info) {
-          formattedResult.contact_info = responseData.contact_info;
-        } else if (responseData.data && responseData.data.contact_info) {
-          formattedResult.contact_info = responseData.data.contact_info;
-        }
-        
-        setResult(formattedResult);
+        // Store the response data directly
+        setResult({
+          results: responseData.data.results,
+          contact_info: responseData.contact_info || responseData.data.contact_info
+        });
         
         toast({
           title: "Success",
@@ -146,22 +135,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         });
         onSearch(); // Trigger refetch of searches
       } else {
-        // If the success flag is false but we still got a response
-        // Try to extract any useful information
-        const formattedResult: SearchResultType = {};
-        
-        if (responseData.data) {
-          formattedResult.results = Array.isArray(responseData.data) 
-            ? responseData.data 
-            : [{ question_id: "general", answer: JSON.stringify(responseData.data) }];
-        }
-        
-        setResult(formattedResult);
+        // If success is false but we still got a response, store it
+        setResult(responseData);
         
         toast({
           title: "Warning",
-          description: "Got a response, but it may not contain all answers",
-          variant: "destructive"
+          description: "Got a response, but it may not contain answers",
         });
       }
     } catch (error: any) {
