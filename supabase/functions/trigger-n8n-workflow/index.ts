@@ -91,23 +91,53 @@ serve(async (req) => {
       );
     }
     
-    // Get the response data
+    // Get the response data and parse it according to the new format
     let responseData;
     let contactInfo = null;
     
     try {
-      responseData = await response.json();
-      console.log('Response data:', JSON.stringify(responseData));
+      // Parse the webhook response
+      const responseJson = await response.json();
+      console.log('Raw webhook response:', JSON.stringify(responseJson));
       
-      // Extract contact info if available
-      if (responseData.contact_info) {
-        contactInfo = responseData.contact_info;
+      // Handle the new format: [{ output: [{ results: [...], contact_info: {...} }] }]
+      if (Array.isArray(responseJson) && responseJson.length > 0 && responseJson[0].output) {
+        // Extract from the new format
+        const output = responseJson[0].output;
+        
+        if (Array.isArray(output) && output.length > 0) {
+          const firstOutput = output[0];
+          
+          // Extract results
+          if (firstOutput.results && Array.isArray(firstOutput.results)) {
+            responseData = {
+              results: firstOutput.results
+            };
+          }
+          
+          // Extract contact info if available
+          if (firstOutput.contact_info) {
+            contactInfo = firstOutput.contact_info;
+          }
+        }
+      } else {
+        // Fallback to the old format handling
+        responseData = responseJson;
+        
+        if (responseJson.contact_info) {
+          contactInfo = responseJson.contact_info;
+        }
+        
+        if (!Array.isArray(responseData.results)) {
+          responseData = Array.isArray(responseJson) ? { results: responseJson } : { results: [responseJson] };
+        }
       }
       
-      // Extract results
-      if (!Array.isArray(responseData.results)) {
-        // If results is not an array, check if responseData itself is an array
-        responseData = Array.isArray(responseData) ? { results: responseData } : { results: [responseData] };
+      if (!responseData || !responseData.results) {
+        console.error('Failed to parse results from response:', responseJson);
+        responseData = { 
+          results: [{ answer: "Could not parse response data" }] 
+        };
       }
       
     } catch (e) {

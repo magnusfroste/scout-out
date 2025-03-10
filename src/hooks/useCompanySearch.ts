@@ -94,36 +94,45 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setResult(null);
 
     try {
-      // DIRECT WEBHOOK CALL - Bypassing the edge function
-      console.log("Sending direct webhook request to:", webhookUrl);
+      const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
       
-      // Prepare a simplified payload for the webhook
-      const payload = {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token;
+
+      // Use the simpler format for questions
+      const questionsToSend = questions.map(q => ({
+        id: q.id,
+        question: q.question
+      }));
+
+      console.log("Sending request to edge function with payload:", {
         company: companyName,
-        questions: questions.map(q => ({
-          id: q.id,
-          question: q.question
-        })),
-        userId: user.id
-      };
-      
-      console.log("Direct webhook payload:", payload);
-      
-      const response = await fetch(webhookUrl, {
+        questions: questionsToSend,
+        webhookUrl,
+        userId: user?.id
+      });
+
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          company: companyName,
+          questions: questionsToSend,
+          webhookUrl,
+          userId: user?.id
+        })
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const responseData = await response.json();
-      console.log("Raw webhook response:", responseData);
+      console.log("Edge function response:", responseData);
       
       if (responseData.success) {
         setResult({
@@ -143,7 +152,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         });
       }
     } catch (error: any) {
-      console.error("Error calling webhook directly:", error);
+      console.error("Error calling edge function:", error);
       
       let errorMessage = "Failed to call webhook";
       
