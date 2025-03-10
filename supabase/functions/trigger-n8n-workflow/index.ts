@@ -25,7 +25,6 @@ serve(async (req) => {
     // Verify authentication if needed
     if (authHeader && authHeader.startsWith('Bearer ')) {
       // We can use the token to verify the user if needed
-      // But for now we'll just log it and proceed
       console.log("Authentication provided correctly");
     } else {
       console.log("No authentication provided, continuing with service role");
@@ -52,18 +51,27 @@ serve(async (req) => {
     // Call the webhook with the company name and questions using POST
     let response;
     try {
+      // Simplified webhook call - only send what's needed
+      console.log(`Sending webhook request to: ${webhookUrl}`);
+      
       response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ company, questions })
+        body: JSON.stringify({ 
+          company, 
+          questions: questions.map(q => ({ id: q.id, question: q.text }))
+        })
       });
       
       console.log(`Webhook response status: ${response.status}`);
       
       // Check for non-200 responses
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Webhook error response: ${errorText}`);
+        
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -96,35 +104,25 @@ serve(async (req) => {
     
     try {
       responseData = await response.json();
-      console.log('Response data:', responseData);
+      console.log('Response data:', JSON.stringify(responseData));
       
-      // Handle the complex nested structure of the new response format
-      if (Array.isArray(responseData) && responseData.length > 0) {
-        // Check for output array at first level
-        if (responseData[0].output) {
-          const outputData = responseData[0].output;
-          
-          if (Array.isArray(outputData) && outputData.length > 0) {
-            // Extract contact info if it exists
-            if (outputData[0].contact_info) {
-              contactInfo = outputData[0].contact_info;
-              console.log('Contact info extracted:', contactInfo);
-            }
-            
-            // Check if results array exists within the first item of output
-            if (outputData[0].results) {
-              // Extract the final results array
-              const results = outputData[0].results;
-              responseData = { results };
-            } else {
-              // If output doesn't contain results array, use it directly
-              responseData = { results: outputData };
-            }
-          }
-        }
+      // Handle various response formats more simply
+      // Extract contact info if available at the root level
+      if (responseData.contact_info) {
+        contactInfo = responseData.contact_info;
       }
       
+      // Extract results from data property if it exists
+      const results = responseData.results || 
+                     (responseData.data && responseData.data.results) || 
+                     responseData.data || 
+                     [];
+                     
+      // Simplify the response structure
+      responseData = { results };
+      
     } catch (e) {
+      console.error('Error parsing response JSON:', e);
       // If not JSON, try to get text
       try {
         const text = await response.text();
@@ -139,7 +137,7 @@ serve(async (req) => {
     // Store the result if we have a user ID
     if (userId) {
       try {
-        // First, store the company search with contact info if available
+        // Store the company search
         const searchData = {
           user_id: userId,
           company_name: company,
@@ -169,30 +167,34 @@ serve(async (req) => {
         
         console.log('Company search stored with ID:', searchData.id);
         
-        // If we have results array, store individual answers
-        if (responseData.results && Array.isArray(responseData.results) && responseData.results.length > 0) {
-          const answersToInsert = responseData.results.map(result => ({
-            company_search_id: searchData.id,
-            question_id: result.question_id,
-            answer: result.answer,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }));
+        // Store individual answers if available
+        if (responseData.results && Array.isArray(responseData.results)) {
+          const answersToInsert = responseData.results
+            .filter(result => result.question_id && result.answer) // Only valid results
+            .map(result => ({
+              company_search_id: searchData.id,
+              question_id: result.question_id,
+              answer: result.answer,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }));
           
-          console.log('Inserting answers:', JSON.stringify(answersToInsert));
-          
-          const { error: answersError } = await supabase
-            .from('company_question_answers')
-            .insert(answersToInsert);
-          
-          if (answersError) {
-            console.error('Error storing answers:', answersError);
-            // Continue even if answer storage fails
+          if (answersToInsert.length > 0) {
+            console.log('Inserting answers:', JSON.stringify(answersToInsert));
+            
+            const { error: answersError } = await supabase
+              .from('company_question_answers')
+              .insert(answersToInsert);
+            
+            if (answersError) {
+              console.error('Error storing answers:', answersError);
+              // Continue even if answer storage fails
+            } else {
+              console.log('Successfully stored answers for all questions');
+            }
           } else {
-            console.log('Successfully stored answers for all questions');
+            console.log('No valid answers found to store');
           }
-        } else {
-          console.log('No results array found in the response data or it was empty.');
         }
       } catch (dbError) {
         console.error('Database error:', dbError);

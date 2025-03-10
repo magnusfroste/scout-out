@@ -104,6 +104,14 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         text: q.question
       }));
 
+      // Log the request payload for debugging
+      console.log("Sending request with payload:", {
+        company: companyName,
+        questions: questionsToSend,
+        webhookUrl,
+        userId: user?.id
+      });
+
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -123,10 +131,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       console.log("Raw webhook response:", responseData);
       
       if (responseData.success) {
-        // Store the response data directly
+        // Simple and direct approach - just store what we get
         setResult({
-          results: responseData.data.results,
-          contact_info: responseData.contact_info || responseData.data.contact_info
+          results: responseData.data?.results,
+          contact_info: responseData.contact_info || responseData.data?.contact_info
         });
         
         toast({
@@ -140,7 +148,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         
         toast({
           title: "Warning",
-          description: "Got a response, but it may not contain answers",
+          description: responseData.message || "Got a response, but it may not contain answers",
         });
       }
     } catch (error: any) {
