@@ -26,7 +26,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
 }) => {
   const [expandedSearch, setExpandedSearch] = useState<string | null>(null);
   
-  const { searchAnswers, isLoadingAnswers, fetchAnswersForSearch } = useSearchAnswers(questions);
+  const { searchAnswers, contactInfo, isLoadingAnswers, fetchAnswersForSearch } = useSearchAnswers(questions);
   const { isDeletingSearch, handleDeleteSearch } = useSearchHistory(onSearchDeleted);
 
   const toggleSearchExpand = (id: string) => {
@@ -60,6 +60,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
                 onDelete={handleDeleteSearch}
                 isLoadingAnswers={!!isLoadingAnswers[search.id]}
                 searchAnswers={searchAnswers[search.id]}
+                contactInfo={contactInfo[search.id]}
                 onToggleExpand={toggleSearchExpand}
                 isExpanded={expandedSearch === search.id}
               />

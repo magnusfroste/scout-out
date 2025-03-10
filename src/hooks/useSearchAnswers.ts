@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ContactInfo } from '@/hooks/useCompanySearch';
 
 type Question = {
   id: string;
@@ -18,6 +18,7 @@ export type CompanyAnswer = {
 
 export const useSearchAnswers = (questions: Question[]) => {
   const [searchAnswers, setSearchAnswers] = useState<{[key: string]: CompanyAnswer[]}>({});
+  const [contactInfo, setContactInfo] = useState<{[key: string]: ContactInfo | undefined}>({});
   const [isLoadingAnswers, setIsLoadingAnswers] = useState<{[key: string]: boolean}>({});
   
   const { toast } = useToast();
@@ -26,6 +27,42 @@ export const useSearchAnswers = (questions: Question[]) => {
     setIsLoadingAnswers(prev => ({ ...prev, [searchId]: true }));
     
     try {
+      // First, fetch the company search record to get contact info
+      const { data: searchData, error: searchError } = await supabase
+        .from('company_searches')
+        .select('contact_info, website, contact_person, email, phone')
+        .eq('id', searchId)
+        .single();
+        
+      if (searchError) throw searchError;
+      
+      // Extract contact info from the search
+      let contactInfoData: ContactInfo | undefined = undefined;
+      
+      if (searchData) {
+        // Try to get from JSON column first
+        if (searchData.contact_info) {
+          contactInfoData = searchData.contact_info as ContactInfo;
+        } 
+        // Otherwise try to get from individual columns
+        else if (searchData.website || searchData.contact_person || searchData.email || searchData.phone) {
+          contactInfoData = {
+            www: searchData.website,
+            contact: searchData.contact_person,
+            email: searchData.email,
+            phone: searchData.phone
+          };
+        }
+        
+        if (contactInfoData) {
+          setContactInfo(prev => ({
+            ...prev,
+            [searchId]: contactInfoData
+          }));
+        }
+      }
+      
+      // Then fetch the answers
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
         .select('*')
@@ -60,6 +97,7 @@ export const useSearchAnswers = (questions: Question[]) => {
 
   return {
     searchAnswers,
+    contactInfo,
     isLoadingAnswers,
     fetchAnswersForSearch
   };

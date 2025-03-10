@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,8 +16,16 @@ type Answer = {
   answer: string;
 };
 
+type ContactInfo = {
+  www?: string;
+  contact?: string;
+  email?: string;
+  phone?: string;
+};
+
 type SearchResultType = {
   results?: Answer[];
+  contact_info?: ContactInfo;
 };
 
 export const useCompanySearch = (questions: Question[], onSearch: () => void) => {
@@ -113,7 +122,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       const responseData = await response.json();
       
       if (responseData.success) {
-        setResult(responseData.data);
+        // Store both the results and contact_info if available
+        setResult({
+          results: responseData.data.results,
+          contact_info: responseData.contact_info || responseData.data.contact_info
+        });
+        
         toast({
           title: "Success",
           description: "Questions answered successfully",
@@ -151,4 +165,4 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   };
 };
 
-export type { SearchResultType };
+export type { SearchResultType, ContactInfo };

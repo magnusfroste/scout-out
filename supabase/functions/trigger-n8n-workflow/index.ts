@@ -92,6 +92,8 @@ serve(async (req) => {
     
     // Get the response data
     let responseData;
+    let contactInfo = null;
+    
     try {
       responseData = await response.json();
       console.log('Response data:', responseData);
@@ -103,6 +105,12 @@ serve(async (req) => {
           const outputData = responseData[0].output;
           
           if (Array.isArray(outputData) && outputData.length > 0) {
+            // Extract contact info if it exists
+            if (outputData[0].contact_info) {
+              contactInfo = outputData[0].contact_info;
+              console.log('Contact info extracted:', contactInfo);
+            }
+            
             // Check if results array exists within the first item of output
             if (outputData[0].results) {
               // Extract the final results array
@@ -131,15 +139,26 @@ serve(async (req) => {
     // Store the result if we have a user ID
     if (userId) {
       try {
-        // First, store the company search
+        // First, store the company search with contact info if available
+        const searchData = {
+          user_id: userId,
+          company_name: company,
+          result: responseData,
+          created_at: new Date().toISOString()
+        };
+        
+        // Add contact info if available
+        if (contactInfo) {
+          searchData.contact_info = contactInfo;
+          searchData.website = contactInfo.www || null;
+          searchData.contact_person = contactInfo.contact || null;
+          searchData.email = contactInfo.email || null;
+          searchData.phone = contactInfo.phone || null;
+        }
+        
         const { data: searchData, error: searchError } = await supabase
           .from('company_searches')
-          .insert({
-            user_id: userId,
-            company_name: company,
-            result: responseData,
-            created_at: new Date().toISOString()
-          })
+          .insert(searchData)
           .select('id')
           .single();
         
@@ -181,11 +200,18 @@ serve(async (req) => {
       }
     }
 
+    // Include contact_info in the response if available
+    const responseObject = { 
+      success: true, 
+      data: responseData
+    };
+    
+    if (contactInfo) {
+      responseObject.contact_info = contactInfo;
+    }
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        data: responseData
-      }),
+      JSON.stringify(responseObject),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

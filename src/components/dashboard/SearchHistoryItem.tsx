@@ -4,12 +4,14 @@ import { ChevronDown, ChevronRight, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchAnswers from './SearchAnswers';
 import { CompanyAnswer } from '@/hooks/useSearchAnswers';
+import { ContactInfo } from '@/hooks/useCompanySearch';
 
 export type CompanySearch = {
   id: string;
   company_name: string;
   created_at: string;
   result: any;
+  contact_info?: ContactInfo;
 };
 
 interface SearchHistoryItemProps {
@@ -18,6 +20,7 @@ interface SearchHistoryItemProps {
   onDelete: (id: string) => void;
   isLoadingAnswers: boolean;
   searchAnswers: CompanyAnswer[] | undefined;
+  contactInfo?: ContactInfo;
   onToggleExpand: (id: string) => void;
   isExpanded: boolean;
 }
@@ -28,6 +31,7 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
   onDelete,
   isLoadingAnswers,
   searchAnswers,
+  contactInfo,
   onToggleExpand,
   isExpanded
 }) => {
@@ -78,6 +82,7 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
             searchId={search.id}
             isLoading={isLoadingAnswers}
             answers={searchAnswers}
+            contactInfo={contactInfo}
           />
         </div>
       )}

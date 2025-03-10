@@ -78,24 +78,39 @@ export type Database = {
       company_searches: {
         Row: {
           company_name: string
+          contact_info: Json | null
+          contact_person: string | null
           created_at: string
+          email: string | null
           id: string
+          phone: string | null
           result: Json | null
           user_id: string
+          website: string | null
         }
         Insert: {
           company_name: string
+          contact_info?: Json | null
+          contact_person?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          phone?: string | null
           result?: Json | null
           user_id: string
+          website?: string | null
         }
         Update: {
           company_name?: string
+          contact_info?: Json | null
+          contact_person?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          phone?: string | null
           result?: Json | null
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }
