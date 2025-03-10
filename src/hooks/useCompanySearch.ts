@@ -1,9 +1,9 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { deductCredits, calculateCreditCost } from '@/utils/creditUtils';
+import { fetchWebhookSettings } from '@/services/webhookService';
 
 type Question = {
   id: string;
@@ -21,7 +21,7 @@ type SearchResultType = {
 
 export const useCompanySearch = (questions: Question[], onSearch: () => void) => {
   const [companyName, setCompanyName] = useState('');
-  const [webhookUrl, setWebhookUrl] = useState(localStorage.getItem('webhookUrl') || '');
+  const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SearchResultType | null>(null);
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
@@ -29,13 +29,15 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
-  // Save webhook URL to localStorage when it changes
-  const updateWebhookUrl = (url: string) => {
-    setWebhookUrl(url);
-    if (url) {
-      localStorage.setItem('webhookUrl', url);
-    }
-  };
+  useEffect(() => {
+    const loadWebhookUrl = async () => {
+      const settings = await fetchWebhookSettings();
+      if (settings) {
+        setWebhookUrl(settings.url);
+      }
+    };
+    loadWebhookUrl();
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,10 +51,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    if (!webhookUrl.trim()) {
+    if (!webhookUrl) {
       toast({
         title: "Error",
-        description: "Please enter a webhook URL",
+        description: "No webhook URL configured. Please contact an administrator.",
         variant: "destructive",
       });
       return;
@@ -140,7 +142,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     companyName,
     setCompanyName,
     webhookUrl,
-    updateWebhookUrl,
+    updateWebhookUrl: () => {}, // Remove client-side webhook URL updates
     isLoading,
     isDeductingCredit,
     result,

@@ -129,6 +129,7 @@ export type Database = {
           credits: number
           first_name: string | null
           id: string
+          is_admin: boolean
           last_name: string | null
           updated_at: string | null
         }
@@ -137,6 +138,7 @@ export type Database = {
           credits?: number
           first_name?: string | null
           id: string
+          is_admin?: boolean
           last_name?: string | null
           updated_at?: string | null
         }
@@ -145,8 +147,30 @@ export type Database = {
           credits?: number
           first_name?: string | null
           id?: string
+          is_admin?: boolean
           last_name?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      webhook_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          url?: string
         }
         Relationships: []
       }
