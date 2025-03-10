@@ -179,10 +179,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setResult(null);
 
     try {
-      // =====================================================================
-      // Try direct webhook call first as a fallback
-      // =====================================================================
-      console.log("First trying direct webhook approach as a fallback...");
+      console.log("Making direct webhook call to:", webhookUrl);
       
       const directResponse = await fetch(webhookUrl, {
         method: 'POST',
@@ -199,138 +196,73 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         })
       });
       
-      if (directResponse.ok) {
-        console.log("Direct webhook call successful!");
-        
-        const responseData = await directResponse.json();
-        console.log("Direct webhook raw response:", responseData);
-        
-        // Process the response
-        let processedData = null;
-        let contactInfo = null;
-        
-        // Handle the new format: [{ output: [{ results: [...], contact_info: {...} }] }]
-        if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
-          const output = responseData[0].output;
-          
-          if (Array.isArray(output) && output.length > 0) {
-            const firstOutput = output[0];
-            
-            if (firstOutput.results) {
-              processedData = firstOutput.results;
-            }
-            
-            if (firstOutput.contact_info) {
-              contactInfo = firstOutput.contact_info;
-            }
-          }
-        }
-        
-        // Store search results in database
-        if (processedData) {
-          const storageSuccess = await storeSearchResults(companyName, responseData, processedData, contactInfo);
-          
-          if (storageSuccess) {
-            console.log("Successfully stored search results to database");
-          } else {
-            console.warn("Failed to store search results to database");
-          }
-        }
-        
-        // Set the result
-        setResult({
-          results: processedData || [],
-          contact_info: contactInfo || undefined
-        });
-        
-        toast({
-          title: "Success",
-          description: "Questions answered successfully (direct method)",
-        });
-        
-        onSearch();
-        setIsLoading(false);
-        return;
-      } else {
-        console.log("Direct webhook call failed, falling back to edge function...");
+      if (!directResponse.ok) {
+        throw new Error(`HTTP error! status: ${directResponse.status}`);
       }
       
-      // =====================================================================
-      // Fall back to edge function
-      // =====================================================================
-      const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
+      const responseData = await directResponse.json();
+      console.log("Webhook raw response:", responseData);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token;
-
-      // Use the simpler format for questions
-      const questionsToSend = questions.map(q => ({
-        id: q.id,
-        question: q.question
-      }));
-
-      console.log("Sending request to edge function with payload:", {
-        company: companyName,
-        questions: questionsToSend,
-        webhookUrl,
-        userId: user?.id
-      });
-
-      // Use AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+      // Process the response
+      let processedResults = null;
+      let contactInfo = null;
       
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          company: companyName,
-          questions: questionsToSend,
-          webhookUrl,
-          userId: user?.id
-        }),
-        signal: controller.signal
-      });
-      
-      // Clear the timeout
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Handle the format: [{ output: [{ results: [...], contact_info: {...} }] }]
+      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+        const output = responseData[0].output;
+        
+        if (Array.isArray(output) && output.length > 0) {
+          const firstOutput = output[0];
+          
+          if (firstOutput.results) {
+            processedResults = firstOutput.results;
+          }
+          
+          if (firstOutput.contact_info) {
+            contactInfo = firstOutput.contact_info;
+          }
+        }
       }
       
-      const responseData = await response.json();
-      console.log("Edge function response:", responseData);
+      // Set the result for UI display
+      setResult({
+        results: processedResults || [],
+        contact_info: contactInfo || undefined
+      });
       
-      if (responseData.success) {
-        setResult({
-          results: responseData.data,
-          contact_info: responseData.contact_info
-        });
+      // Store search results in database
+      if (processedResults) {
+        const storageSuccess = await storeSearchResults(companyName, responseData, processedResults, contactInfo);
         
-        toast({
-          title: "Success",
-          description: "Questions answered successfully",
-        });
-        onSearch(); // Trigger refetch of searches
+        if (storageSuccess) {
+          console.log("Successfully stored search results to database");
+          onSearch(); // Trigger refetch of searches
+        } else {
+          console.warn("Failed to store search results to database");
+          toast({
+            title: "Warning",
+            description: "Search results were retrieved but could not be saved to history.",
+          });
+        }
       } else {
+        console.warn("No processed results found in webhook response");
         toast({
           title: "Warning",
-          description: responseData.message || "Got a response, but it may not contain answers",
+          description: "Received response from webhook, but no valid answers could be extracted.",
         });
       }
+      
+      toast({
+        title: "Success",
+        description: "Questions answered successfully",
+      });
+      
     } catch (error: any) {
-      console.error("Error calling edge function:", error);
+      console.error("Error calling webhook:", error);
       
       let errorMessage = "Failed to call webhook";
       
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timed out. The server took too long to respond.";
-      } else if (error.message === 'Failed to fetch') {
+      if (error.message === 'Failed to fetch') {
         errorMessage = "Network error. Please check your internet connection or the webhook URL.";
       } else {
         errorMessage = error.message || "An unexpected error occurred";
