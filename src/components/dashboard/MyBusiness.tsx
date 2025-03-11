@@ -11,11 +11,13 @@ import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponseParser';
 import { Separator } from '@/components/ui/separator';
 import { callMyBusinessWebhook } from '@/services/myBusinessWebhookService';
+import { ContactInfo } from '@/types/company';
 
 interface BusinessData {
   summary: string;
   salesInfo: string;
   elevatorPitch?: ElevatorPitch;
+  contactInfo?: ContactInfo;
 }
 
 const MyBusiness = () => {
@@ -45,7 +47,29 @@ const MyBusiness = () => {
     };
 
     loadWebhookSettings();
-  }, []);
+    
+    // Load saved business data if available
+    if (userProfile?.business_data) {
+      const savedData: BusinessData = {
+        summary: '',
+        salesInfo: userProfile.sales_info || '',
+        elevatorPitch: userProfile.business_data.elevator_pitch,
+        contactInfo: userProfile.business_data.contact_info
+      };
+      
+      // Reconstruct summary from saved data if available
+      if (savedData.elevatorPitch) {
+        const ep = savedData.elevatorPitch;
+        const introduction = ep.introduction || ep.overview || '';
+        const valueProposition = ep.value_proposition || ep.client_value || '';
+        savedData.summary = `${ep.company_name}: ${ep.tagline}\n\n${introduction}\n\n${valueProposition}`;
+      }
+      
+      setBusinessData(savedData);
+      setSalesInfo(savedData.salesInfo);
+      console.log('Loaded saved business data:', savedData);
+    }
+  }, [userProfile]);
 
   const handleAnalyzeWebsite = async () => {
     if (!websiteUrl) {
@@ -86,7 +110,8 @@ const MyBusiness = () => {
       const newBusinessData: BusinessData = {
         summary: '',
         salesInfo: '',
-        elevatorPitch: parsedData.elevatorPitch
+        elevatorPitch: parsedData.elevatorPitch,
+        contactInfo: parsedData.contactInfo
       };
       
       if (parsedData.elevatorPitch) {
@@ -145,17 +170,24 @@ const MyBusiness = () => {
     
     setIsSaving(true);
     try {
-      await updateProfile({ sales_info: salesInfo });
+      // Save both sales info text and complete business data
+      await updateProfile({ 
+        sales_info: salesInfo,
+        business_data: {
+          elevator_pitch: businessData?.elevatorPitch,
+          contact_info: businessData?.contactInfo
+        }
+      });
       
       toast({
         title: "Success",
-        description: "Your sales information has been saved",
+        description: "Your business information has been saved",
       });
     } catch (error) {
-      console.error('Error saving sales info:', error);
+      console.error('Error saving business info:', error);
       toast({
         title: "Error",
-        description: "Failed to save your sales information. Please try again.",
+        description: "Failed to save your business information. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -240,6 +272,11 @@ const MyBusiness = () => {
       <Card>
         <CardHeader>
           <CardTitle>My Business Analysis</CardTitle>
+          {userProfile?.business_data?.elevator_pitch && (
+            <CardDescription>
+              Showing saved business profile for {userProfile.business_data.elevator_pitch.company_name}
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -299,7 +336,7 @@ const MyBusiness = () => {
               disabled={isSaving}
               className="ml-auto"
             >
-              {isSaving ? "Saving..." : "Save Sales Information"}
+              {isSaving ? "Saving..." : "Save Business Information"}
             </Button>
           </CardFooter>
         )}

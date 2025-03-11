@@ -1,6 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { ElevatorPitch } from '@/utils/webhookResponseParser';
+import { ContactInfo } from '@/types/company';
 
 export interface UserProfile {
   id: string;
@@ -11,6 +13,10 @@ export interface UserProfile {
   is_admin: boolean;
   website_url?: string | null;
   sales_info?: string | null;
+  business_data?: {
+    elevator_pitch?: ElevatorPitch;
+    contact_info?: ContactInfo;
+  } | null;
 }
 
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -49,7 +55,8 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
           avatar_url: null,
           is_admin: false,
           website_url: null,
-          sales_info: null
+          sales_info: null,
+          business_data: null
         })
         .select('*')
         .single();
@@ -73,7 +80,8 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         avatar_url: newProfile.avatar_url,
         is_admin: newProfile.is_admin,
         website_url: newProfile.website_url,
-        sales_info: newProfile.sales_info
+        sales_info: newProfile.sales_info,
+        business_data: newProfile.business_data
       } as UserProfile;
     }
     
@@ -87,7 +95,8 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       avatar_url: data.avatar_url,
       is_admin: data.is_admin,
       website_url: data.website_url,
-      sales_info: data.sales_info
+      sales_info: data.sales_info,
+      business_data: data.business_data
     } as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
