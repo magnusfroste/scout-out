@@ -8,6 +8,7 @@ import WebhookForm from '@/components/dashboard/WebhookForm';
 import MyBusinessWebhookForm from '@/components/dashboard/MyBusinessWebhookForm';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { fetchWebhookSettings, updateWebhookSettings, updateMyBusinessWebhookSettings } from '@/services/webhookService';
+import { toast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { user, loading, userProfile } = useAuth();
@@ -17,16 +18,43 @@ const Settings = () => {
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
-      const settings = await fetchWebhookSettings();
-      if (settings) {
-        setWebhookUrl(settings.url || '');
-        setMyBusinessWebhookUrl(settings.mybusiness_url || '');
+      setIsLoading(true);
+      try {
+        console.log('Fetching webhook settings...');
+        const settings = await fetchWebhookSettings();
+        console.log('Webhook settings received:', settings);
+        
+        if (settings) {
+          setWebhookUrl(settings.url || '');
+          setMyBusinessWebhookUrl(settings.mybusiness_url || '');
+          console.log(`Set webhook URL: ${settings.url}`);
+          console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
+        } else {
+          console.warn('No webhook settings found');
+          toast({
+            title: "Warning",
+            description: "Could not load webhook settings",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error loading webhook settings:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load webhook settings",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    loadWebhookSettings();
-  }, []);
+    if (user && userProfile?.is_admin) {
+      loadWebhookSettings();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user, userProfile]);
 
   // Redirect if not admin
   if (!loading && (!user || !userProfile?.is_admin)) {
@@ -34,16 +62,24 @@ const Settings = () => {
   }
 
   const handleWebhookUpdate = async (newUrl: string) => {
-    const success = await updateWebhookSettings(newUrl);
-    if (success) {
-      setWebhookUrl(newUrl);
+    try {
+      const success = await updateWebhookSettings(newUrl);
+      if (success) {
+        setWebhookUrl(newUrl);
+      }
+    } catch (error) {
+      console.error('Error updating webhook URL:', error);
     }
   };
 
   const handleMyBusinessWebhookUpdate = async (newUrl: string) => {
-    const success = await updateMyBusinessWebhookSettings(newUrl);
-    if (success) {
-      setMyBusinessWebhookUrl(newUrl);
+    try {
+      const success = await updateMyBusinessWebhookSettings(newUrl);
+      if (success) {
+        setMyBusinessWebhookUrl(newUrl);
+      }
+    } catch (error) {
+      console.error('Error updating My Business webhook URL:', error);
     }
   };
 
@@ -65,7 +101,7 @@ const Settings = () => {
                   webhookUrl={webhookUrl}
                   setWebhookUrl={handleWebhookUpdate}
                   isDisabled={isLoading}
-                  showDescription={false}
+                  showDescription={true}
                 />
               </CardContent>
             </Card>

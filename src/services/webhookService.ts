@@ -12,6 +12,7 @@ export interface WebhookSettings {
 
 export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> => {
   try {
+    console.log('Fetching webhook settings from Supabase');
     const { data, error } = await supabase
       .from('webhook_settings')
       .select('*')
@@ -23,6 +24,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
       return null;
     }
     
+    console.log('Webhook settings fetched successfully:', data);
     return data;
   } catch (error) {
     console.error('Error in fetchWebhookSettings:', error);
