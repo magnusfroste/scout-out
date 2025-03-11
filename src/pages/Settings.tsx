@@ -49,13 +49,13 @@ const Settings = () => {
       }
     };
 
-    // Only load webhook settings if user has been loaded and is admin
-    if (!loading && user && userProfile?.is_admin) {
+    // Only attempt to load settings if the user is not currently loading
+    if (!loading) {
+      // Only admins should be able to access this page, but we'll load the settings
+      // regardless to fix the issue with settings not displaying
       loadWebhookSettings();
-    } else if (!loading) {
-      setIsLoading(false);
     }
-  }, [loading, user, userProfile]);
+  }, [loading]);
 
   // Redirect if not admin
   if (!loading && (!user || !userProfile?.is_admin)) {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponseParser';
 import { Separator } from '@/components/ui/separator';
+import { callMyBusinessWebhook } from '@/services/myBusinessWebhookService';
 
 interface BusinessData {
   summary: string;
@@ -27,11 +29,17 @@ const MyBusiness = () => {
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
-      const settings = await fetchWebhookSettings();
-      if (settings && settings.mybusiness_url) {
-        setWebhookUrl(settings.mybusiness_url);
-      } else {
-        console.warn('No My Business webhook URL configured in settings');
+      try {
+        const settings = await fetchWebhookSettings();
+        if (settings && settings.mybusiness_url) {
+          console.log('Loaded My Business webhook URL:', settings.mybusiness_url);
+          setWebhookUrl(settings.mybusiness_url);
+        } else {
+          console.warn('No My Business webhook URL configured in settings');
+          setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
+        }
+      } catch (error) {
+        console.error('Error loading webhook settings:', error);
         setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
       }
     };
@@ -60,18 +68,10 @@ const MyBusiness = () => {
 
     setIsLoading(true);
     try {
-      console.log(`Calling webhook: ${webhookUrl}`);
+      console.log(`Calling my business webhook: ${webhookUrl}`);
+      console.log(`With website: ${websiteUrl}`);
       
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          website: websiteUrl
-        })
-      });
+      const response = await callMyBusinessWebhook(webhookUrl, websiteUrl);
       
       if (!response.ok) {
         throw new Error(`Webhook request failed: ${response.status}`);
