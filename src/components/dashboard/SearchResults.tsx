@@ -3,28 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { User, Mail, Phone, Globe } from 'lucide-react';
-
-type Question = {
-  id: string;
-  question: string;
-};
-
-type Answer = {
-  question_id: string;
-  answer: string;
-};
-
-type ContactInfo = {
-  www?: string;
-  contact?: string;
-  email?: string;
-  phone?: string;
-};
-
-type SearchResultType = {
-  results?: Answer[];
-  contact_info?: ContactInfo;
-};
+import { Question, Answer, ContactInfo, SearchResultType } from '@/types/company';
 
 interface SearchResultsProps {
   result: SearchResultType | null;

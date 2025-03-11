@@ -2,7 +2,7 @@
 import React from 'react';
 import { Loader2, User, Mail, Phone, Globe } from 'lucide-react';
 import { CompanyAnswer } from '@/hooks/useSearchAnswers';
-import { ContactInfo } from '@/hooks/useCompanySearch';
+import { ContactInfo } from '@/types/company';
 
 interface SearchAnswersProps {
   searchId: string;

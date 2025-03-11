@@ -1,104 +1,94 @@
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { ContactInfo } from '@/hooks/useCompanySearch';
 
-type Question = {
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { ContactInfo } from '@/types/company';
+
+export interface CompanyAnswer {
   id: string;
   question: string;
-};
+  answer: string;
+}
 
-export type CompanyAnswer = {
-  id: string;
-  company_search_id: string;
-  question_id: string;
-  answer: string | null;
-  question?: string;
-};
-
-export const useSearchAnswers = (questions: Question[]) => {
-  const [searchAnswers, setSearchAnswers] = useState<{[key: string]: CompanyAnswer[]}>({});
-  const [contactInfo, setContactInfo] = useState<{[key: string]: ContactInfo | undefined}>({});
-  const [isLoadingAnswers, setIsLoadingAnswers] = useState<{[key: string]: boolean}>({});
+export const useSearchAnswers = (questions: { id: string; question: string }[]) => {
+  const [searchAnswers, setSearchAnswers] = useState<Record<string, CompanyAnswer[]>>({});
+  const [contactInfo, setContactInfo] = useState<Record<string, ContactInfo>>({});
+  const [isLoadingAnswers, setIsLoadingAnswers] = useState<Record<string, boolean>>({});
   
-  const { toast } = useToast();
-
   const fetchAnswersForSearch = async (searchId: string) => {
     setIsLoadingAnswers(prev => ({ ...prev, [searchId]: true }));
-    
     try {
-      // First, fetch the company search record to get contact info
+      // First get the company search record to get contact info
       const { data: searchData, error: searchError } = await supabase
         .from('company_searches')
-        .select('contact_info, website, contact_person, email, phone')
+        .select('*')
         .eq('id', searchId)
         .single();
         
-      if (searchError) throw searchError;
-      
-      // Extract contact info from the search
-      let contactInfoData: ContactInfo | undefined = undefined;
-      
-      if (searchData) {
-        // Try to get from JSON column first
-        if (searchData.contact_info) {
-          contactInfoData = searchData.contact_info as ContactInfo;
-        } 
-        // Otherwise try to get from individual columns
-        else if (searchData.website || searchData.contact_person || searchData.email || searchData.phone) {
-          contactInfoData = {
-            www: searchData.website,
-            contact: searchData.contact_person,
-            email: searchData.email,
-            phone: searchData.phone
-          };
-        }
-        
-        if (contactInfoData) {
-          setContactInfo(prev => ({
-            ...prev,
-            [searchId]: contactInfoData
-          }));
-        }
+      if (searchError) {
+        console.error('Error fetching search:', searchError);
+        return;
       }
       
-      // Then fetch the answers
+      // Store contact info
+      if (searchData.contact_info) {
+        setContactInfo(prev => ({
+          ...prev,
+          [searchId]: searchData.contact_info
+        }));
+      }
+      
+      // Fetch answers for this search
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
         .select('*')
         .eq('company_search_id', searchId);
-        
-      if (answersError) throw answersError;
       
-      const answersWithQuestions = (answersData || []).map(answer => {
+      if (answersError) {
+        console.error('Error fetching answers:', answersError);
+        return;
+      }
+      
+      // Map answers to questions
+      const mappedAnswers: CompanyAnswer[] = answersData.map(answer => {
         const question = questions.find(q => q.id === answer.question_id);
         return {
-          ...answer,
-          question: question ? question.question : 'Unknown question'
+          id: answer.id,
+          question: question ? question.question : 'Unknown Question',
+          answer: answer.answer || 'No answer provided'
         };
       });
       
       setSearchAnswers(prev => ({
         ...prev,
-        [searchId]: answersWithQuestions
+        [searchId]: mappedAnswers
       }));
       
-    } catch (error: any) {
-      console.error('Error fetching answers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load answers",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error('Error in fetchAnswersForSearch:', error);
     } finally {
       setIsLoadingAnswers(prev => ({ ...prev, [searchId]: false }));
     }
   };
-
+  
+  const clearSearchAnswers = (searchId: string) => {
+    setSearchAnswers(prev => {
+      const newAnswers = { ...prev };
+      delete newAnswers[searchId];
+      return newAnswers;
+    });
+    
+    setContactInfo(prev => {
+      const newContactInfo = { ...prev };
+      delete newContactInfo[searchId];
+      return newContactInfo;
+    });
+  };
+  
   return {
     searchAnswers,
     contactInfo,
     isLoadingAnswers,
-    fetchAnswersForSearch
+    fetchAnswersForSearch,
+    clearSearchAnswers
   };
 };

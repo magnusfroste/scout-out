@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCompanySearch, SearchResultType } from '@/hooks/useCompanySearch';
+import { useCompanySearch } from '@/hooks/useCompanySearch';
+import { SearchResultType } from '@/types/company';
 import SearchForm from './SearchForm';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
