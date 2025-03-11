@@ -38,16 +38,19 @@ const Navigation = () => {
   };
   
   const handleSignIn = () => {
+    console.log('Navigating to auth page...');
     navigate('/auth');
   };
 
   const getInitials = () => {
-    if (!userProfile?.full_name) return 'U';
-    return userProfile.full_name.split(' ')
-      .map(n => n[0])
-      .join('')
+    if (!userProfile?.first_name) return 'U';
+    
+    const firstName = userProfile.first_name || '';
+    const lastName = userProfile.last_name || '';
+    
+    return ((firstName[0] || '') + (lastName[0] || ''))
       .toUpperCase()
-      .substring(0, 2);
+      .substring(0, 2) || 'U';
   };
   
   return (
@@ -111,7 +114,7 @@ const Navigation = () => {
               
               <Avatar className="h-8 w-8 border">
                 {userProfile?.avatar_url ? (
-                  <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
+                  <AvatarImage src={userProfile.avatar_url} alt={userProfile?.first_name || 'User'} />
                 ) : (
                   <AvatarFallback>{getInitials()}</AvatarFallback>
                 )}
@@ -122,7 +125,8 @@ const Navigation = () => {
               </Button>
             </>
           ) : (
-            <Button onClick={handleSignIn} className="z-50">
+            // Fix: Changed to Button component that directly calls handleSignIn
+            <Button onClick={handleSignIn}>
               Sign In
             </Button>
           )}
