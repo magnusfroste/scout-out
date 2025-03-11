@@ -10,26 +10,21 @@ const Footer: React.FC = () => {
       title: 'Product',
       links: [
         { name: 'Features', path: '/features' },
-        { name: 'Pricing', path: '/pricing' },
-        { name: 'Integrations', path: '#' },
-        { name: 'Changelog', path: '#' }
+        { name: 'Pricing', path: '/pricing' }
+ 
       ]
     },
     {
       title: 'Company',
       links: [
-        { name: 'About', path: '/about' },
         { name: 'Blog', path: '#' },
-        { name: 'Careers', path: '#' },
         { name: 'Contact', path: '#' }
       ]
     },
     {
       title: 'Resources',
       links: [
-        { name: 'Documentation', path: '#' },
         { name: 'Help Center', path: '#' },
-        { name: 'Community', path: '#' },
         { name: 'Status', path: '#' }
       ]
     },
@@ -38,8 +33,6 @@ const Footer: React.FC = () => {
       links: [
         { name: 'Privacy', path: '#' },
         { name: 'Terms', path: '#' },
-        { name: 'Cookie Policy', path: '#' },
-        { name: 'Licenses', path: '#' }
       ]
     }
   ];
@@ -50,10 +43,10 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="inline-block">
-              <span className="font-semibold text-xl tracking-tight">SaaS</span>
+              <span className="font-semibold text-xl tracking-tight">Master Business Agent</span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-              Empowering businesses with scalable, reliable, and secure solutions.
+              Works Smarter, not harder!
             </p>
           </div>
           
