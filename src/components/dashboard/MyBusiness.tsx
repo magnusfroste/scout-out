@@ -92,19 +92,29 @@ const MyBusiness = () => {
       if (parsedData.elevatorPitch) {
         const ep = parsedData.elevatorPitch;
         
-        newBusinessData.summary = `${ep.company_name}: ${ep.tagline}\n\n${ep.introduction}\n\n${ep.value_proposition}`;
+        // Use either introduction or overview field
+        const introduction = ep.introduction || ep.overview || '';
+        const valueProposition = ep.value_proposition || ep.client_value || '';
+        
+        newBusinessData.summary = `${ep.company_name}: ${ep.tagline}\n\n${introduction}\n\n${valueProposition}`;
         
         let servicesText = "Our Services:\n";
-        ep.services.forEach(service => {
-          servicesText += `- ${service.name}: ${service.description}\n`;
-        });
+        if (ep.services && Array.isArray(ep.services)) {
+          ep.services.forEach(service => {
+            servicesText += `- ${service.name}: ${service.description}\n`;
+          });
+        }
         
         let testimonialsText = "\nWhat Our Clients Say:\n";
-        ep.client_testimonials.forEach(testimonial => {
-          testimonialsText += `"${testimonial.feedback}" - ${testimonial.client_name}, ${testimonial.title} at ${testimonial.company}\n\n`;
-        });
+        if (ep.client_testimonials && Array.isArray(ep.client_testimonials)) {
+          ep.client_testimonials.forEach(testimonial => {
+            const quote = testimonial.feedback || testimonial.quote || '';
+            const name = testimonial.client_name || testimonial.name || '';
+            testimonialsText += `"${quote}" - ${name}, ${testimonial.title} at ${testimonial.company}\n\n`;
+          });
+        }
         
-        newBusinessData.salesInfo = servicesText + testimonialsText + `\n${ep.call_to_action}`;
+        newBusinessData.salesInfo = servicesText + testimonialsText + (ep.call_to_action ? `\n${ep.call_to_action}` : '');
       }
       
       setBusinessData(newBusinessData);
@@ -157,19 +167,22 @@ const MyBusiness = () => {
     if (!businessData?.elevatorPitch) return null;
     
     const ep = businessData.elevatorPitch;
+    const introduction = ep.introduction || ep.overview || '';
+    const valueProposition = ep.value_proposition || ep.client_value || '';
+    const clientNames = ep.client_names || ep.notable_clients || [];
     
     return (
       <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">{ep.company_name}</h3>
           <p className="text-lg font-medium italic">{ep.tagline}</p>
-          <p className="text-sm text-muted-foreground">{ep.introduction}</p>
+          <p className="text-sm text-muted-foreground">{introduction}</p>
         </div>
         
         <div className="space-y-2">
           <h4 className="text-lg font-medium">Services</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ep.services.map((service, index) => (
+            {ep.services && ep.services.map((service, index) => (
               <div key={index} className="p-4 border rounded-lg">
                 <h5 className="font-semibold">{service.name}</h5>
                 <p className="text-sm">{service.description}</p>
@@ -180,14 +193,14 @@ const MyBusiness = () => {
         
         <div className="space-y-2">
           <h4 className="text-lg font-medium">Value Proposition</h4>
-          <p className="text-sm">{ep.value_proposition}</p>
+          <p className="text-sm">{valueProposition}</p>
         </div>
         
-        {ep.client_names && ep.client_names.length > 0 && (
+        {clientNames && clientNames.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-lg font-medium">Clients</h4>
             <div className="flex flex-wrap gap-2">
-              {ep.client_names.map((client, index) => (
+              {clientNames.map((client, index) => (
                 <span key={index} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-sm">
                   {client}
                 </span>
@@ -202,9 +215,9 @@ const MyBusiness = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {ep.client_testimonials.map((testimonial, index) => (
                 <div key={index} className="p-4 border rounded-lg bg-slate-50 dark:bg-slate-800">
-                  <p className="text-sm italic">"{testimonial.feedback}"</p>
+                  <p className="text-sm italic">"{testimonial.feedback || testimonial.quote}"</p>
                   <p className="text-sm font-medium mt-2">
-                    {testimonial.client_name}, {testimonial.title}
+                    {testimonial.client_name || testimonial.name}, {testimonial.title}
                   </p>
                   <p className="text-xs text-muted-foreground">{testimonial.company}</p>
                 </div>
@@ -213,9 +226,11 @@ const MyBusiness = () => {
           </div>
         )}
         
-        <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border-l-4 border-blue-500 mt-4">
-          <p className="font-medium text-center">{ep.call_to_action}</p>
-        </div>
+        {ep.call_to_action && (
+          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border-l-4 border-blue-500 mt-4">
+            <p className="font-medium text-center">{ep.call_to_action}</p>
+          </div>
+        )}
       </div>
     );
   };

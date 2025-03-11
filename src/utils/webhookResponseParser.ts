@@ -9,20 +9,25 @@ export type Answer = {
 export type ElevatorPitch = {
   company_name: string;
   tagline: string;
-  introduction: string;
+  introduction?: string;
+  overview?: string;
   services: {
     name: string;
     description: string;
   }[];
-  value_proposition: string;
-  client_names: string[];
-  client_testimonials: {
-    client_name: string;
+  value_proposition?: string;
+  client_value?: string;
+  client_names?: string[];
+  notable_clients?: string[];
+  client_testimonials?: {
+    client_name?: string;
+    name?: string;
     title: string;
     company: string;
-    feedback: string;
+    feedback?: string;
+    quote?: string;
   }[];
-  call_to_action: string;
+  call_to_action?: string;
 };
 
 export type WebhookParseResult = {
@@ -63,7 +68,28 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
       if (output && typeof output === 'object') {
         // Extract elevator pitch if it exists
         if (output.elevator_pitch) {
-          elevatorPitch = output.elevator_pitch as ElevatorPitch;
+          const ep = output.elevator_pitch;
+          elevatorPitch = {
+            company_name: ep.company_name,
+            tagline: ep.tagline,
+            // Handle both old and new schema fields
+            introduction: ep.introduction || ep.overview,
+            overview: ep.overview || ep.introduction,
+            services: ep.services || [],
+            value_proposition: ep.value_proposition || ep.client_value,
+            client_value: ep.client_value || ep.value_proposition,
+            client_names: ep.client_names || ep.notable_clients,
+            notable_clients: ep.notable_clients || ep.client_names,
+            client_testimonials: (ep.client_testimonials || []).map(t => ({
+              client_name: t.client_name || t.name,
+              name: t.name || t.client_name,
+              title: t.title,
+              company: t.company,
+              feedback: t.feedback || t.quote,
+              quote: t.quote || t.feedback
+            })),
+            call_to_action: ep.call_to_action
+          };
           console.log('Extracted elevator pitch:', elevatorPitch);
         }
         
