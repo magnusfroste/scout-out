@@ -28,7 +28,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
       />
       {showDescription && (
         <p className="text-xs text-muted-foreground">
-          Example: https://agent.froste.eu/webhook/lovable
+          Enter the URL for your webhook endpoint
         </p>
       )}
     </div>
