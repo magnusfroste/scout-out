@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponseParser';
 import { Separator } from '@/components/ui/separator';
-import { callCompanyWebhook } from '@/services/companyWebhookService';
 
 interface BusinessData {
   summary: string;
@@ -34,7 +32,6 @@ const MyBusiness = () => {
         setWebhookUrl(settings.mybusiness_url);
       } else {
         console.warn('No My Business webhook URL configured in settings');
-        // Fall back to the default URL if no webhook URL is configured
         setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
       }
     };
@@ -63,15 +60,13 @@ const MyBusiness = () => {
 
     setIsLoading(true);
     try {
-      // Use the same method as company search to avoid CORS issues
-      console.log(`Calling webhook via fetch helper: ${webhookUrl}`);
+      console.log(`Calling webhook: ${webhookUrl}`);
       
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Mode': 'cors'
+          'Accept': 'application/json'
         },
         body: JSON.stringify({ 
           website: websiteUrl
@@ -94,14 +89,11 @@ const MyBusiness = () => {
         elevatorPitch: parsedData.elevatorPitch
       };
       
-      // If we have an elevator pitch, generate a summary and sales info from it
       if (parsedData.elevatorPitch) {
         const ep = parsedData.elevatorPitch;
         
-        // Create a summary from the elevator pitch data
         newBusinessData.summary = `${ep.company_name}: ${ep.tagline}\n\n${ep.introduction}\n\n${ep.value_proposition}`;
         
-        // Create sales info from services and testimonials
         let servicesText = "Our Services:\n";
         ep.services.forEach(service => {
           servicesText += `- ${service.name}: ${service.description}\n`;
@@ -118,7 +110,6 @@ const MyBusiness = () => {
       setBusinessData(newBusinessData);
       setSalesInfo(newBusinessData.salesInfo);
       
-      // Save the website URL to user profile
       if (user && websiteUrl !== userProfile?.website_url) {
         await updateProfile({ website_url: websiteUrl });
       }
@@ -144,7 +135,6 @@ const MyBusiness = () => {
     
     setIsSaving(true);
     try {
-      // Save the sales info to user profile
       await updateProfile({ sales_info: salesInfo });
       
       toast({
