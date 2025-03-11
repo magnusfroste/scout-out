@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface WebhookFormProps {
   webhookUrl: string;
@@ -16,21 +17,38 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
   isDisabled,
   showDescription = false
 }) => {
+  const [inputValue, setInputValue] = useState(webhookUrl);
+  
+  const handleSave = () => {
+    setWebhookUrl(inputValue);
+  };
+  
   return (
-    <div className="space-y-2">
-      <Label htmlFor="webhookUrl">Webhook URL</Label>
-      <Input
-        id="webhookUrl"
-        value={webhookUrl}
-        onChange={(e) => setWebhookUrl(e.target.value)}
-        placeholder="Enter your webhook URL"
-        disabled={isDisabled}
-      />
-      {showDescription && (
-        <p className="text-xs text-muted-foreground">
-          Enter the URL for your webhook endpoint
-        </p>
-      )}
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="webhookUrl">Webhook URL</Label>
+        <div className="flex gap-2">
+          <Input
+            id="webhookUrl"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Enter your webhook URL"
+            disabled={isDisabled}
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleSave}
+            disabled={isDisabled || inputValue === webhookUrl}
+          >
+            Save
+          </Button>
+        </div>
+        {showDescription && (
+          <p className="text-xs text-muted-foreground">
+            Enter the URL for your webhook endpoint
+          </p>
+        )}
+      </div>
     </div>
   );
 };
