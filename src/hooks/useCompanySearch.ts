@@ -20,13 +20,29 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
 
   useEffect(() => {
     const loadWebhookUrl = async () => {
-      const settings = await fetchWebhookSettings();
-      if (settings) {
-        setWebhookUrl(settings.url);
+      try {
+        const settings = await fetchWebhookSettings();
+        if (settings?.url) {
+          setWebhookUrl(settings.url);
+        } else {
+          console.error('No webhook URL found in settings');
+          toast({
+            title: "System Error",
+            description: "Application not properly configured. Please contact support.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error loading webhook settings:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load application settings. Please try again later.",
+          variant: "destructive",
+        });
       }
     };
     loadWebhookUrl();
-  }, []);
+  }, [toast]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +59,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     if (!webhookUrl) {
       toast({
         title: "Error",
-        description: "No webhook URL configured. Please contact an administrator.",
+        description: "System is not properly configured. Please try again later.",
         variant: "destructive",
       });
       return;
@@ -74,7 +90,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setResult(null);
 
     try {
-      console.log("Making direct webhook call to:", webhookUrl);
+      console.log("Making webhook call to:", webhookUrl);
       
       const directResponse = await callCompanyWebhook(webhookUrl, companyName, questions);
       
@@ -85,16 +101,13 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       const responseData = await directResponse.json();
       console.log("Webhook raw response:", responseData);
       
-      // Parse the webhook response
       const { processedResults, contactInfo } = parseWebhookResponse(responseData);
       
-      // Set the result for UI display
       setResult({
         results: processedResults,
         contact_info: contactInfo
       });
       
-      // Store search results in database
       if (user.id) {
         const storageSuccess = await storeSearchResults(
           user.id, 
@@ -124,10 +137,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } catch (error: any) {
       console.error("Error calling webhook:", error);
       
-      let errorMessage = "Failed to call webhook";
+      let errorMessage = "Failed to process company search";
       
       if (error.message === 'Failed to fetch') {
-        errorMessage = "Network error. Please check your internet connection or the webhook URL.";
+        errorMessage = "Network error. Please try again later.";
       } else {
         errorMessage = error.message || "An unexpected error occurred";
       }

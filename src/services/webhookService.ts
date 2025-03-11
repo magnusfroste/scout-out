@@ -14,6 +14,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
     const { data, error } = await supabase
       .from('webhook_settings')
       .select('*')
+      .limit(1)
       .single();
 
     if (error) {
