@@ -203,52 +203,50 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       const responseData = await directResponse.json();
       console.log("Webhook raw response:", responseData);
       
-      // Process the response
-      let processedResults = null;
-      let contactInfo = null;
+      // Process the response based on new format
+      let processedResults: Answer[] = [];
+      let contactInfo: ContactInfo | undefined = undefined;
       
-      // Handle the format: [{ output: [{ results: [...], contact_info: {...} }] }]
+      // Handle the new format: [{ output: { basic_info: {...}, questions: [...] } }]
       if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
         const output = responseData[0].output;
         
-        if (Array.isArray(output) && output.length > 0) {
-          const firstOutput = output[0];
-          
-          if (firstOutput.results) {
-            processedResults = firstOutput.results;
-          }
-          
-          if (firstOutput.contact_info) {
-            contactInfo = firstOutput.contact_info;
-          }
+        // Extract contact info
+        if (output.basic_info) {
+          contactInfo = {
+            www: output.basic_info.www,
+            contact: output.basic_info.contact,
+            email: output.basic_info.email,
+            phone: output.basic_info.phone
+          };
+        }
+        
+        // Extract questions and answers
+        if (output.questions && Array.isArray(output.questions)) {
+          processedResults = output.questions.map(q => ({
+            question_id: q.id,
+            answer: q.answer
+          }));
         }
       }
       
       // Set the result for UI display
       setResult({
-        results: processedResults || [],
-        contact_info: contactInfo || undefined
+        results: processedResults,
+        contact_info: contactInfo
       });
       
       // Store search results in database
-      if (processedResults) {
-        const storageSuccess = await storeSearchResults(companyName, responseData, processedResults, contactInfo);
-        
-        if (storageSuccess) {
-          console.log("Successfully stored search results to database");
-          onSearch(); // Trigger refetch of searches
-        } else {
-          console.warn("Failed to store search results to database");
-          toast({
-            title: "Warning",
-            description: "Search results were retrieved but could not be saved to history.",
-          });
-        }
+      const storageSuccess = await storeSearchResults(companyName, responseData, processedResults, contactInfo);
+      
+      if (storageSuccess) {
+        console.log("Successfully stored search results to database");
+        onSearch(); // Trigger refetch of searches
       } else {
-        console.warn("No processed results found in webhook response");
+        console.warn("Failed to store search results to database");
         toast({
           title: "Warning",
-          description: "Received response from webhook, but no valid answers could be extracted.",
+          description: "Search results were retrieved but could not be saved to history.",
         });
       }
       
