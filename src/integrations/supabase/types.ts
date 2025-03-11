@@ -178,18 +178,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          mybusiness_url: string | null
           updated_at: string | null
           url: string
         }
         Insert: {
           created_at?: string | null
           id?: string
+          mybusiness_url?: string | null
           updated_at?: string | null
           url?: string
         }
         Update: {
           created_at?: string | null
           id?: string
+          mybusiness_url?: string | null
           updated_at?: string | null
           url?: string
         }
