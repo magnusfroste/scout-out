@@ -18,7 +18,7 @@ const Settings = () => {
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
-      if (!user) return;
+      if (!user || !userProfile?.is_admin) return;
       
       setIsLoading(true);
       try {
@@ -32,19 +32,11 @@ const Settings = () => {
           console.log(`Set webhook URL: ${settings.url}`);
           console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
         } else {
-          console.warn('No webhook settings found or user does not have access');
-          if (userProfile?.is_admin) {
-            toast({
-              title: "Information",
-              description: "No webhook settings found. You can create them now.",
-            });
-          } else {
-            toast({
-              title: "Access Denied",
-              description: "You need admin privileges to view webhook settings.",
-              variant: "destructive",
-            });
-          }
+          console.warn('No webhook settings found');
+          toast({
+            title: "Information",
+            description: "No webhook settings found. You can create them now.",
+          });
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
@@ -58,16 +50,21 @@ const Settings = () => {
       }
     };
 
-    // Only attempt to load settings if the user is logged in and not currently loading
-    if (!loading && user) {
+    // Only attempt to load settings if the user is logged in, is admin, and not currently loading
+    if (!loading && user && userProfile?.is_admin) {
       loadWebhookSettings();
     } else if (!loading) {
       setIsLoading(false);
     }
   }, [loading, user, userProfile]);
 
-  // Redirect if not admin
+  // If user is not logged in or not an admin, redirect to dashboard
   if (!loading && (!user || !userProfile?.is_admin)) {
+    toast({
+      title: "Access Denied",
+      description: "You need admin privileges to access this page.",
+      variant: "destructive",
+    });
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -103,6 +100,15 @@ const Settings = () => {
     }
   };
 
+  // Show loading state while checking authentication
+  if (loading || (user && !userProfile)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <p className="text-lg">Loading settings...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
@@ -117,16 +123,12 @@ const Settings = () => {
                 <CardTitle>Webhook Configuration</CardTitle>
               </CardHeader>
               <CardContent>
-                {userProfile?.is_admin ? (
-                  <WebhookForm 
-                    webhookUrl={webhookUrl}
-                    setWebhookUrl={handleWebhookUpdate}
-                    isDisabled={isLoading}
-                    showDescription={true}
-                  />
-                ) : (
-                  <p className="text-red-500">You need admin privileges to manage webhook settings.</p>
-                )}
+                <WebhookForm 
+                  webhookUrl={webhookUrl}
+                  setWebhookUrl={handleWebhookUpdate}
+                  isDisabled={isLoading}
+                  showDescription={true}
+                />
               </CardContent>
             </Card>
             
@@ -135,16 +137,12 @@ const Settings = () => {
                 <CardTitle>My Business Webhook Configuration</CardTitle>
               </CardHeader>
               <CardContent>
-                {userProfile?.is_admin ? (
-                  <MyBusinessWebhookForm 
-                    webhookUrl={myBusinessWebhookUrl}
-                    setWebhookUrl={handleMyBusinessWebhookUpdate}
-                    isDisabled={isLoading}
-                    showDescription={true}
-                  />
-                ) : (
-                  <p className="text-red-500">You need admin privileges to manage My Business webhook settings.</p>
-                )}
+                <MyBusinessWebhookForm 
+                  webhookUrl={myBusinessWebhookUrl}
+                  setWebhookUrl={handleMyBusinessWebhookUpdate}
+                  isDisabled={isLoading}
+                  showDescription={true}
+                />
               </CardContent>
             </Card>
           </div>
