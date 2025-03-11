@@ -49,12 +49,10 @@ const Settings = () => {
       }
     };
 
-    if (user && userProfile?.is_admin) {
+    if (!loading) {
       loadWebhookSettings();
-    } else {
-      setIsLoading(false);
     }
-  }, [user, userProfile]);
+  }, [loading]);
 
   // Redirect if not admin
   if (!loading && (!user || !userProfile?.is_admin)) {
