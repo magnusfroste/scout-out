@@ -5,19 +5,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import WebhookForm from '@/components/dashboard/WebhookForm';
+import MyBusinessWebhookForm from '@/components/dashboard/MyBusinessWebhookForm';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { fetchWebhookSettings, updateWebhookSettings } from '@/services/webhookService';
+import { fetchWebhookSettings, updateWebhookSettings, updateMyBusinessWebhookSettings } from '@/services/webhookService';
 
 const Settings = () => {
   const { user, loading, userProfile } = useAuth();
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [myBusinessWebhookUrl, setMyBusinessWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
       const settings = await fetchWebhookSettings();
       if (settings) {
-        setWebhookUrl(settings.url);
+        setWebhookUrl(settings.url || '');
+        setMyBusinessWebhookUrl(settings.mybusiness_url || '');
       }
       setIsLoading(false);
     };
@@ -37,6 +40,13 @@ const Settings = () => {
     }
   };
 
+  const handleMyBusinessWebhookUpdate = async (newUrl: string) => {
+    const success = await updateMyBusinessWebhookSettings(newUrl);
+    if (success) {
+      setMyBusinessWebhookUrl(newUrl);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
@@ -45,19 +55,35 @@ const Settings = () => {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Admin Settings</h1>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Webhook Configuration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <WebhookForm 
-                webhookUrl={webhookUrl}
-                setWebhookUrl={handleWebhookUpdate}
-                isDisabled={isLoading}
-                showDescription={false}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Webhook Configuration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <WebhookForm 
+                  webhookUrl={webhookUrl}
+                  setWebhookUrl={handleWebhookUpdate}
+                  isDisabled={isLoading}
+                  showDescription={false}
+                />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>My Business Webhook Configuration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MyBusinessWebhookForm 
+                  webhookUrl={myBusinessWebhookUrl}
+                  setWebhookUrl={handleMyBusinessWebhookUpdate}
+                  isDisabled={isLoading}
+                  showDescription={true}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
       
