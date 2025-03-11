@@ -23,8 +23,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
   const {
     companyName,
     setCompanyName,
-    webhookUrl,
-    updateWebhookUrl: setWebhookUrl,
     isLoading,
     isDeductingCredit,
     result,
@@ -36,8 +34,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
       <SearchForm 
         companyName={companyName}
         setCompanyName={setCompanyName}
-        webhookUrl={webhookUrl}
-        setWebhookUrl={setWebhookUrl}
         isLoading={isLoading}
         isDeductingCredit={isDeductingCredit}
         questionsCount={questions.length}

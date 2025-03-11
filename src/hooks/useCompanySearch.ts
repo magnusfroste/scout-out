@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,10 +10,10 @@ import { Question, SearchResultType, ContactInfo } from '@/types/company';
 
 export const useCompanySearch = (questions: Question[], onSearch: () => void) => {
   const [companyName, setCompanyName] = useState('');
-  const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SearchResultType | null>(null);
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState('');
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
@@ -146,8 +145,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   return {
     companyName,
     setCompanyName,
-    webhookUrl,
-    updateWebhookUrl: setWebhookUrl,
     isLoading,
     isDeductingCredit,
     result,
