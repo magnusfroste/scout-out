@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -13,6 +12,43 @@ export interface WebhookSettings {
 export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> => {
   try {
     console.log('Fetching webhook settings from Supabase');
+    
+    // First check if the user has admin privileges
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Error getting current user:', userError);
+      return null;
+    }
+    
+    if (!userData.user) {
+      console.error('No authenticated user found');
+      return null;
+    }
+    
+    // Get the user's profile to check admin status
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userData.user.id)
+      .single();
+      
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+      return null;
+    }
+    
+    if (!profileData.is_admin) {
+      console.error('User is not an admin');
+      toast({
+        title: "Access Denied",
+        description: "You need admin privileges to access webhook settings",
+        variant: "destructive",
+      });
+      return null;
+    }
+    
+    // Now fetch the webhook settings
     const { data, error } = await supabase
       .from('webhook_settings')
       .select('*')
@@ -23,18 +59,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
       console.error('Error fetching webhook settings:', error);
       if (error.code === 'PGRST116') {
         // No rows found
-        console.log('No webhook settings found');
-        return null;
-      }
-      
-      if (error.code === 'PGRST301') {
-        // RLS policy error
-        console.error('Row Level Security policy error. User may not have admin access to webhook settings.');
-        toast({
-          title: "Access Error",
-          description: "You don't have permission to access webhook settings. Admin privileges required.",
-          variant: "destructive",
-        });
+        console.log('No webhook settings found, will create new settings');
         return null;
       }
       

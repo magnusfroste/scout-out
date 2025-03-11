@@ -15,51 +15,56 @@ const Settings = () => {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [myBusinessWebhookUrl, setMyBusinessWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [adminChecked, setAdminChecked] = useState(false);
 
   useEffect(() => {
-    const loadWebhookSettings = async () => {
-      if (!user || !userProfile?.is_admin) return;
-      
-      setIsLoading(true);
-      try {
-        console.log('Fetching webhook settings...');
-        const settings = await fetchWebhookSettings();
-        console.log('Webhook settings received:', settings);
-        
-        if (settings) {
-          setWebhookUrl(settings.url || '');
-          setMyBusinessWebhookUrl(settings.mybusiness_url || '');
-          console.log(`Set webhook URL: ${settings.url}`);
-          console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
-        } else {
-          console.warn('No webhook settings found');
-          toast({
-            title: "Information",
-            description: "No webhook settings found. You can create them now.",
-          });
-        }
-      } catch (error) {
-        console.error('Error loading webhook settings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load webhook settings",
-          variant: "destructive",
-        });
-      } finally {
+    // Once authentication loading is done, check if user is admin
+    if (!loading) {
+      if (user && userProfile?.is_admin) {
+        console.log('User is admin, loading webhook settings');
+        loadWebhookSettings();
+      } else {
+        console.log('User is not admin or not logged in');
         setIsLoading(false);
+        setAdminChecked(true);
       }
-    };
-
-    // Only attempt to load settings if the user is logged in, is admin, and not currently loading
-    if (user && userProfile?.is_admin) {
-      loadWebhookSettings();
-    } else if (!loading) {
-      setIsLoading(false);
     }
   }, [loading, user, userProfile]);
 
-  // Show loading state while fetching auth information
-  if (loading) {
+  const loadWebhookSettings = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Fetching webhook settings...');
+      const settings = await fetchWebhookSettings();
+      console.log('Webhook settings received:', settings);
+      
+      if (settings) {
+        setWebhookUrl(settings.url || '');
+        setMyBusinessWebhookUrl(settings.mybusiness_url || '');
+        console.log(`Set webhook URL: ${settings.url}`);
+        console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
+      } else {
+        console.warn('No webhook settings found');
+        toast({
+          title: "Information",
+          description: "No webhook settings found. You can create them now.",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading webhook settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load webhook settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setAdminChecked(true);
+    }
+  };
+
+  // Show loading state while fetching auth information or webhook settings
+  if (loading || (isLoading && !adminChecked)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <p className="text-lg">Loading settings...</p>
@@ -67,8 +72,9 @@ const Settings = () => {
     );
   }
 
-  // Only redirect after loading is complete
-  if (!loading && (!user || !userProfile?.is_admin)) {
+  // Only redirect after admin check is complete
+  if (adminChecked && (!user || !userProfile?.is_admin)) {
+    console.log('Access denied, redirecting to dashboard');
     toast({
       title: "Access Denied",
       description: "You need admin privileges to access this page.",
