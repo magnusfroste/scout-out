@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchWebhookSettings } from '@/services/webhookService';
 
 interface BusinessData {
   summary: string;
@@ -21,6 +21,22 @@ const MyBusiness = () => {
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
   const [salesInfo, setSalesInfo] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [webhookUrl, setWebhookUrl] = useState<string>('');
+
+  useEffect(() => {
+    const loadWebhookSettings = async () => {
+      const settings = await fetchWebhookSettings();
+      if (settings && settings.mybusiness_url) {
+        setWebhookUrl(settings.mybusiness_url);
+      } else {
+        console.warn('No My Business webhook URL configured in settings');
+        // Fall back to the default URL if no webhook URL is configured
+        setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
+      }
+    };
+
+    loadWebhookSettings();
+  }, []);
 
   const handleAnalyzeWebsite = async () => {
     if (!websiteUrl) {
@@ -32,9 +48,18 @@ const MyBusiness = () => {
       return;
     }
 
+    if (!webhookUrl) {
+      toast({
+        title: "Error",
+        description: "Webhook URL is not configured. Please contact an administrator.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await fetch('https://agent.froste.eu/webhook/mybusiness', {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
