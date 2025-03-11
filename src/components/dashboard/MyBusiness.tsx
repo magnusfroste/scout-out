@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponseParser';
 import { Separator } from '@/components/ui/separator';
+import { callCompanyWebhook } from '@/services/companyWebhookService';
 
 interface BusinessData {
   summary: string;
@@ -62,14 +63,15 @@ const MyBusiness = () => {
 
     setIsLoading(true);
     try {
-      // Direct webhook call instead of using the edge function
-      console.log(`Calling webhook directly: ${webhookUrl}`);
+      // Use the same method as company search to avoid CORS issues
+      console.log(`Calling webhook via fetch helper: ${webhookUrl}`);
       
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Mode': 'cors'
         },
         body: JSON.stringify({ 
           website: websiteUrl
