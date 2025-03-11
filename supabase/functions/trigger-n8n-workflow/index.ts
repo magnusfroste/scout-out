@@ -29,7 +29,7 @@ serve(async (req) => {
     }
 
     // Parse the request body as JSON
-    const { company, questions, website, userId, webhookUrl, structuredSchema } = await req.json();
+    const { company, questions, website, userId, webhookUrl } = await req.json();
     
     console.log(`Calling webhook: ${webhookUrl}`);
     
@@ -52,23 +52,9 @@ serve(async (req) => {
       console.log(`Sending webhook request to: ${webhookUrl}`);
       
       // Prepare the request payload
-      let payload = {};
-      
-      if (website) {
-        payload = { website };
-      } else if (company) {
-        payload = { company };
-        
-        if (questions) {
-          payload = { ...payload, questions };
-        }
-      }
-      
-      // If structured schema is provided, include it in the payload
-      if (structuredSchema) {
-        console.log('Including structured schema in payload');
-        payload = { ...payload, schema: structuredSchema };
-      }
+      const payload = website 
+        ? { website } 
+        : { company, questions };
       
       response = await fetch(webhookUrl, {
         method: 'POST',
@@ -112,6 +98,7 @@ serve(async (req) => {
     
     // Get the response data
     let responseData;
+    let contactInfo = null;
     
     try {
       // Parse the webhook response

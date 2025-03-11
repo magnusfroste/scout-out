@@ -1,40 +1,29 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { BusinessData } from '@/types/company';
+import { toast } from '@/hooks/use-toast';
+import { ElevatorPitch } from '@/utils/webhookResponseParser';
+import { ContactInfo } from '@/types/company';
 
-/**
- * Update user profile information
- */
-export const updateProfile = async (userId: string, updates: {
-  first_name?: string;
-  last_name?: string;
-  avatar_url?: string;
-  sales_info?: string;
-  website_url?: string;
-  business_data?: BusinessData;
-}) => {
+export interface UserProfile {
+  id: string;
+  credits: number;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  is_admin: boolean;
+  website_url?: string | null;
+  sales_info?: string | null;
+  business_data?: {
+    elevator_pitch?: ElevatorPitch;
+    contact_info?: ContactInfo;
+  } | null;
+}
+
+export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
-
-    if (error) {
-      throw error;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    return false;
-  }
-};
-
-/**
- * Get user profile data
- */
-export const getProfile = async (userId: string) => {
-  try {
+    console.log('Fetching profile for user:', userId);
+    
+    // Try to get the existing profile
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -42,131 +31,114 @@ export const getProfile = async (userId: string) => {
       .single();
 
     if (error) {
-      throw error;
+      console.error('Error fetching user profile:', error);
+      // If it's not a "not found" error, return null
+      if (error.code !== 'PGRST116') {
+        toast({
+          title: "Profile Error",
+          description: "Could not load your profile. Please try again later.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      // Profile doesn't exist, create one
+      console.log('Profile not found, creating new profile for user:', userId);
+      
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          credits: 50,
+          first_name: null,
+          last_name: null,
+          avatar_url: null,
+          is_admin: false,
+          website_url: null,
+          sales_info: null,
+          business_data: null
+        })
+        .select('*')
+        .single();
+        
+      if (insertError) {
+        console.error('Error creating user profile:', insertError);
+        toast({
+          title: "Profile Error",
+          description: "Could not create user profile. Please try again later.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      console.log('New profile created:', newProfile);
+      return {
+        id: newProfile.id,
+        credits: newProfile.credits || 0,
+        first_name: newProfile.first_name,
+        last_name: newProfile.last_name,
+        avatar_url: newProfile.avatar_url,
+        is_admin: newProfile.is_admin,
+        website_url: newProfile.website_url,
+        sales_info: newProfile.sales_info,
+        business_data: newProfile.business_data
+      } as UserProfile;
     }
-
-    return data;
+    
+    // Profile exists, return it
+    console.log('Profile found:', data);
+    return {
+      id: data.id,
+      credits: data.credits || 0,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      avatar_url: data.avatar_url,
+      is_admin: data.is_admin,
+      website_url: data.website_url,
+      sales_info: data.sales_info,
+      business_data: data.business_data
+    } as UserProfile;
   } catch (error) {
-    console.error('Error fetching profile:', error);
+    console.error('Error in fetchUserProfile:', error);
+    toast({
+      title: "Profile Error",
+      description: "An unexpected error occurred. Please try again later.",
+      variant: "destructive",
+    });
     return null;
   }
 };
 
-/**
- * Add credits to a user's account
- */
-export const addCredits = async (userId: string, amount: number, reason: string) => {
+export const updateUserProfile = async (userId: string, updates: Partial<Omit<UserProfile, 'id'>>) => {
   try {
-    // Get current credits
-    const profile = await getProfile(userId);
-    
-    if (!profile) {
-      throw new Error('Profile not found');
-    }
-    
-    const newCredits = (profile.credits || 0) + amount;
-    
-    // Update credits
-    const { error: updateError } = await supabase
+    const { error } = await supabase
       .from('profiles')
-      .update({ credits: newCredits })
+      .update(updates)
       .eq('id', userId);
-    
-    if (updateError) {
-      throw updateError;
-    }
-    
-    // Log the transaction
-    const { error: logError } = await supabase
-      .from('credit_transactions')
-      .insert({
-        user_id: userId,
-        amount,
-        type: 'add',
-        reason,
-        balance: newCredits
-      });
-    
-    if (logError) {
-      console.error('Error logging credit transaction:', logError);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error adding credits:', error);
-    return false;
-  }
-};
-
-/**
- * Remove credits from a user's account
- */
-export const removeCredits = async (userId: string, amount: number, reason: string) => {
-  try {
-    // Get current credits
-    const profile = await getProfile(userId);
-    
-    if (!profile) {
-      throw new Error('Profile not found');
-    }
-    
-    // Check if user has enough credits
-    if ((profile.credits || 0) < amount) {
-      throw new Error('Not enough credits');
-    }
-    
-    const newCredits = (profile.credits || 0) - amount;
-    
-    // Update credits
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ credits: newCredits })
-      .eq('id', userId);
-    
-    if (updateError) {
-      throw updateError;
-    }
-    
-    // Log the transaction
-    const { error: logError } = await supabase
-      .from('credit_transactions')
-      .insert({
-        user_id: userId,
-        amount: -amount,
-        type: 'remove',
-        reason,
-        balance: newCredits
-      });
-    
-    if (logError) {
-      console.error('Error logging credit transaction:', logError);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error removing credits:', error);
-    throw error;
-  }
-};
-
-/**
- * Get user credit transactions
- */
-export const getCreditTransactions = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('credit_transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    
+      
     if (error) {
-      throw error;
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update your profile. Please try again.",
+        variant: "destructive",
+      });
+      return false;
     }
     
-    return data;
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been successfully updated.",
+    });
+    
+    return true;
   } catch (error) {
-    console.error('Error fetching credit transactions:', error);
-    return [];
+    console.error('Error updating profile:', error);
+    toast({
+      title: "Update Failed",
+      description: "Could not update your profile. Please try again.",
+      variant: "destructive",
+    });
+    return false;
   }
 };
