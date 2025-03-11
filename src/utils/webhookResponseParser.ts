@@ -6,17 +6,41 @@ export type Answer = {
   answer: string;
 };
 
+export type ElevatorPitch = {
+  company_name: string;
+  tagline: string;
+  introduction: string;
+  services: {
+    name: string;
+    description: string;
+  }[];
+  value_proposition: string;
+  client_names: string[];
+  client_testimonials: {
+    client_name: string;
+    title: string;
+    company: string;
+    feedback: string;
+  }[];
+  call_to_action: string;
+};
+
+export type WebhookParseResult = {
+  processedResults: Answer[];
+  contactInfo?: ContactInfo;
+  elevatorPitch?: ElevatorPitch;
+};
+
 /**
  * Parses webhook response data according to the expected format
  * [{ output: { basic_info: {...}, questions: [...] } }]
  * or new format [{ output: "{\"basic_info\":{...},\"answers\":[...]}" }]
+ * or elevator pitch format [{ output: { elevator_pitch: {...} } }]
  */
-export const parseWebhookResponse = (responseData: any): { 
-  processedResults: Answer[];
-  contactInfo?: ContactInfo;
-} => {
+export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   let processedResults: Answer[] = [];
   let contactInfo: ContactInfo | undefined = undefined;
+  let elevatorPitch: ElevatorPitch | undefined = undefined;
   
   console.log('Parsing webhook response:', JSON.stringify(responseData));
   
@@ -37,6 +61,12 @@ export const parseWebhookResponse = (responseData: any): {
       
       // Now handle output as an object
       if (output && typeof output === 'object') {
+        // Extract elevator pitch if it exists
+        if (output.elevator_pitch) {
+          elevatorPitch = output.elevator_pitch as ElevatorPitch;
+          console.log('Extracted elevator pitch:', elevatorPitch);
+        }
+        
         // Extract contact info
         if (output.basic_info) {
           contactInfo = {
@@ -69,6 +99,7 @@ export const parseWebhookResponse = (responseData: any): {
 
   console.log('Processed results:', processedResults);
   console.log('Contact info:', contactInfo);
+  console.log('Elevator pitch:', elevatorPitch);
   
-  return { processedResults, contactInfo };
+  return { processedResults, contactInfo, elevatorPitch };
 };
