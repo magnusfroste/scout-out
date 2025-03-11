@@ -37,10 +37,10 @@ export type WebhookParseResult = {
 };
 
 /**
- * Parses webhook response data according to the expected format
- * [{ output: { basic_info: {...}, questions: [...] } }]
- * or new format [{ output: "{\"basic_info\":{...},\"answers\":[...]}" }]
- * or elevator pitch format [{ output: { elevator_pitch: {...} } }]
+ * Parses webhook response data according to the expected formats:
+ * 1. [{ output: { basic_info: {...}, questions: [...] } }]
+ * 2. [{ output: "{\"basic_info\":{...},\"answers\":[...]}" }]
+ * 3. [{ output: { elevator_pitch: {...} } }]
  */
 export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   let processedResults: Answer[] = [];
@@ -80,14 +80,25 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
             client_value: ep.client_value || ep.value_proposition,
             client_names: ep.client_names || ep.notable_clients,
             notable_clients: ep.notable_clients || ep.client_names,
-            client_testimonials: (ep.client_testimonials || []).map(t => ({
-              client_name: t.client_name || t.name,
-              name: t.name || t.client_name,
-              title: t.title,
-              company: t.company,
-              feedback: t.feedback || t.quote,
-              quote: t.quote || t.feedback
-            })),
+            client_testimonials: Array.isArray(ep.client_testimonials) 
+              ? ep.client_testimonials.map(t => ({
+                  client_name: t.client_name || t.name,
+                  name: t.name || t.client_name,
+                  title: t.title,
+                  company: t.company,
+                  feedback: t.feedback || t.quote,
+                  quote: t.quote || t.feedback
+                }))
+              : Array.isArray(ep.client_feedback) 
+                ? ep.client_feedback.map(t => ({
+                    client_name: t.name,
+                    name: t.name,
+                    title: t.title,
+                    company: t.company,
+                    feedback: t.quote,
+                    quote: t.quote
+                  }))
+                : [],
             call_to_action: ep.call_to_action
           };
           console.log('Extracted elevator pitch:', elevatorPitch);
@@ -101,6 +112,7 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
             email: output.basic_info.email || undefined,
             phone: output.basic_info.phone || undefined
           };
+          console.log('Extracted contact info:', contactInfo);
         }
         
         // Extract questions and answers - handle both formats
@@ -117,15 +129,13 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
             answer: a.answer
           }));
         }
+
+        console.log('Processed results:', processedResults);
       }
     }
   } catch (error) {
     console.error('Error parsing webhook response:', error);
   }
 
-  console.log('Processed results:', processedResults);
-  console.log('Contact info:', contactInfo);
-  console.log('Elevator pitch:', elevatorPitch);
-  
   return { processedResults, contactInfo, elevatorPitch };
 };
