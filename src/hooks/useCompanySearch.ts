@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -99,7 +100,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       }
       
       const responseData = await directResponse.json();
-      console.log("Webhook raw response:", responseData);
       
       const { processedResults, contactInfo } = parseWebhookResponse(responseData);
       
@@ -161,9 +161,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     isLoading,
     isDeductingCredit,
     result,
-    handleSearch,
-    questions
+    handleSearch
   };
 };
-
-export type { SearchResultType, ContactInfo };

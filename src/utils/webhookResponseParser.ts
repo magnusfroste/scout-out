@@ -1,4 +1,3 @@
-
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -69,13 +68,15 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
           about: output.about_us || '',
           services: servicesArray,
           value_proposition: output.delivered_value || '',
-          clients: output.clients || [],
-          testimonials: (output.clients_testimonials || []).map(t => ({
-            name: t.name,
-            position: t.position,
-            company: t.company,
-            testimonial: t.testimonial
-          }))
+          clients: Array.isArray(output.clients) ? output.clients : [],
+          testimonials: Array.isArray(output.clients_testimonials) 
+            ? output.clients_testimonials.map(t => ({
+                name: t.name || '',
+                position: t.position || '',
+                company: t.company || '',
+                testimonial: t.testimonial || ''
+              }))
+            : []
         };
         
         console.log('Extracted elevator pitch:', elevatorPitch);

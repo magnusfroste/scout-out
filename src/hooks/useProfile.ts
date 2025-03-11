@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchUserProfile, updateUserProfile, UserProfile } from '@/services/profileService';
 import { toast } from '@/hooks/use-toast';
 
@@ -8,7 +8,7 @@ export const useProfile = (userId: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (!userId) {
       setLoading(false);
       return;
@@ -32,7 +32,7 @@ export const useProfile = (userId: string | undefined) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   // Fetch profile when userId changes
   useEffect(() => {
@@ -42,7 +42,7 @@ export const useProfile = (userId: string | undefined) => {
       setUserProfile(null);
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, refreshUserProfile]);
 
   const updateProfile = async (updates: Partial<Omit<UserProfile, 'id'>>) => {
     if (!userId) return false;
