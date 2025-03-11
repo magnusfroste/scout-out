@@ -21,6 +21,26 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
 
     if (error) {
       console.error('Error fetching webhook settings:', error);
+      if (error.code === 'PGRST116') {
+        // No rows found
+        return null;
+      }
+      if (error.code === 'PGRST301') {
+        // RLS policy error
+        console.error('Row Level Security policy error. User may not have access to webhook settings.');
+        toast({
+          title: "Access Error",
+          description: "You don't have permission to access webhook settings.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to fetch webhook settings",
+        variant: "destructive",
+      });
       return null;
     }
     

@@ -18,6 +18,8 @@ const Settings = () => {
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
+      if (!user) return;
+      
       setIsLoading(true);
       try {
         console.log('Fetching webhook settings...');
@@ -49,13 +51,13 @@ const Settings = () => {
       }
     };
 
-    // Only attempt to load settings if the user is not currently loading
-    if (!loading) {
-      // Only admins should be able to access this page, but we'll load the settings
-      // regardless to fix the issue with settings not displaying
+    // Only attempt to load settings if the user is logged in and not currently loading
+    if (!loading && user) {
       loadWebhookSettings();
+    } else if (!loading) {
+      setIsLoading(false);
     }
-  }, [loading]);
+  }, [loading, user]);
 
   // Redirect if not admin
   if (!loading && (!user || !userProfile?.is_admin)) {
