@@ -33,10 +33,7 @@ const Dashboard = () => {
 
   const { user, loading, userProfile } = useAuth();
 
-  if (!loading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
-
+  // IMPORTANT: Moving the conditional return after all hooks
   useEffect(() => {
     if (user) {
       fetchQuestions();
@@ -79,6 +76,11 @@ const Dashboard = () => {
       setIsLoadingSearches(false);
     }
   };
+
+  // Move the conditional return here, after all hooks are defined
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
