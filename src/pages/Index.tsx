@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import Navigation from '@/components/Navigation';
+import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import Pricing from '@/components/Pricing';
@@ -22,7 +22,7 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Header />
       <main>
         <Hero />
         <HowItWorks />
