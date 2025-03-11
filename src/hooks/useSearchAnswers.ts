@@ -31,20 +31,26 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
       
       // Store contact info if it exists
       if (searchData.contact_info) {
-        // Safely type cast the contact_info object
-        const contactInfoData = typeof searchData.contact_info === 'object' ? searchData.contact_info : {};
-        
-        const typedContactInfo: ContactInfo = {
-          www: contactInfoData.www || undefined,
-          contact: contactInfoData.contact || undefined,
-          email: contactInfoData.email || undefined,
-          phone: contactInfoData.phone || undefined
-        };
-        
-        setContactInfo(prev => ({
-          ...prev,
-          [searchId]: typedContactInfo
-        }));
+        try {
+          // Ensure contact_info is an object (not an array)
+          const contactInfoData = typeof searchData.contact_info === 'object' && 
+                                 !Array.isArray(searchData.contact_info) ? 
+                                 searchData.contact_info : {};
+          
+          const typedContactInfo: ContactInfo = {
+            www: contactInfoData.www || undefined,
+            contact: contactInfoData.contact || undefined,
+            email: contactInfoData.email || undefined,
+            phone: contactInfoData.phone || undefined
+          };
+          
+          setContactInfo(prev => ({
+            ...prev,
+            [searchId]: typedContactInfo
+          }));
+        } catch (error) {
+          console.error('Error processing contact info:', error, searchData.contact_info);
+        }
       }
       
       // Fetch answers for this search
