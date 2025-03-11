@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -180,29 +179,22 @@ const MyBusiness = () => {
     );
   };
   
-  const ServicesSection = ({ services }: { services?: string[] }) => {
+  const ServicesSection = ({ services }: { services?: ElevatorPitch['services'] }) => {
     if (!services || services.length === 0) return null;
     
     return (
       <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50">
         <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Our Services</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {services.map((service, index) => {
-            // Split the service text into name and description
-            const parts = service.split(':');
-            const name = parts[0].trim();
-            const description = parts.length > 1 ? parts[1].trim() : '';
-            
-            return (
-              <div 
-                key={index} 
-                className="p-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:shadow-md transition-shadow"
-              >
-                <h3 className="text-lg font-medium mb-2 text-slate-800 dark:text-white">{name}</h3>
-                <p className="text-slate-600 dark:text-slate-300">{description}</p>
-              </div>
-            );
-          })}
+          {services.map((service, index) => (
+            <div 
+              key={index} 
+              className="p-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:shadow-md transition-shadow"
+            >
+              <h3 className="text-lg font-medium mb-2 text-slate-800 dark:text-white">{service.name}</h3>
+              <p className="text-slate-600 dark:text-slate-300">{service.description}</p>
+            </div>
+          ))}
         </div>
       </div>
     );

@@ -1,3 +1,4 @@
+
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -9,7 +10,10 @@ export type ElevatorPitch = {
   company_name: string;
   tagline: string;
   about: string;
-  services: string[];
+  services: {
+    name: string;
+    description: string;
+  }[];
   value_proposition: string;
   clients: string[];
   testimonials: {
@@ -31,7 +35,7 @@ export type WebhookParseResult = {
  * [{
  *   output: {
  *     about_us: string,
- *     our_services: string[],
+ *     our_services: { [serviceName: string]: string }, // Now an object with service names as keys
  *     delivered_value: string,
  *     clients: string[],
  *     clients_testimonials: Array<{name, position, company, testimonial}>
@@ -55,11 +59,14 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
         // Get the company name from the URL or use a default
         const companyName = extractCompanyName();
         
+        // Transform our_services from object to array of {name, description}
+        const servicesArray = transformServicesObject(output.our_services || {});
+        
         elevatorPitch = {
           company_name: companyName,
           tagline: extractTagline(output.about_us || ''),
           about: output.about_us || '',
-          services: output.our_services || [],
+          services: servicesArray,
           value_proposition: output.delivered_value || '',
           clients: output.clients || [],
           testimonials: (output.clients_testimonials || []).map(t => ({
@@ -101,6 +108,16 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   }
 
   return { processedResults, contactInfo, elevatorPitch };
+};
+
+/**
+ * Helper function to transform services object to array
+ */
+const transformServicesObject = (servicesObject: Record<string, string>): Array<{name: string; description: string}> => {
+  return Object.entries(servicesObject).map(([name, description]) => ({
+    name,
+    description
+  }));
 };
 
 /**
