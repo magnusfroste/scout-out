@@ -29,11 +29,18 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
         return;
       }
       
-      // Store contact info
+      // Store contact info if it exists
       if (searchData.contact_info) {
+        const typedContactInfo: ContactInfo = {
+          www: searchData.contact_info.www || undefined,
+          contact: searchData.contact_info.contact || undefined,
+          email: searchData.contact_info.email || undefined,
+          phone: searchData.contact_info.phone || undefined
+        };
+        
         setContactInfo(prev => ({
           ...prev,
-          [searchId]: searchData.contact_info
+          [searchId]: typedContactInfo
         }));
       }
       

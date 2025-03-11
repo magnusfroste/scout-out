@@ -1,5 +1,5 @@
 
-import { ContactInfo } from '@/hooks/useCompanySearch';
+import { ContactInfo } from '@/types/company';
 
 export type Answer = {
   question_id: string;
@@ -24,10 +24,10 @@ export const parseWebhookResponse = (responseData: any): {
     // Extract contact info
     if (output.basic_info) {
       contactInfo = {
-        www: output.basic_info.www,
-        contact: output.basic_info.contact,
-        email: output.basic_info.email,
-        phone: output.basic_info.phone
+        www: output.basic_info.www || undefined,
+        contact: output.basic_info.contact || undefined,
+        email: output.basic_info.email || undefined,
+        phone: output.basic_info.phone || undefined
       };
     }
     
