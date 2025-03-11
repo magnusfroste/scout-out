@@ -65,21 +65,16 @@ const Navigation = () => {
         {/* Show main navigation on public pages or when logged out */}
         {(isPublicPage || !user) && (
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link to="/features" className="text-sm font-medium">
-                Features
-              </Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link to="/pricing" className="text-sm font-medium">
-                Pricing
-              </Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link to="/about" className="text-sm font-medium">
-                About
-              </Link>
-            </Button>
+            {/* Fix: Using direct Link components instead of nested in Button */}
+            <Link to="/features" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+              Features
+            </Link>
+            <Link to="/pricing" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+              Pricing
+            </Link>
+            <Link to="/about" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+              About
+            </Link>
           </div>
         )}
         
@@ -89,27 +84,21 @@ const Navigation = () => {
             <>
               {/* Show dashboard link on non-dashboard pages */}
               {location.pathname !== '/dashboard' && (
-                <Button variant="ghost" asChild>
-                  <Link to="/dashboard" className="text-sm font-medium">
-                    Dashboard
-                  </Link>
-                </Button>
+                <Link to="/dashboard" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+                  Dashboard
+                </Link>
               )}
               {/* Show admin settings only for admins */}
               {userProfile?.is_admin && (
-                <Button variant="ghost" asChild>
-                  <Link to="/settings" className="text-sm font-medium">
-                    Settings
-                  </Link>
-                </Button>
+                <Link to="/settings" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+                  Settings
+                </Link>
               )}
               {/* Show profile link on non-profile pages */}
               {location.pathname !== '/profile' && (
-                <Button variant="ghost" asChild>
-                  <Link to="/profile" className="text-sm font-medium">
-                    Profile
-                  </Link>
-                </Button>
+                <Link to="/profile" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+                  Profile
+                </Link>
               )}
               
               <Avatar className="h-8 w-8 border">
@@ -125,10 +114,10 @@ const Navigation = () => {
               </Button>
             </>
           ) : (
-            // Fix: Changed to Button component that directly calls handleSignIn
-            <Button onClick={handleSignIn}>
+            // Fix: Using direct Link component instead of Button with onClick
+            <Link to="/auth" className="inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4">
               Sign In
-            </Button>
+            </Link>
           )}
         </div>
       </div>
