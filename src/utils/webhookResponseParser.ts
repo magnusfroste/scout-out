@@ -17,6 +17,8 @@ export const parseWebhookResponse = (responseData: any): {
   let processedResults: Answer[] = [];
   let contactInfo: ContactInfo | undefined = undefined;
   
+  console.log('Parsing webhook response:', JSON.stringify(responseData));
+  
   // Handle the format: [{ output: { basic_info: {...}, questions: [...] } }]
   if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
     const output = responseData[0].output;
@@ -31,7 +33,7 @@ export const parseWebhookResponse = (responseData: any): {
       };
     }
     
-    // Extract questions and answers
+    // Extract questions and answers - handle both formats (questions and answers arrays)
     if (output.questions && Array.isArray(output.questions)) {
       processedResults = output.questions.map(q => ({
         question_id: q.id,
@@ -40,5 +42,8 @@ export const parseWebhookResponse = (responseData: any): {
     }
   }
 
+  console.log('Processed results:', processedResults);
+  console.log('Contact info:', contactInfo);
+  
   return { processedResults, contactInfo };
 };

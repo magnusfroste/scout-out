@@ -10,6 +10,8 @@ export const callCompanyWebhook = async (
   companyName: string,
   questions: Question[]
 ): Promise<Response> => {
+  console.log('Calling webhook with questions:', JSON.stringify(questions));
+  
   return fetch(webhookUrl, {
     method: 'POST',
     headers: {

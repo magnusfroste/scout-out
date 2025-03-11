@@ -31,11 +31,14 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
       
       // Store contact info if it exists
       if (searchData.contact_info) {
+        // Safely type cast the contact_info object
+        const contactInfoData = typeof searchData.contact_info === 'object' ? searchData.contact_info : {};
+        
         const typedContactInfo: ContactInfo = {
-          www: searchData.contact_info.www || undefined,
-          contact: searchData.contact_info.contact || undefined,
-          email: searchData.contact_info.email || undefined,
-          phone: searchData.contact_info.phone || undefined
+          www: contactInfoData.www || undefined,
+          contact: contactInfoData.contact || undefined,
+          email: contactInfoData.email || undefined,
+          phone: contactInfoData.phone || undefined
         };
         
         setContactInfo(prev => ({
