@@ -11,6 +11,7 @@ import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponsePars
 import { Separator } from '@/components/ui/separator';
 import { callMyBusinessWebhook } from '@/services/myBusinessWebhookService';
 import { ContactInfo } from '@/types/company';
+import { Globe, Mail, Phone, User } from 'lucide-react';
 
 interface BusinessData {
   elevatorPitch?: ElevatorPitch;
@@ -147,103 +148,154 @@ const MyBusiness = () => {
     }
   };
 
-  const renderContactInfo = () => {
-    if (!businessData?.contactInfo) return null;
-    
-    const contactInfo = businessData.contactInfo;
+  // Mini Homepage Components
+  const CompanyHeader = ({ elevatorPitch }: { elevatorPitch?: ElevatorPitch }) => {
+    if (!elevatorPitch) return null;
     
     return (
-      <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-2">
-        <h4 className="text-lg font-medium">Contact Information</h4>
-        {contactInfo.email && contactInfo.email !== "Not Found" && (
-          <p><span className="font-medium">Email:</span> {contactInfo.email}</p>
-        )}
-        {contactInfo.phone && contactInfo.phone !== "Not Found" && (
-          <p><span className="font-medium">Phone:</span> {contactInfo.phone}</p>
-        )}
-        {contactInfo.contact && contactInfo.contact !== "Not Found" && (
-          <p><span className="font-medium">Contact:</span> {contactInfo.contact}</p>
-        )}
-        {contactInfo.www && contactInfo.www !== "Not Found" && (
-          <p>
-            <span className="font-medium">Website:</span>{' '}
-            <a href={contactInfo.www} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-              {contactInfo.www}
-            </a>
-          </p>
-        )}
+      <div className="text-center py-8 px-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-t-lg">
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white">
+          {elevatorPitch.company_name}
+        </h1>
+        <p className="mt-2 text-lg md:text-xl italic text-slate-600 dark:text-slate-300">
+          {elevatorPitch.tagline}
+        </p>
       </div>
     );
   };
-
-  const renderElevatorPitch = () => {
-    if (!businessData?.elevatorPitch) return null;
-    
-    const ep = businessData.elevatorPitch;
-    const introduction = ep.introduction || ep.overview || '';
-    const valueProposition = ep.value_proposition || ep.client_value || '';
-    const clientNames = ep.client_names || ep.notable_clients || [];
+  
+  const CompanyIntroduction = ({ elevatorPitch }: { elevatorPitch?: ElevatorPitch }) => {
+    if (!elevatorPitch) return null;
+    const introduction = elevatorPitch.introduction || elevatorPitch.overview || '';
     
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-xl font-semibold">{ep.company_name}</h3>
-          <p className="text-lg font-medium italic">{ep.tagline}</p>
-          <p className="text-sm text-muted-foreground">{introduction}</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h4 className="text-lg font-medium">Services</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ep.services && ep.services.map((service, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <h5 className="font-semibold">{service.name}</h5>
-                <p className="text-sm">{service.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <h4 className="text-lg font-medium">Value Proposition</h4>
-          <p className="text-sm">{valueProposition}</p>
-        </div>
-        
-        {clientNames && clientNames.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-lg font-medium">Clients</h4>
-            <div className="flex flex-wrap gap-2">
-              {clientNames.map((client, index) => (
-                <span key={index} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-sm">
-                  {client}
-                </span>
-              ))}
+      <div className="py-6 px-6 md:px-8">
+        <p className="text-base md:text-lg text-center max-w-3xl mx-auto text-slate-700 dark:text-slate-200">
+          {introduction}
+        </p>
+      </div>
+    );
+  };
+  
+  const ServicesSection = ({ services }: { services?: { name: string; description: string }[] }) => {
+    if (!services || services.length === 0) return null;
+    
+    return (
+      <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Our Services</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {services.map((service, index) => (
+            <div 
+              key={index} 
+              className="p-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:shadow-md transition-shadow"
+            >
+              <h3 className="text-lg font-medium mb-2 text-slate-800 dark:text-white">{service.name}</h3>
+              <p className="text-slate-600 dark:text-slate-300">{service.description}</p>
             </div>
-          </div>
-        )}
-        
-        {ep.client_testimonials && ep.client_testimonials.length > 0 && (
-          <div className="space-y-4">
-            <h4 className="text-lg font-medium">Testimonials</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ep.client_testimonials.map((testimonial, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-slate-50 dark:bg-slate-800">
-                  <p className="text-sm italic">"{testimonial.feedback || testimonial.quote}"</p>
-                  <p className="text-sm font-medium mt-2">
-                    {testimonial.client_name || testimonial.name}, {testimonial.title}
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  const TestimonialsSection = ({ testimonials }: { testimonials?: ElevatorPitch['client_testimonials'] }) => {
+    if (!testimonials || testimonials.length === 0) return null;
+    
+    return (
+      <div className="py-8 px-6 md:px-8 bg-slate-50 dark:bg-slate-800/30">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">What Our Clients Say</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {testimonials.map((testimonial, index) => (
+            <div key={index} className="p-5 rounded-lg bg-white dark:bg-slate-800 shadow-sm">
+              <p className="italic text-slate-600 dark:text-slate-300 mb-4">"{testimonial.feedback || testimonial.quote}"</p>
+              <div className="flex items-center">
+                <div>
+                  <p className="font-medium text-slate-800 dark:text-white">
+                    {testimonial.client_name || testimonial.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">{testimonial.company}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {testimonial.title}{testimonial.company ? `, ${testimonial.company}` : ''}
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        )}
-        
-        {ep.call_to_action && (
-          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border-l-4 border-blue-500 mt-4">
-            <p className="font-medium text-center">{ep.call_to_action}</p>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  const ClientsSection = ({ clients }: { clients?: string[] }) => {
+    if (!clients || clients.length === 0) return null;
+    
+    return (
+      <div className="py-8 px-6 md:px-8">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Our Clients</h2>
+        <div className="flex flex-wrap justify-center gap-3">
+          {clients.map((client, index) => (
+            <span 
+              key={index} 
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-700 dark:text-slate-200"
+            >
+              {client}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  const CallToAction = ({ cta }: { cta?: string }) => {
+    if (!cta) return null;
+    
+    return (
+      <div className="py-8 px-6 md:px-8 text-center">
+        <div className="p-6 rounded-lg bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 max-w-2xl mx-auto">
+          <p className="text-lg font-medium text-slate-800 dark:text-white">{cta}</p>
+        </div>
+      </div>
+    );
+  };
+  
+  const ContactSection = ({ contactInfo }: { contactInfo?: ContactInfo }) => {
+    if (!contactInfo) return null;
+    
+    return (
+      <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50 rounded-b-lg">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Contact Us</h2>
+        <div className="max-w-md mx-auto space-y-4">
+          {contactInfo.email && contactInfo.email !== "Not Found" && (
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-blue-500" />
+              <span className="text-slate-700 dark:text-slate-200">{contactInfo.email}</span>
+            </div>
+          )}
+          {contactInfo.phone && contactInfo.phone !== "Not Found" && (
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-green-500" />
+              <span className="text-slate-700 dark:text-slate-200">{contactInfo.phone}</span>
+            </div>
+          )}
+          {contactInfo.contact && contactInfo.contact !== "Not Found" && (
+            <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-purple-500" />
+              <span className="text-slate-700 dark:text-slate-200">{contactInfo.contact}</span>
+            </div>
+          )}
+          {contactInfo.www && contactInfo.www !== "Not Found" && (
+            <div className="flex items-center gap-3">
+              <Globe className="h-5 w-5 text-orange-500" />
+              <a 
+                href={contactInfo.www} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {contactInfo.www.replace(/^https?:\/\//, '')}
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -284,17 +336,50 @@ const MyBusiness = () => {
             </div>
 
             {businessData && (
-              <div className="mt-6">
-                <div className="rounded-lg border overflow-hidden">
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800">
-                    {renderElevatorPitch()}
-                  </div>
+              <div className="mt-8 overflow-hidden rounded-lg border shadow">
+                <div className="business-mini-homepage">
+                  <CompanyHeader elevatorPitch={businessData.elevatorPitch} />
+                  <CompanyIntroduction elevatorPitch={businessData.elevatorPitch} />
                   
-                  <Separator />
+                  {businessData.elevatorPitch?.services && businessData.elevatorPitch.services.length > 0 && (
+                    <>
+                      <Separator />
+                      <ServicesSection services={businessData.elevatorPitch?.services} />
+                    </>
+                  )}
                   
-                  <div className="p-6">
-                    {renderContactInfo()}
-                  </div>
+                  {businessData.elevatorPitch?.client_testimonials && businessData.elevatorPitch.client_testimonials.length > 0 && (
+                    <>
+                      <Separator />
+                      <TestimonialsSection testimonials={businessData.elevatorPitch?.client_testimonials} />
+                    </>
+                  )}
+                  
+                  {(businessData.elevatorPitch?.client_names || businessData.elevatorPitch?.notable_clients) && (
+                    <>
+                      <Separator />
+                      <ClientsSection 
+                        clients={
+                          businessData.elevatorPitch?.client_names || 
+                          businessData.elevatorPitch?.notable_clients
+                        } 
+                      />
+                    </>
+                  )}
+                  
+                  {businessData.elevatorPitch?.call_to_action && (
+                    <>
+                      <Separator />
+                      <CallToAction cta={businessData.elevatorPitch?.call_to_action} />
+                    </>
+                  )}
+                  
+                  {businessData.contactInfo && (
+                    <>
+                      <Separator />
+                      <ContactSection contactInfo={businessData.contactInfo} />
+                    </>
+                  )}
                 </div>
               </div>
             )}
