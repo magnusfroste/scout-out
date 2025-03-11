@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Navigation = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -39,10 +40,19 @@ const Navigation = () => {
   const handleSignIn = () => {
     navigate('/auth');
   };
+
+  const getInitials = () => {
+    if (!userProfile?.full_name) return 'U';
+    return userProfile.full_name.split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
   
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container flex h-14 items-center">
+      <div className="container flex h-14 items-center">
         <div className="mr-6 font-bold text-2xl">
           <Link to="/" className="hover:text-primary transition-colors">
             Master Business Agent
@@ -52,15 +62,21 @@ const Navigation = () => {
         {/* Show main navigation on public pages or when logged out */}
         {(isPublicPage || !user) && (
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/features" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-              Features
-            </Link>
-            <Link to="/pricing" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-              Pricing
-            </Link>
-            <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-              About
-            </Link>
+            <Button variant="ghost" asChild>
+              <Link to="/features" className="text-sm font-medium">
+                Features
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/pricing" className="text-sm font-medium">
+                Pricing
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/about" className="text-sm font-medium">
+                About
+              </Link>
+            </Button>
           </div>
         )}
         
@@ -70,22 +86,37 @@ const Navigation = () => {
             <>
               {/* Show dashboard link on non-dashboard pages */}
               {location.pathname !== '/dashboard' && (
-                <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-                  Dashboard
-                </Link>
+                <Button variant="ghost" asChild>
+                  <Link to="/dashboard" className="text-sm font-medium">
+                    Dashboard
+                  </Link>
+                </Button>
               )}
               {/* Show admin settings only for admins */}
               {userProfile?.is_admin && (
-                <Link to="/settings" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-                  Settings
-                </Link>
+                <Button variant="ghost" asChild>
+                  <Link to="/settings" className="text-sm font-medium">
+                    Settings
+                  </Link>
+                </Button>
               )}
               {/* Show profile link on non-profile pages */}
               {location.pathname !== '/profile' && (
-                <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors px-3 py-2">
-                  Profile
-                </Link>
+                <Button variant="ghost" asChild>
+                  <Link to="/profile" className="text-sm font-medium">
+                    Profile
+                  </Link>
+                </Button>
               )}
+              
+              <Avatar className="h-8 w-8 border">
+                {userProfile?.avatar_url ? (
+                  <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
+                ) : (
+                  <AvatarFallback>{getInitials()}</AvatarFallback>
+                )}
+              </Avatar>
+              
               <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
               </Button>
@@ -96,7 +127,7 @@ const Navigation = () => {
             </Button>
           )}
         </div>
-      </nav>
+      </div>
     </header>
   );
 };
