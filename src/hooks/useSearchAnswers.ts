@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from '@/types/company';
+import { Json } from '@/integrations/supabase/types';
 
 export interface CompanyAnswer {
   id: string;
@@ -37,11 +38,12 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
                                  !Array.isArray(searchData.contact_info) ? 
                                  searchData.contact_info : {};
           
+          // Safely extract string values or undefined
           const typedContactInfo: ContactInfo = {
-            www: contactInfoData.www || undefined,
-            contact: contactInfoData.contact || undefined,
-            email: contactInfoData.email || undefined,
-            phone: contactInfoData.phone || undefined
+            www: typeof contactInfoData.www === 'string' ? contactInfoData.www : undefined,
+            contact: typeof contactInfoData.contact === 'string' ? contactInfoData.contact : undefined,
+            email: typeof contactInfoData.email === 'string' ? contactInfoData.email : undefined,
+            phone: typeof contactInfoData.phone === 'string' ? contactInfoData.phone : undefined
           };
           
           setContactInfo(prev => ({
