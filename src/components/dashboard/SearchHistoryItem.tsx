@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchAnswers from './SearchAnswers';
 import { CompanyAnswer } from '@/hooks/useSearchAnswers';
-import { ContactInfo } from '@/hooks/useCompanySearch';
+import { ContactInfo } from '@/types/company';
 
 export type CompanySearch = {
   id: string;

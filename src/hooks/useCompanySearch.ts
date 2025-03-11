@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +6,7 @@ import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import { storeSearchResults } from '@/services/companySearchService';
 import { callCompanyWebhook } from '@/services/companyWebhookService';
-import { Question, SearchResultType, ContactInfo } from '@/types/company';
+import { Question, SearchResultType } from '@/types/company';
 
 export const useCompanySearch = (questions: Question[], onSearch: () => void) => {
   const [companyName, setCompanyName] = useState('');

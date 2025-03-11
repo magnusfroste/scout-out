@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContactInfo } from '@/hooks/useCompanySearch';
+import { ContactInfo } from '@/types/company';
 
 export type Answer = {
   question_id: string;
