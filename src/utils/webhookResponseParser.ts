@@ -45,6 +45,26 @@ export type ElevatorPitch = {
   call_to_action?: string;
 };
 
+// This is the structure we expect from the LLM when using structured output
+export type StructuredElevatorPitch = {
+  company_name: string;
+  tagline: string;
+  about_us: string;
+  services: Array<{
+    name: string;
+    description: string;
+  }>;
+  value_clients_experience: string;
+  clients: string[];
+  client_testimonials: Array<{
+    name: string;
+    position: string;
+    company: string;
+    quote: string;
+  }>;
+  call_to_action?: string;
+};
+
 export type WebhookParseResult = {
   processedResults: Answer[];
   contactInfo?: ContactInfo;
@@ -57,6 +77,7 @@ export type WebhookParseResult = {
  * 2. [{ output: "{\"basic_info\":{...},\"answers\":[...]}" }]
  * 3. [{ output: { elevator_pitch: {...} } }]
  * 4. Direct N8N output format without wrapper
+ * 5. Structured JSON output from LLM using the StructuredElevatorPitch format
  */
 export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   let processedResults: Answer[] = [];
@@ -90,8 +111,13 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
     
     // Now handle output as an object with different possible structures
     if (output && typeof output === 'object') {
+      // Check if this is the structured LLM output format
+      if (isStructuredElevatorPitch(output)) {
+        console.log('Detected structured elevator pitch format');
+        extractStructuredElevatorPitch(output);
+      }
       // Extract elevator pitch format
-      if (output.elevator_pitch) {
+      else if (output.elevator_pitch) {
         extractElevatorPitch(output.elevator_pitch);
       } 
       // Direct elevator pitch data without wrapper
@@ -123,6 +149,59 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
       }
 
       console.log('Processed results:', processedResults);
+    }
+    
+    // Helper function to check if the output matches our structured format
+    function isStructuredElevatorPitch(data: any): boolean {
+      return (
+        data.company_name &&
+        data.tagline &&
+        data.about_us &&
+        Array.isArray(data.services) &&
+        data.value_clients_experience !== undefined &&
+        Array.isArray(data.clients) &&
+        Array.isArray(data.client_testimonials)
+      );
+    }
+    
+    // Helper function to extract structured elevator pitch data
+    function extractStructuredElevatorPitch(data: StructuredElevatorPitch) {
+      elevatorPitch = {
+        company_name: data.company_name,
+        tagline: data.tagline,
+        about_us: data.about_us,
+        introduction: data.about_us, // For compatibility with existing code
+        overview: data.about_us,     // For compatibility with existing code
+        services: data.services,
+        value_clients_experience: data.value_clients_experience,
+        value_proposition: data.value_clients_experience, // For compatibility
+        client_value: data.value_clients_experience,      // For compatibility
+        clients: data.clients,
+        client_names: data.clients,      // For compatibility
+        notable_clients: data.clients,   // For compatibility
+        client_testimonials: data.client_testimonials.map(t => ({
+          name: t.name,
+          client_name: t.name,  // For compatibility
+          position: t.position,
+          title: t.position,    // For compatibility
+          company: t.company,
+          quote: t.quote,
+          testimonial: t.quote, // For compatibility
+          feedback: t.quote     // For compatibility
+        })),
+        client_feedback: data.client_testimonials.map(t => ({
+          name: t.name,
+          client_name: t.name,
+          position: t.position,
+          title: t.position,
+          company: t.company,
+          quote: t.quote,
+          testimonial: t.quote,
+          feedback: t.quote
+        })),
+        call_to_action: data.call_to_action || ''
+      };
+      console.log('Extracted structured elevator pitch:', elevatorPitch);
     }
     
     // Helper function to extract and normalize elevator pitch data
@@ -181,4 +260,3 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
 
   return { processedResults, contactInfo, elevatorPitch };
 };
-

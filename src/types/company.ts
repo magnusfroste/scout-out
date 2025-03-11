@@ -16,6 +16,11 @@ export type ContactInfo = {
   phone?: string;
 };
 
+export type BusinessData = {
+  elevator_pitch?: any;
+  contact_info?: ContactInfo;
+};
+
 export type SearchResultType = {
   results?: Answer[];
   contact_info?: ContactInfo;
