@@ -1,4 +1,3 @@
-
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -35,7 +34,7 @@ export type WebhookParseResult = {
  * [{
  *   output: {
  *     about_us: string,
- *     our_services: { [serviceName: string]: string }, // Now an object with service names as keys
+ *     our_services: { [serviceName: string]: string }, // Object with service names as keys
  *     delivered_value: string,
  *     clients: string[],
  *     clients_testimonials: Array<{name, position, company, testimonial}>
@@ -80,6 +79,16 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
         console.log('Extracted elevator pitch:', elevatorPitch);
       }
       
+      // Extract contact info
+      if (output.basic_info) {
+        contactInfo = {
+          www: output.basic_info.www || undefined,
+          contact: output.basic_info.contact || undefined,
+          email: output.basic_info.email || undefined,
+          phone: output.basic_info.phone || undefined
+        };
+      }
+      
       // Extract processed results (for company search feature)
       if (output.questions && Array.isArray(output.questions)) {
         processedResults = output.questions.map(q => ({
@@ -91,16 +100,6 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
           question_id: a.id,
           answer: a.answer
         }));
-      }
-      
-      // Extract contact info
-      if (output.basic_info) {
-        contactInfo = {
-          www: output.basic_info.www || undefined,
-          contact: output.basic_info.contact || undefined,
-          email: output.basic_info.email || undefined,
-          phone: output.basic_info.phone || undefined
-        };
       }
     }
   } catch (error) {
