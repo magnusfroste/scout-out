@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponseParser';
 import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
 
 interface BusinessData {
   summary: string;
@@ -51,28 +51,39 @@ const MyBusiness = () => {
       return;
     }
 
+    if (!webhookUrl) {
+      toast({
+        title: "Error",
+        description: "Webhook URL is not configured",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Use our edge function as a proxy to call the webhook
-      const { data, error } = await supabase.functions.invoke('trigger-n8n-workflow', {
-        body: { 
-          website: websiteUrl,
-          webhookUrl: webhookUrl
-        },
-      });
-
-      if (error) {
-        throw new Error(`Edge function error: ${error.message}`);
-      }
-
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to analyze website');
-      }
-
-      console.log('Raw webhook response via edge function:', data);
+      // Direct webhook call instead of using the edge function
+      console.log(`Calling webhook directly: ${webhookUrl}`);
       
-      const rawData = data.data;
-      const parsedData = parseWebhookResponse(rawData);
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          website: websiteUrl
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Webhook request failed: ${response.status}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('Raw webhook response:', responseData);
+      
+      const parsedData = parseWebhookResponse(responseData);
       console.log('Parsed data:', parsedData);
       
       const newBusinessData: BusinessData = {
@@ -118,7 +129,7 @@ const MyBusiness = () => {
       console.error('Error analyzing website:', error);
       toast({
         title: "Error",
-        description: "Failed to analyze your business website. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze your business website. Please try again.",
         variant: "destructive",
       });
     } finally {
