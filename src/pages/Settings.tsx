@@ -51,14 +51,23 @@ const Settings = () => {
     };
 
     // Only attempt to load settings if the user is logged in, is admin, and not currently loading
-    if (!loading && user && userProfile?.is_admin) {
+    if (user && userProfile?.is_admin) {
       loadWebhookSettings();
     } else if (!loading) {
       setIsLoading(false);
     }
   }, [loading, user, userProfile]);
 
-  // If user is not logged in or not an admin, redirect to dashboard
+  // Show loading state while fetching auth information
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <p className="text-lg">Loading settings...</p>
+      </div>
+    );
+  }
+
+  // Only redirect after loading is complete
   if (!loading && (!user || !userProfile?.is_admin)) {
     toast({
       title: "Access Denied",
@@ -99,15 +108,6 @@ const Settings = () => {
       });
     }
   };
-
-  // Show loading state while checking authentication
-  if (loading || (user && !userProfile)) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <p className="text-lg">Loading settings...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
