@@ -1,3 +1,4 @@
+
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -55,8 +56,9 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
       
       // Extract my business data if available
       if (output.about_us || output.our_services || output.clients) {
-        // Get the company name from the URL or use a default
-        const companyName = extractCompanyName();
+        // Get company name from output data or extract from URL
+        const companyName = output.company_name || output.name || extractCompanyName();
+        console.log('Company name determined as:', companyName);
         
         // Transform our_services from object to array of {name, description}
         const servicesArray = transformServicesObject(output.our_services || {});
@@ -126,22 +128,30 @@ const extractCompanyName = (): string => {
   try {
     // Try to get the website URL from the application state
     const websiteUrl = window.location.href;
+    console.log('Current URL for company name extraction:', websiteUrl);
+    
     if (websiteUrl) {
       const url = new URL(websiteUrl);
       const hostname = url.hostname;
+      console.log('Hostname extracted:', hostname);
       
       // Extract domain name without TLD
       const domainParts = hostname.split('.');
+      console.log('Domain parts:', domainParts);
+      
       if (domainParts.length >= 2) {
         // Use the second-to-last part (domain name without TLD)
         const name = domainParts[domainParts.length - 2];
-        return name.charAt(0).toUpperCase() + name.slice(1);
+        const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+        console.log('Extracted company name from URL:', capitalizedName);
+        return capitalizedName;
       }
     }
   } catch (e) {
     console.error('Error extracting company name:', e);
   }
   
+  console.log('Using default company name: "Your Company"');
   return 'Your Company';
 };
 
