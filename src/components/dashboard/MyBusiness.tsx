@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,11 +19,17 @@ interface BusinessData {
 
 const MyBusiness = () => {
   const { user, userProfile, updateProfile } = useAuth();
-  const [websiteUrl, setWebsiteUrl] = useState<string>(userProfile?.website_url || '');
+  const [websiteUrl, setWebsiteUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [webhookUrl, setWebhookUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (userProfile?.website_url) {
+      setWebsiteUrl(userProfile.website_url);
+    }
+  }, [userProfile?.website_url]);
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
@@ -45,7 +50,6 @@ const MyBusiness = () => {
 
     loadWebhookSettings();
     
-    // Load saved business data if available
     if (userProfile?.business_data) {
       const savedData: BusinessData = {
         elevatorPitch: userProfile.business_data.elevator_pitch,
@@ -148,7 +152,6 @@ const MyBusiness = () => {
     }
   };
 
-  // Mini Homepage Components
   const CompanyHeader = ({ elevatorPitch }: { elevatorPitch?: ElevatorPitch }) => {
     if (!elevatorPitch) return null;
     
@@ -305,9 +308,9 @@ const MyBusiness = () => {
       <Card>
         <CardHeader>
           <CardTitle>My Business Profile</CardTitle>
-          {userProfile?.business_data?.elevator_pitch && (
+          {businessData?.elevatorPitch?.company_name && (
             <CardDescription>
-              Showing saved business profile for {userProfile.business_data.elevator_pitch.company_name}
+              Showing business profile for {businessData.elevatorPitch.company_name}
             </CardDescription>
           )}
         </CardHeader>
