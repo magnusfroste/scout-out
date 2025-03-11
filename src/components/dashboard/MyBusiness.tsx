@@ -4,7 +4,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWebhookSettings } from '@/services/webhookService';
@@ -14,8 +13,6 @@ import { callMyBusinessWebhook } from '@/services/myBusinessWebhookService';
 import { ContactInfo } from '@/types/company';
 
 interface BusinessData {
-  summary: string;
-  salesInfo: string;
   elevatorPitch?: ElevatorPitch;
   contactInfo?: ContactInfo;
 }
@@ -25,7 +22,6 @@ const MyBusiness = () => {
   const [websiteUrl, setWebsiteUrl] = useState<string>(userProfile?.website_url || '');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
-  const [salesInfo, setSalesInfo] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [webhookUrl, setWebhookUrl] = useState<string>('');
 
@@ -51,22 +47,11 @@ const MyBusiness = () => {
     // Load saved business data if available
     if (userProfile?.business_data) {
       const savedData: BusinessData = {
-        summary: '',
-        salesInfo: userProfile.sales_info || '',
         elevatorPitch: userProfile.business_data.elevator_pitch,
         contactInfo: userProfile.business_data.contact_info
       };
       
-      // Reconstruct summary from saved data if available
-      if (savedData.elevatorPitch) {
-        const ep = savedData.elevatorPitch;
-        const introduction = ep.introduction || ep.overview || '';
-        const valueProposition = ep.value_proposition || ep.client_value || '';
-        savedData.summary = `${ep.company_name}: ${ep.tagline}\n\n${introduction}\n\n${valueProposition}`;
-      }
-      
       setBusinessData(savedData);
-      setSalesInfo(savedData.salesInfo);
       console.log('Loaded saved business data:', savedData);
     }
   }, [userProfile]);
@@ -108,42 +93,11 @@ const MyBusiness = () => {
       console.log('Parsed data:', parsedData);
       
       const newBusinessData: BusinessData = {
-        summary: '',
-        salesInfo: '',
         elevatorPitch: parsedData.elevatorPitch,
         contactInfo: parsedData.contactInfo
       };
       
-      if (parsedData.elevatorPitch) {
-        const ep = parsedData.elevatorPitch;
-        
-        // Use either introduction or overview field
-        const introduction = ep.introduction || ep.overview || '';
-        const valueProposition = ep.value_proposition || ep.client_value || '';
-        
-        newBusinessData.summary = `${ep.company_name}: ${ep.tagline}\n\n${introduction}\n\n${valueProposition}`;
-        
-        let servicesText = "Our Services:\n";
-        if (ep.services && Array.isArray(ep.services)) {
-          ep.services.forEach(service => {
-            servicesText += `- ${service.name}: ${service.description}\n`;
-          });
-        }
-        
-        let testimonialsText = "\nWhat Our Clients Say:\n";
-        if (ep.client_testimonials && Array.isArray(ep.client_testimonials)) {
-          ep.client_testimonials.forEach(testimonial => {
-            const quote = testimonial.feedback || testimonial.quote || '';
-            const name = testimonial.client_name || testimonial.name || '';
-            testimonialsText += `"${quote}" - ${name}, ${testimonial.title} at ${testimonial.company}\n\n`;
-          });
-        }
-        
-        newBusinessData.salesInfo = servicesText + testimonialsText + (ep.call_to_action ? `\n${ep.call_to_action}` : '');
-      }
-      
       setBusinessData(newBusinessData);
-      setSalesInfo(newBusinessData.salesInfo);
       
       if (user && websiteUrl !== userProfile?.website_url) {
         await updateProfile({ website_url: websiteUrl });
@@ -165,14 +119,12 @@ const MyBusiness = () => {
     }
   };
 
-  const handleSaveSalesInfo = async () => {
+  const handleSaveBusinessData = async () => {
     if (!user) return;
     
     setIsSaving(true);
     try {
-      // Save both sales info text and complete business data
       await updateProfile({ 
-        sales_info: salesInfo,
         business_data: {
           elevator_pitch: businessData?.elevatorPitch,
           contact_info: businessData?.contactInfo
@@ -193,6 +145,35 @@ const MyBusiness = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const renderContactInfo = () => {
+    if (!businessData?.contactInfo) return null;
+    
+    const contactInfo = businessData.contactInfo;
+    
+    return (
+      <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-2">
+        <h4 className="text-lg font-medium">Contact Information</h4>
+        {contactInfo.email && contactInfo.email !== "Not Found" && (
+          <p><span className="font-medium">Email:</span> {contactInfo.email}</p>
+        )}
+        {contactInfo.phone && contactInfo.phone !== "Not Found" && (
+          <p><span className="font-medium">Phone:</span> {contactInfo.phone}</p>
+        )}
+        {contactInfo.contact && contactInfo.contact !== "Not Found" && (
+          <p><span className="font-medium">Contact:</span> {contactInfo.contact}</p>
+        )}
+        {contactInfo.www && contactInfo.www !== "Not Found" && (
+          <p>
+            <span className="font-medium">Website:</span>{' '}
+            <a href={contactInfo.www} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              {contactInfo.www}
+            </a>
+          </p>
+        )}
+      </div>
+    );
   };
 
   const renderElevatorPitch = () => {
@@ -271,7 +252,7 @@ const MyBusiness = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>My Business Analysis</CardTitle>
+          <CardTitle>My Business Profile</CardTitle>
           {userProfile?.business_data?.elevator_pitch && (
             <CardDescription>
               Showing saved business profile for {userProfile.business_data.elevator_pitch.company_name}
@@ -298,32 +279,22 @@ const MyBusiness = () => {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Enter your business website URL to generate a summary and sales information
+                Enter your business website URL to generate a business profile
               </p>
             </div>
 
             {businessData && (
-              <div className="space-y-6 mt-6">
-                {businessData.elevatorPitch && (
-                  <>
-                    <h3 className="text-xl font-semibold">Business Profile</h3>
+              <div className="mt-6">
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800">
                     {renderElevatorPitch()}
-                    <Separator className="my-4" />
-                  </>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="salesInfo">Sales Information</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Review and edit the generated sales information before saving
-                  </p>
-                  <Textarea
-                    id="salesInfo"
-                    value={salesInfo}
-                    onChange={(e) => setSalesInfo(e.target.value)}
-                    rows={6}
-                    className="resize-none"
-                  />
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="p-6">
+                    {renderContactInfo()}
+                  </div>
                 </div>
               </div>
             )}
@@ -332,11 +303,11 @@ const MyBusiness = () => {
         {businessData && (
           <CardFooter>
             <Button 
-              onClick={handleSaveSalesInfo} 
+              onClick={handleSaveBusinessData} 
               disabled={isSaving}
               className="ml-auto"
             >
-              {isSaving ? "Saving..." : "Save Business Information"}
+              {isSaving ? "Saving..." : "Save Business Profile"}
             </Button>
           </CardFooter>
         )}

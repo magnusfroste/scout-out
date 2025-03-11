@@ -96,7 +96,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       is_admin: data.is_admin,
       website_url: data.website_url,
       sales_info: data.sales_info,
-      business_data: data.business_data
+      business_data: data.business_data || null
     } as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
