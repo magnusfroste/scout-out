@@ -11,19 +11,24 @@ export type ElevatorPitch = {
   tagline: string;
   introduction?: string;
   overview?: string;
+  about_us?: string;
   services: {
     name: string;
     description: string;
   }[];
   value_proposition?: string;
+  value_clients_experience?: string;
   client_value?: string;
   client_names?: string[];
+  clients?: string[];
   notable_clients?: string[];
   client_testimonials?: {
     client_name?: string;
     name?: string;
-    title: string;
-    company: string;
+    position?: string;
+    title?: string;
+    company?: string;
+    testimonial?: string;
     feedback?: string;
     quote?: string;
   }[];
@@ -71,35 +76,42 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
           const ep = output.elevator_pitch;
           elevatorPitch = {
             company_name: ep.company_name,
-            tagline: ep.tagline,
-            // Handle both old and new schema fields
-            introduction: ep.introduction || ep.overview,
-            overview: ep.overview || ep.introduction,
-            services: ep.services || [],
-            value_proposition: ep.value_proposition || ep.client_value,
-            client_value: ep.client_value || ep.value_proposition,
-            client_names: ep.client_names || ep.notable_clients,
-            notable_clients: ep.notable_clients || ep.client_names,
+            tagline: ep.tagline || '',
+            // Handle different naming conventions for the same conceptual fields
+            introduction: ep.introduction || ep.overview || ep.about_us || '',
+            overview: ep.overview || ep.introduction || ep.about_us || '',
+            about_us: ep.about_us || ep.overview || ep.introduction || '',
+            services: Array.isArray(ep.services) ? ep.services : [],
+            value_proposition: ep.value_proposition || ep.client_value || ep.value_clients_experience || '',
+            value_clients_experience: ep.value_clients_experience || ep.value_proposition || ep.client_value || '',
+            client_value: ep.client_value || ep.value_proposition || ep.value_clients_experience || '',
+            client_names: ep.client_names || ep.notable_clients || ep.clients || [],
+            clients: ep.clients || ep.client_names || ep.notable_clients || [],
+            notable_clients: ep.notable_clients || ep.client_names || ep.clients || [],
             client_testimonials: Array.isArray(ep.client_testimonials) 
               ? ep.client_testimonials.map(t => ({
-                  client_name: t.client_name || t.name,
-                  name: t.name || t.client_name,
-                  title: t.title,
-                  company: t.company,
-                  feedback: t.feedback || t.quote,
-                  quote: t.quote || t.feedback
+                  client_name: t.client_name || t.name || '',
+                  name: t.name || t.client_name || '',
+                  title: t.title || t.position || '',
+                  position: t.position || t.title || '',
+                  company: t.company || '',
+                  feedback: t.feedback || t.quote || t.testimonial || '',
+                  quote: t.quote || t.feedback || t.testimonial || '',
+                  testimonial: t.testimonial || t.feedback || t.quote || ''
                 }))
               : Array.isArray(ep.client_feedback) 
                 ? ep.client_feedback.map(t => ({
-                    client_name: t.name,
-                    name: t.name,
-                    title: t.title,
-                    company: t.company,
-                    feedback: t.quote,
-                    quote: t.quote
+                    client_name: t.name || t.client_name || '',
+                    name: t.name || t.client_name || '',
+                    title: t.title || t.position || '',
+                    position: t.position || t.title || '',
+                    company: t.company || '',
+                    feedback: t.quote || t.feedback || t.testimonial || '',
+                    quote: t.quote || t.feedback || t.testimonial || '',
+                    testimonial: t.testimonial || t.quote || t.feedback || ''
                   }))
                 : [],
-            call_to_action: ep.call_to_action
+            call_to_action: ep.call_to_action || ''
           };
           console.log('Extracted elevator pitch:', elevatorPitch);
         }

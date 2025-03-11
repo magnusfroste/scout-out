@@ -166,7 +166,7 @@ const MyBusiness = () => {
   
   const CompanyIntroduction = ({ elevatorPitch }: { elevatorPitch?: ElevatorPitch }) => {
     if (!elevatorPitch) return null;
-    const introduction = elevatorPitch.introduction || elevatorPitch.overview || '';
+    const introduction = elevatorPitch.introduction || elevatorPitch.overview || elevatorPitch.about_us || '';
     
     return (
       <div className="py-6 px-6 md:px-8">
@@ -207,14 +207,17 @@ const MyBusiness = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {testimonials.map((testimonial, index) => (
             <div key={index} className="p-5 rounded-lg bg-white dark:bg-slate-800 shadow-sm">
-              <p className="italic text-slate-600 dark:text-slate-300 mb-4">"{testimonial.feedback || testimonial.quote}"</p>
+              <p className="italic text-slate-600 dark:text-slate-300 mb-4">
+                "{testimonial.feedback || testimonial.quote || testimonial.testimonial}"
+              </p>
               <div className="flex items-center">
                 <div>
                   <p className="font-medium text-slate-800 dark:text-white">
                     {testimonial.client_name || testimonial.name}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {testimonial.title}{testimonial.company ? `, ${testimonial.company}` : ''}
+                    {testimonial.title || testimonial.position}
+                    {testimonial.company ? `, ${testimonial.company}` : ''}
                   </p>
                 </div>
               </div>
@@ -264,32 +267,36 @@ const MyBusiness = () => {
       <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50 rounded-b-lg">
         <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Contact Us</h2>
         <div className="max-w-md mx-auto space-y-4">
+          {contactInfo.contact && contactInfo.contact !== "Not Found" && (
+            <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-blue-500" />
+              <span className="text-slate-700 dark:text-slate-200">{contactInfo.contact}</span>
+            </div>
+          )}
           {contactInfo.email && contactInfo.email !== "Not Found" && (
             <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-blue-500" />
-              <span className="text-slate-700 dark:text-slate-200">{contactInfo.email}</span>
+              <Mail className="h-5 w-5 text-green-500" />
+              <a href={`mailto:${contactInfo.email}`} className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:underline">
+                {contactInfo.email}
+              </a>
             </div>
           )}
           {contactInfo.phone && contactInfo.phone !== "Not Found" && (
             <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-green-500" />
-              <span className="text-slate-700 dark:text-slate-200">{contactInfo.phone}</span>
-            </div>
-          )}
-          {contactInfo.contact && contactInfo.contact !== "Not Found" && (
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-purple-500" />
-              <span className="text-slate-700 dark:text-slate-200">{contactInfo.contact}</span>
+              <Phone className="h-5 w-5 text-purple-500" />
+              <a href={`tel:${contactInfo.phone}`} className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:underline">
+                {contactInfo.phone}
+              </a>
             </div>
           )}
           {contactInfo.www && contactInfo.www !== "Not Found" && (
             <div className="flex items-center gap-3">
               <Globe className="h-5 w-5 text-orange-500" />
               <a 
-                href={contactInfo.www} 
+                href={contactInfo.www.startsWith('http') ? contactInfo.www : `https://${contactInfo.www}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
               >
                 {contactInfo.www.replace(/^https?:\/\//, '')}
               </a>
@@ -355,11 +362,14 @@ const MyBusiness = () => {
                     </>
                   )}
                   
-                  {(businessData.elevatorPitch?.client_names || businessData.elevatorPitch?.notable_clients) && (
+                  {(businessData.elevatorPitch?.client_names || 
+                    businessData.elevatorPitch?.notable_clients || 
+                    businessData.elevatorPitch?.clients) && (
                     <>
                       <Separator />
                       <ClientsSection 
                         clients={
+                          businessData.elevatorPitch?.clients || 
                           businessData.elevatorPitch?.client_names || 
                           businessData.elevatorPitch?.notable_clients
                         } 
