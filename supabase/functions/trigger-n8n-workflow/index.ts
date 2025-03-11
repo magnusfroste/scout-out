@@ -98,7 +98,6 @@ serve(async (req) => {
     
     // Get the response data
     let responseData;
-    let contactInfo = null;
     
     try {
       // Parse the webhook response
