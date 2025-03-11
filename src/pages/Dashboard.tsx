@@ -13,6 +13,7 @@ import QuestionManager from '@/components/dashboard/QuestionManager';
 import CompanySearch from '@/components/dashboard/CompanySearch';
 import SearchHistory from '@/components/dashboard/SearchHistory';
 import CreditDisplay from '@/components/dashboard/CreditDisplay';
+import MyBusiness from '@/components/dashboard/MyBusiness';
 
 type Question = {
   id: string;
@@ -96,12 +97,17 @@ const Dashboard = () => {
             )}
           </div>
           
-          <Tabs defaultValue="search" className="w-full mb-10">
+          <Tabs defaultValue="mybusiness" className="w-full mb-10">
             <TabsList className="mb-6">
+              <TabsTrigger value="mybusiness">My Business</TabsTrigger>
               <TabsTrigger value="search">Search Company</TabsTrigger>
               <TabsTrigger value="questions">Manage Questions</TabsTrigger>
               <TabsTrigger value="history">Search History</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="mybusiness">
+              <MyBusiness />
+            </TabsContent>
             
             <TabsContent value="search">
               <CompanySearch 

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -8,6 +9,8 @@ export interface UserProfile {
   last_name: string | null;
   avatar_url: string | null;
   is_admin: boolean;
+  website_url?: string | null;
+  sales_info?: string | null;
 }
 
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -44,7 +47,9 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
           first_name: null,
           last_name: null,
           avatar_url: null,
-          is_admin: false
+          is_admin: false,
+          website_url: null,
+          sales_info: null
         })
         .select('*')
         .single();
@@ -66,7 +71,9 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         first_name: newProfile.first_name,
         last_name: newProfile.last_name,
         avatar_url: newProfile.avatar_url,
-        is_admin: newProfile.is_admin
+        is_admin: newProfile.is_admin,
+        website_url: newProfile.website_url,
+        sales_info: newProfile.sales_info
       } as UserProfile;
     }
     
@@ -78,7 +85,9 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       first_name: data.first_name,
       last_name: data.last_name,
       avatar_url: data.avatar_url,
-      is_admin: data.is_admin
+      is_admin: data.is_admin,
+      website_url: data.website_url,
+      sales_info: data.sales_info
     } as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
