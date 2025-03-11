@@ -29,15 +29,15 @@ serve(async (req) => {
     }
 
     // Parse the request body as JSON
-    const { company, questions, userId, webhookUrl } = await req.json();
-    console.log(`Calling webhook for company: ${company}, webhook: ${webhookUrl}`);
-    console.log(`Questions: ${JSON.stringify(questions)}`);
-
-    if (!company || !webhookUrl) {
+    const { company, questions, website, userId, webhookUrl } = await req.json();
+    
+    console.log(`Calling webhook: ${webhookUrl}`);
+    
+    if ((!company && !website) || !webhookUrl) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: "Company name and webhook URL are required" 
+          message: "Company name/website and webhook URL are required" 
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -51,12 +51,17 @@ serve(async (req) => {
     try {
       console.log(`Sending webhook request to: ${webhookUrl}`);
       
+      // Prepare the request payload
+      const payload = website 
+        ? { website } 
+        : { company, questions };
+      
       response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ company, questions })
+        body: JSON.stringify(payload)
       });
       
       console.log(`Webhook response status: ${response.status}`);
@@ -91,7 +96,7 @@ serve(async (req) => {
       );
     }
     
-    // Get the response data and parse it according to the new format
+    // Get the response data
     let responseData;
     let contactInfo = null;
     
@@ -100,45 +105,8 @@ serve(async (req) => {
       const responseJson = await response.json();
       console.log('Raw webhook response:', JSON.stringify(responseJson));
       
-      // Handle the new format: [{ output: [{ results: [...], contact_info: {...} }] }]
-      if (Array.isArray(responseJson) && responseJson.length > 0 && responseJson[0].output) {
-        // Extract from the new format
-        const output = responseJson[0].output;
-        
-        if (Array.isArray(output) && output.length > 0) {
-          const firstOutput = output[0];
-          
-          // Extract results
-          if (firstOutput.results && Array.isArray(firstOutput.results)) {
-            responseData = {
-              results: firstOutput.results
-            };
-          }
-          
-          // Extract contact info if available
-          if (firstOutput.contact_info) {
-            contactInfo = firstOutput.contact_info;
-          }
-        }
-      } else {
-        // Fallback to the old format handling
-        responseData = responseJson;
-        
-        if (responseJson.contact_info) {
-          contactInfo = responseJson.contact_info;
-        }
-        
-        if (!Array.isArray(responseData.results)) {
-          responseData = Array.isArray(responseJson) ? { results: responseJson } : { results: [responseJson] };
-        }
-      }
-      
-      if (!responseData || !responseData.results) {
-        console.error('Failed to parse results from response:', responseJson);
-        responseData = { 
-          results: [{ answer: "Could not parse response data" }] 
-        };
-      }
+      // Return the raw response directly
+      responseData = responseJson;
       
     } catch (e) {
       console.error('Error parsing response JSON:', e);
@@ -146,93 +114,19 @@ serve(async (req) => {
       try {
         const text = await response.text();
         console.log('Text response:', text);
-        responseData = { results: [{ answer: text }] };
+        responseData = text;
       } catch (textError) {
         console.error('Error reading response:', textError);
-        responseData = { results: [{ answer: "Could not parse response" }] };
+        responseData = "Could not parse response";
       }
     }
     
-    // Store the result if we have a user ID
-    if (userId) {
-      try {
-        // Store the company search
-        const searchData = {
-          user_id: userId,
-          company_name: company,
-          result: responseData,
-          created_at: new Date().toISOString()
-        };
-        
-        // Add contact info if available
-        if (contactInfo) {
-          searchData.contact_info = contactInfo;
-          searchData.website = contactInfo.www || null;
-          searchData.contact_person = contactInfo.contact || null;
-          searchData.email = contactInfo.email || null;
-          searchData.phone = contactInfo.phone || null;
-        }
-        
-        const { data: searchData, error: searchError } = await supabase
-          .from('company_searches')
-          .insert(searchData)
-          .select('id')
-          .single();
-        
-        if (searchError) {
-          console.error('Error storing company search:', searchError);
-          throw searchError;
-        }
-        
-        console.log('Company search stored with ID:', searchData.id);
-        
-        // Store individual answers if available
-        if (responseData.results && Array.isArray(responseData.results)) {
-          const answersToInsert = responseData.results
-            .filter(result => result.question_id && result.answer) // Only valid results
-            .map(result => ({
-              company_search_id: searchData.id,
-              question_id: result.question_id,
-              answer: result.answer,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }));
-          
-          if (answersToInsert.length > 0) {
-            console.log('Inserting answers:', JSON.stringify(answersToInsert));
-            
-            const { error: answersError } = await supabase
-              .from('company_question_answers')
-              .insert(answersToInsert);
-            
-            if (answersError) {
-              console.error('Error storing answers:', answersError);
-              // Continue even if answer storage fails
-            } else {
-              console.log('Successfully stored answers for all questions');
-            }
-          } else {
-            console.log('No valid answers found to store');
-          }
-        }
-      } catch (dbError) {
-        console.error('Database error:', dbError);
-        // Continue even if DB storage fails
-      }
-    }
-
     // Return successful response
-    const responseObject = { 
-      success: true, 
-      data: responseData.results,
-    };
-    
-    if (contactInfo) {
-      responseObject.contact_info = contactInfo;
-    }
-
     return new Response(
-      JSON.stringify(responseObject),
+      JSON.stringify({ 
+        success: true, 
+        data: responseData
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

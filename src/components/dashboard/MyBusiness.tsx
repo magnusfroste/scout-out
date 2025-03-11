@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponseParser';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BusinessData {
   summary: string;
@@ -51,34 +51,27 @@ const MyBusiness = () => {
       return;
     }
 
-    if (!webhookUrl) {
-      toast({
-        title: "Error",
-        description: "Webhook URL is not configured. Please contact an administrator.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Use our edge function as a proxy to call the webhook
+      const { data, error } = await supabase.functions.invoke('trigger-n8n-workflow', {
+        body: { 
+          website: websiteUrl,
+          webhookUrl: webhookUrl
         },
-        body: JSON.stringify({ 
-          website: websiteUrl 
-        }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
+      if (error) {
+        throw new Error(`Edge function error: ${error.message}`);
       }
 
-      const rawData = await response.json();
-      console.log('Raw webhook response:', rawData);
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to analyze website');
+      }
+
+      console.log('Raw webhook response via edge function:', data);
       
+      const rawData = data.data;
       const parsedData = parseWebhookResponse(rawData);
       console.log('Parsed data:', parsedData);
       
