@@ -1,18 +1,17 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
 
 const Header = () => {
   const { user, userProfile, signOut } = useAuth();
-  const navigate = useNavigate();
   
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/auth', { replace: true });
+      window.location.href = '/auth';
       toast({
         title: "Signed out successfully",
         description: "You have been signed out of your account.",
