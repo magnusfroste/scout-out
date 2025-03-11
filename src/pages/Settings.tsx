@@ -49,10 +49,13 @@ const Settings = () => {
       }
     };
 
-    if (!loading) {
+    // Only load webhook settings if user has been loaded and is admin
+    if (!loading && user && userProfile?.is_admin) {
       loadWebhookSettings();
+    } else if (!loading) {
+      setIsLoading(false);
     }
-  }, [loading]);
+  }, [loading, user, userProfile]);
 
   // Redirect if not admin
   if (!loading && (!user || !userProfile?.is_admin)) {
@@ -64,9 +67,18 @@ const Settings = () => {
       const success = await updateWebhookSettings(newUrl);
       if (success) {
         setWebhookUrl(newUrl);
+        toast({
+          title: "Success",
+          description: "Webhook URL updated successfully",
+        });
       }
     } catch (error) {
       console.error('Error updating webhook URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update webhook URL",
+        variant: "destructive",
+      });
     }
   };
 
@@ -75,9 +87,18 @@ const Settings = () => {
       const success = await updateMyBusinessWebhookSettings(newUrl);
       if (success) {
         setMyBusinessWebhookUrl(newUrl);
+        toast({
+          title: "Success",
+          description: "My Business webhook URL updated successfully",
+        });
       }
     } catch (error) {
       console.error('Error updating My Business webhook URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update My Business webhook URL",
+        variant: "destructive",
+      });
     }
   };
 
