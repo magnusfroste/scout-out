@@ -15,6 +15,11 @@ const Index = () => {
     window.scrollTo(0, 0);
   }, []);
   
+  // Add a console log to verify the page is loading correctly
+  useEffect(() => {
+    console.log('Index page loaded');
+  }, []);
+  
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
