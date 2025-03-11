@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -169,39 +170,45 @@ const MyBusiness = () => {
   
   const CompanyIntroduction = ({ elevatorPitch }: { elevatorPitch?: ElevatorPitch }) => {
     if (!elevatorPitch) return null;
-    const introduction = elevatorPitch.introduction || elevatorPitch.overview || '';
     
     return (
       <div className="py-6 px-6 md:px-8">
         <p className="text-base md:text-lg text-center max-w-3xl mx-auto text-slate-700 dark:text-slate-200">
-          {introduction}
+          {elevatorPitch.about}
         </p>
       </div>
     );
   };
   
-  const ServicesSection = ({ services }: { services?: { name: string; description: string }[] }) => {
+  const ServicesSection = ({ services }: { services?: string[] }) => {
     if (!services || services.length === 0) return null;
     
     return (
       <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50">
         <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Our Services</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service, index) => (
-            <div 
-              key={index} 
-              className="p-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:shadow-md transition-shadow"
-            >
-              <h3 className="text-lg font-medium mb-2 text-slate-800 dark:text-white">{service.name}</h3>
-              <p className="text-slate-600 dark:text-slate-300">{service.description}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {services.map((service, index) => {
+            // Split the service text into name and description
+            const parts = service.split(':');
+            const name = parts[0].trim();
+            const description = parts.length > 1 ? parts[1].trim() : '';
+            
+            return (
+              <div 
+                key={index} 
+                className="p-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:shadow-md transition-shadow"
+              >
+                <h3 className="text-lg font-medium mb-2 text-slate-800 dark:text-white">{name}</h3>
+                <p className="text-slate-600 dark:text-slate-300">{description}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
   };
   
-  const TestimonialsSection = ({ testimonials }: { testimonials?: ElevatorPitch['client_testimonials'] }) => {
+  const TestimonialsSection = ({ testimonials }: { testimonials?: ElevatorPitch['testimonials'] }) => {
     if (!testimonials || testimonials.length === 0) return null;
     
     return (
@@ -210,14 +217,14 @@ const MyBusiness = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {testimonials.map((testimonial, index) => (
             <div key={index} className="p-5 rounded-lg bg-white dark:bg-slate-800 shadow-sm">
-              <p className="italic text-slate-600 dark:text-slate-300 mb-4">"{testimonial.feedback || testimonial.quote}"</p>
+              <p className="italic text-slate-600 dark:text-slate-300 mb-4">"{testimonial.testimonial}"</p>
               <div className="flex items-center">
                 <div>
                   <p className="font-medium text-slate-800 dark:text-white">
-                    {testimonial.client_name || testimonial.name}
+                    {testimonial.name}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {testimonial.title}{testimonial.company ? `, ${testimonial.company}` : ''}
+                    {testimonial.position}{testimonial.company ? `, ${testimonial.company}` : ''}
                   </p>
                 </div>
               </div>
@@ -248,13 +255,14 @@ const MyBusiness = () => {
     );
   };
   
-  const CallToAction = ({ cta }: { cta?: string }) => {
-    if (!cta) return null;
+  const ValueProposition = ({ valueProposition }: { valueProposition?: string }) => {
+    if (!valueProposition) return null;
     
     return (
       <div className="py-8 px-6 md:px-8 text-center">
         <div className="p-6 rounded-lg bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 max-w-2xl mx-auto">
-          <p className="text-lg font-medium text-slate-800 dark:text-white">{cta}</p>
+          <h2 className="text-2xl font-semibold mb-3 text-slate-800 dark:text-white">Our Value</h2>
+          <p className="text-lg text-slate-800 dark:text-white">{valueProposition}</p>
         </div>
       </div>
     );
@@ -351,29 +359,24 @@ const MyBusiness = () => {
                     </>
                   )}
                   
-                  {businessData.elevatorPitch?.client_testimonials && businessData.elevatorPitch.client_testimonials.length > 0 && (
+                  {businessData.elevatorPitch?.value_proposition && (
                     <>
                       <Separator />
-                      <TestimonialsSection testimonials={businessData.elevatorPitch?.client_testimonials} />
+                      <ValueProposition valueProposition={businessData.elevatorPitch?.value_proposition} />
                     </>
                   )}
                   
-                  {(businessData.elevatorPitch?.client_names || businessData.elevatorPitch?.notable_clients) && (
+                  {businessData.elevatorPitch?.testimonials && businessData.elevatorPitch.testimonials.length > 0 && (
                     <>
                       <Separator />
-                      <ClientsSection 
-                        clients={
-                          businessData.elevatorPitch?.client_names || 
-                          businessData.elevatorPitch?.notable_clients
-                        } 
-                      />
+                      <TestimonialsSection testimonials={businessData.elevatorPitch?.testimonials} />
                     </>
                   )}
                   
-                  {businessData.elevatorPitch?.call_to_action && (
+                  {businessData.elevatorPitch?.clients && businessData.elevatorPitch.clients.length > 0 && (
                     <>
                       <Separator />
-                      <CallToAction cta={businessData.elevatorPitch?.call_to_action} />
+                      <ClientsSection clients={businessData.elevatorPitch?.clients} />
                     </>
                   )}
                   

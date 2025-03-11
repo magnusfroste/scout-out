@@ -1,4 +1,3 @@
-
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -9,25 +8,16 @@ export type Answer = {
 export type ElevatorPitch = {
   company_name: string;
   tagline: string;
-  introduction?: string;
-  overview?: string;
-  services: {
+  about: string;
+  services: string[];
+  value_proposition: string;
+  clients: string[];
+  testimonials: {
     name: string;
-    description: string;
-  }[];
-  value_proposition?: string;
-  client_value?: string;
-  client_names?: string[];
-  notable_clients?: string[];
-  client_testimonials?: {
-    client_name?: string;
-    name?: string;
-    title: string;
+    position: string;
     company: string;
-    feedback?: string;
-    quote?: string;
+    testimonial: string;
   }[];
-  call_to_action?: string;
 };
 
 export type WebhookParseResult = {
@@ -37,10 +27,16 @@ export type WebhookParseResult = {
 };
 
 /**
- * Parses webhook response data according to the expected formats:
- * 1. [{ output: { basic_info: {...}, questions: [...] } }]
- * 2. [{ output: "{\"basic_info\":{...},\"answers\":[...]}" }]
- * 3. [{ output: { elevator_pitch: {...} } }]
+ * Parses webhook response data for My Business feature in the standard format:
+ * [{
+ *   output: {
+ *     about_us: string,
+ *     our_services: string[],
+ *     delivered_value: string,
+ *     clients: string[],
+ *     clients_testimonials: Array<{name, position, company, testimonial}>
+ *   }
+ * }]
  */
 export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   let processedResults: Answer[] = [];
@@ -51,86 +47,53 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   
   try {
     // Check if responseData is an array with output
-    if (Array.isArray(responseData) && responseData.length > 0) {
-      let output = responseData[0].output;
+    if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+      const output = responseData[0].output;
       
-      // Check if output is a string (new format) and try to parse it
-      if (typeof output === 'string') {
-        try {
-          console.log('Detected string output, attempting to parse JSON');
-          output = JSON.parse(output);
-        } catch (e) {
-          console.error('Error parsing output string:', e);
-        }
+      // Extract my business data if available
+      if (output.about_us || output.our_services || output.clients) {
+        // Get the company name from the URL or use a default
+        const companyName = extractCompanyName();
+        
+        elevatorPitch = {
+          company_name: companyName,
+          tagline: extractTagline(output.about_us || ''),
+          about: output.about_us || '',
+          services: output.our_services || [],
+          value_proposition: output.delivered_value || '',
+          clients: output.clients || [],
+          testimonials: (output.clients_testimonials || []).map(t => ({
+            name: t.name,
+            position: t.position,
+            company: t.company,
+            testimonial: t.testimonial
+          }))
+        };
+        
+        console.log('Extracted elevator pitch:', elevatorPitch);
       }
       
-      // Now handle output as an object
-      if (output && typeof output === 'object') {
-        // Extract elevator pitch if it exists
-        if (output.elevator_pitch) {
-          const ep = output.elevator_pitch;
-          elevatorPitch = {
-            company_name: ep.company_name,
-            tagline: ep.tagline,
-            // Handle both old and new schema fields
-            introduction: ep.introduction || ep.overview,
-            overview: ep.overview || ep.introduction,
-            services: ep.services || [],
-            value_proposition: ep.value_proposition || ep.client_value,
-            client_value: ep.client_value || ep.value_proposition,
-            client_names: ep.client_names || ep.notable_clients,
-            notable_clients: ep.notable_clients || ep.client_names,
-            client_testimonials: Array.isArray(ep.client_testimonials) 
-              ? ep.client_testimonials.map(t => ({
-                  client_name: t.client_name || t.name,
-                  name: t.name || t.client_name,
-                  title: t.title,
-                  company: t.company,
-                  feedback: t.feedback || t.quote,
-                  quote: t.quote || t.feedback
-                }))
-              : Array.isArray(ep.client_feedback) 
-                ? ep.client_feedback.map(t => ({
-                    client_name: t.name,
-                    name: t.name,
-                    title: t.title,
-                    company: t.company,
-                    feedback: t.quote,
-                    quote: t.quote
-                  }))
-                : [],
-            call_to_action: ep.call_to_action
-          };
-          console.log('Extracted elevator pitch:', elevatorPitch);
-        }
-        
-        // Extract contact info
-        if (output.basic_info) {
-          contactInfo = {
-            www: output.basic_info.www || undefined,
-            contact: output.basic_info.contact || undefined,
-            email: output.basic_info.email || undefined,
-            phone: output.basic_info.phone || undefined
-          };
-          console.log('Extracted contact info:', contactInfo);
-        }
-        
-        // Extract questions and answers - handle both formats
-        if (output.questions && Array.isArray(output.questions)) {
-          // Old format with questions array
-          processedResults = output.questions.map(q => ({
-            question_id: q.id,
-            answer: q.answer
-          }));
-        } else if (output.answers && Array.isArray(output.answers)) {
-          // New format with answers array
-          processedResults = output.answers.map(a => ({
-            question_id: a.id,
-            answer: a.answer
-          }));
-        }
-
-        console.log('Processed results:', processedResults);
+      // Extract processed results (for company search feature)
+      if (output.questions && Array.isArray(output.questions)) {
+        processedResults = output.questions.map(q => ({
+          question_id: q.id,
+          answer: q.answer
+        }));
+      } else if (output.answers && Array.isArray(output.answers)) {
+        processedResults = output.answers.map(a => ({
+          question_id: a.id,
+          answer: a.answer
+        }));
+      }
+      
+      // Extract contact info
+      if (output.basic_info) {
+        contactInfo = {
+          www: output.basic_info.www || undefined,
+          contact: output.basic_info.contact || undefined,
+          email: output.basic_info.email || undefined,
+          phone: output.basic_info.phone || undefined
+        };
       }
     }
   } catch (error) {
@@ -138,4 +101,53 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   }
 
   return { processedResults, contactInfo, elevatorPitch };
+};
+
+/**
+ * Helper function to extract company name from website URL or use a default
+ */
+const extractCompanyName = (): string => {
+  try {
+    // Try to get the website URL from the application state
+    const websiteUrl = window.location.href;
+    if (websiteUrl) {
+      const url = new URL(websiteUrl);
+      const hostname = url.hostname;
+      
+      // Extract domain name without TLD
+      const domainParts = hostname.split('.');
+      if (domainParts.length >= 2) {
+        // Use the second-to-last part (domain name without TLD)
+        const name = domainParts[domainParts.length - 2];
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+  } catch (e) {
+    console.error('Error extracting company name:', e);
+  }
+  
+  return 'Your Company';
+};
+
+/**
+ * Helper function to extract a tagline from the about text
+ */
+const extractTagline = (aboutText: string): string => {
+  if (!aboutText) return 'Excellence in Business';
+  
+  // Try to extract first sentence if it's short enough
+  const firstSentence = aboutText.split('.')[0];
+  if (firstSentence.length <= 60) {
+    return firstSentence;
+  }
+  
+  // Otherwise, extract first 50 characters and find a good break point
+  let shortTagline = aboutText.substring(0, 60);
+  const lastSpaceIndex = shortTagline.lastIndexOf(' ');
+  
+  if (lastSpaceIndex > 30) {
+    shortTagline = shortTagline.substring(0, lastSpaceIndex);
+  }
+  
+  return shortTagline + '...';
 };
