@@ -32,12 +32,19 @@ const Settings = () => {
           console.log(`Set webhook URL: ${settings.url}`);
           console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
         } else {
-          console.warn('No webhook settings found');
-          toast({
-            title: "Warning",
-            description: "Could not load webhook settings",
-            variant: "destructive",
-          });
+          console.warn('No webhook settings found or user does not have access');
+          if (userProfile?.is_admin) {
+            toast({
+              title: "Information",
+              description: "No webhook settings found. You can create them now.",
+            });
+          } else {
+            toast({
+              title: "Access Denied",
+              description: "You need admin privileges to view webhook settings.",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
@@ -57,7 +64,7 @@ const Settings = () => {
     } else if (!loading) {
       setIsLoading(false);
     }
-  }, [loading, user]);
+  }, [loading, user, userProfile]);
 
   // Redirect if not admin
   if (!loading && (!user || !userProfile?.is_admin)) {
@@ -69,10 +76,6 @@ const Settings = () => {
       const success = await updateWebhookSettings(newUrl);
       if (success) {
         setWebhookUrl(newUrl);
-        toast({
-          title: "Success",
-          description: "Webhook URL updated successfully",
-        });
       }
     } catch (error) {
       console.error('Error updating webhook URL:', error);
@@ -89,10 +92,6 @@ const Settings = () => {
       const success = await updateMyBusinessWebhookSettings(newUrl);
       if (success) {
         setMyBusinessWebhookUrl(newUrl);
-        toast({
-          title: "Success",
-          description: "My Business webhook URL updated successfully",
-        });
       }
     } catch (error) {
       console.error('Error updating My Business webhook URL:', error);
@@ -118,12 +117,16 @@ const Settings = () => {
                 <CardTitle>Webhook Configuration</CardTitle>
               </CardHeader>
               <CardContent>
-                <WebhookForm 
-                  webhookUrl={webhookUrl}
-                  setWebhookUrl={handleWebhookUpdate}
-                  isDisabled={isLoading}
-                  showDescription={true}
-                />
+                {userProfile?.is_admin ? (
+                  <WebhookForm 
+                    webhookUrl={webhookUrl}
+                    setWebhookUrl={handleWebhookUpdate}
+                    isDisabled={isLoading}
+                    showDescription={true}
+                  />
+                ) : (
+                  <p className="text-red-500">You need admin privileges to manage webhook settings.</p>
+                )}
               </CardContent>
             </Card>
             
@@ -132,12 +135,16 @@ const Settings = () => {
                 <CardTitle>My Business Webhook Configuration</CardTitle>
               </CardHeader>
               <CardContent>
-                <MyBusinessWebhookForm 
-                  webhookUrl={myBusinessWebhookUrl}
-                  setWebhookUrl={handleMyBusinessWebhookUpdate}
-                  isDisabled={isLoading}
-                  showDescription={true}
-                />
+                {userProfile?.is_admin ? (
+                  <MyBusinessWebhookForm 
+                    webhookUrl={myBusinessWebhookUrl}
+                    setWebhookUrl={handleMyBusinessWebhookUpdate}
+                    isDisabled={isLoading}
+                    showDescription={true}
+                  />
+                ) : (
+                  <p className="text-red-500">You need admin privileges to manage My Business webhook settings.</p>
+                )}
               </CardContent>
             </Card>
           </div>
