@@ -2,16 +2,11 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
-import { SearchResultType } from '@/types/company';
+import { Question } from '@/types/company';
 import SearchForm from './SearchForm';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
 import { Card, CardContent } from '@/components/ui/card';
-
-type Question = {
-  id: string;
-  question: string;
-};
 
 interface CompanySearchProps {
   questions: Question[];
@@ -70,8 +65,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
-          {/* Always render SearchResults when searchRequested, 
-              with a stable key to prevent unnecessary remounts */}
           {searchRequested && (
             <SearchResults 
               key={searchId}
