@@ -7,6 +7,8 @@ import SearchForm from './SearchForm';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
 interface CompanySearchProps {
   questions: Question[];
@@ -18,6 +20,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
   const [displayedResult, setDisplayedResult] = useState(null);
   const [displayedSearchId, setDisplayedSearchId] = useState(null);
   const [isDisplayReady, setIsDisplayReady] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const resultContainerRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -28,8 +31,32 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     isLoadingWebhook,
     result,
     handleSearch,
-    searchId
+    searchId,
+    webhookUrl,
+    lastError
   } = useCompanySearch(questions, onSearch);
+
+  // Debug effect to log important state changes
+  useEffect(() => {
+    console.log("Search state update:", { 
+      isLoading, 
+      hasResult: !!result, 
+      searchId, 
+      webhookUrl,
+      lastError 
+    });
+    
+    // Update debug info
+    let status = "";
+    if (isLoadingWebhook) status = "Loading webhook configuration...";
+    else if (!webhookUrl) status = "No webhook URL configured";
+    else if (isLoading) status = "Search in progress...";
+    else if (lastError) status = `Error: ${lastError}`;
+    else if (result) status = "Search completed successfully";
+    else status = "Ready to search";
+    
+    setDebugInfo(status);
+  }, [isLoading, result, searchId, webhookUrl, isLoadingWebhook, lastError]);
 
   // Post-process and update displayedResult when search completes
   useEffect(() => {
@@ -71,6 +98,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     setDisplayedResult(null);
     setDisplayedSearchId(null);
     setIsDisplayReady(false);
+    setDebugInfo("Starting search...");
     handleSearch(e);
   };
 
@@ -86,6 +114,24 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
         </Card>
       ) : (
         <>
+          {/* Debug status display */}
+          {debugInfo && (
+            <Alert variant={lastError ? "destructive" : "default"} className="mb-4">
+              <AlertDescription className="flex items-center gap-2">
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>{debugInfo}</span>
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {!webhookUrl && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                No webhook URL is configured. Please contact the administrator.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <SearchForm 
             companyName={companyName}
             setCompanyName={setCompanyName}

@@ -20,6 +20,7 @@ export const useCompanySearch = (
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
   const [searchId, setSearchId] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
   const isMounted = useRef(true);
   
   const { user, userProfile, refreshUserProfile } = useAuth();
@@ -39,6 +40,7 @@ export const useCompanySearch = (
       if (!isMounted.current) return;
       
       setIsLoadingWebhook(true);
+      setLastError(null);
       try {
         const settings = await fetchWebhookSettings();
         if (settings?.url && isMounted.current) {
@@ -46,9 +48,11 @@ export const useCompanySearch = (
           console.log("Loaded webhook URL:", settings.url);
         } else {
           console.log("No webhook URL configured");
+          setLastError("No webhook URL configured");
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
+        setLastError("Failed to load webhook configuration");
       } finally {
         if (isMounted.current) {
           setIsLoadingWebhook(false);
@@ -61,6 +65,7 @@ export const useCompanySearch = (
   // Memoized search handler to prevent recreation on each render
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setLastError(null);
     
     if (!companyName.trim()) {
       toast({
@@ -68,6 +73,7 @@ export const useCompanySearch = (
         description: "Please enter a company name",
         variant: "destructive",
       });
+      setLastError("Company name is required");
       return;
     }
 
@@ -78,6 +84,7 @@ export const useCompanySearch = (
         description: "The service is currently unavailable. Please try again later.",
         variant: "destructive",
       });
+      setLastError("Webhook URL not configured");
       return;
     }
 
@@ -86,6 +93,7 @@ export const useCompanySearch = (
     
     if (!user || !userProfile) {
       console.error("User or user profile is missing", { user, userProfile });
+      setLastError("User authentication error");
       return;
     }
     
@@ -112,6 +120,7 @@ export const useCompanySearch = (
     if (!creditSuccess) {
       if (isMounted.current) {
         setIsLoading(false);
+        setLastError("Insufficient credits");
       }
       return;
     }
@@ -183,6 +192,7 @@ export const useCompanySearch = (
       console.error("Error during company search:", error);
       
       if (isMounted.current) {
+        setLastError(error.message || "Search failed");
         toast({
           title: "Error",
           description: "Unable to process your search at this time. Please try again later.",
@@ -204,6 +214,8 @@ export const useCompanySearch = (
     isLoadingWebhook,
     result,
     handleSearch,
-    searchId
+    searchId,
+    webhookUrl,
+    lastError
   };
 };
