@@ -2,16 +2,36 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, Globe } from 'lucide-react';
+import { User, Mail, Phone, Globe, Loader2 } from 'lucide-react';
 import { Question, Answer, ContactInfo, SearchResultType } from '@/types/company';
 
 interface SearchResultsProps {
   result: SearchResultType | null;
   companyName: string;
   questions: Question[];
+  isLoading?: boolean;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions }) => {
+const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions, isLoading = false }) => {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Searching for {companyName}</CardTitle>
+          <CardDescription>
+            Our agent is gathering information...
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">This might take a moment as we analyze company information</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   if (!result) return null;
   
   const renderContactInfo = () => {

@@ -28,7 +28,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     isDeductingCredit,
     isLoadingWebhook,
     result,
-    handleSearch
+    handleSearch,
+    searchRequested
   } = useCompanySearch(questions, onSearch);
 
   return (
@@ -55,11 +56,12 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
-          {result && (
+          {searchRequested && (isLoading || result) && (
             <SearchResults 
               result={result} 
               companyName={companyName} 
-              questions={questions} 
+              questions={questions}
+              isLoading={isLoading}
             />
           )}
         </>

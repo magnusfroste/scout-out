@@ -16,6 +16,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
+  const [searchRequested, setSearchRequested] = useState(false);
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
@@ -88,13 +89,17 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
 
     setIsLoading(true);
     setResult(null);
+    setSearchRequested(true);
 
     try {
       console.log("Making webhook call to:", webhookUrl);
       console.log("Searching for company:", companyName);
       console.log("User ID:", user.id);
       
+      const startTime = new Date().getTime();
       const directResponse = await callCompanyWebhook(webhookUrl, companyName, questions);
+      const endTime = new Date().getTime();
+      console.log(`Webhook response time: ${(endTime - startTime) / 1000} seconds`);
       
       if (!directResponse.ok) {
         throw new Error(`HTTP error! status: ${directResponse.status}`);
@@ -163,6 +168,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     isDeductingCredit,
     isLoadingWebhook,
     result,
-    handleSearch
+    handleSearch,
+    searchRequested
   };
 };

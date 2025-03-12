@@ -37,6 +37,12 @@ export const storeSearchResults = async (
   try {
     console.log(`Storing search results for user ${userId} and company ${company}`);
     
+    // Ensure we have a valid response to store
+    if (!responseData) {
+      console.error('Cannot store search results: Missing response data');
+      return false;
+    }
+    
     // Store the company search
     const searchRecord: CompanySearchRecord = {
       user_id: userId,
