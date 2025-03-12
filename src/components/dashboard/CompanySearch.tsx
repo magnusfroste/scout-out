@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
 import { Question } from '@/types/company';
@@ -16,6 +16,7 @@ interface CompanySearchProps {
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
   const [activeSearchId, setActiveSearchId] = useState<string | null>(null);
+  const resultContainerRef = useRef<HTMLDivElement>(null);
   
   const {
     companyName,
@@ -31,7 +32,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
   // Update activeSearchId when search is completed
   useEffect(() => {
     if (searchId && !isLoading && result) {
-      setActiveSearchId(searchId);
+      // Use setTimeout to ensure DOM is ready before updating
+      setTimeout(() => {
+        setActiveSearchId(searchId);
+      }, 0);
     }
   }, [searchId, isLoading, result]);
 
@@ -64,15 +68,17 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
-          {activeSearchId && (
-            <SearchResults 
-              key={activeSearchId}
-              result={result} 
-              companyName={companyName} 
-              questions={questions}
-              isLoading={isLoading}
-            />
-          )}
+          <div ref={resultContainerRef} className="search-results-wrapper">
+            {activeSearchId && (
+              <SearchResults 
+                key={activeSearchId}
+                result={result} 
+                companyName={companyName} 
+                questions={questions}
+                isLoading={isLoading}
+              />
+            )}
+          </div>
         </>
       )}
     </div>

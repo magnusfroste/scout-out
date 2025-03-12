@@ -78,6 +78,12 @@
     @apply bg-foreground/5 backdrop-blur-lg border border-foreground/10 shadow-glass;
   }
   
+  /* Disable animations that might cause flickering */
+  .search-results-container * {
+    animation: none !important;
+    transition: none !important;
+  }
+  
   .animated-gradient {
     background-size: 400% 400%;
     animation: gradient 8s ease infinite;
@@ -95,25 +101,26 @@
     }
   }
   
+  /* Remove page transition animations as they might interfere with the search results */
   .page-transition-enter {
-    opacity: 0;
-    transform: translateY(10px);
+    opacity: 1;
+    transform: none;
   }
   
   .page-transition-enter-active {
     opacity: 1;
-    transform: translateY(0);
-    transition: opacity 300ms, transform 300ms;
+    transform: none;
+    transition: none;
   }
   
   .page-transition-exit {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
   
   .page-transition-exit-active {
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 300ms, transform 300ms;
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

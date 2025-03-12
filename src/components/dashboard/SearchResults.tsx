@@ -147,7 +147,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
         )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-auto max-h-[500px]">
+        <div className="overflow-auto max-h-[500px] search-results-container">
           {renderContactInfo()}
           {renderResults()}
         </div>
