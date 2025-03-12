@@ -6,7 +6,7 @@ import { SearchResultType } from '@/types/company';
 import SearchForm from './SearchForm';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
-import { Card, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 type Question = {
   id: string;
@@ -37,7 +37,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
         <Card>
           <CardContent className="p-6">
             <div className="flex justify-center items-center py-8">
-              <div className="animate-pulse text-muted-foreground">Loading company search...</div>
+              <div className="animate-pulse text-muted-foreground">Loading company search tools...</div>
             </div>
           </CardContent>
         </Card>

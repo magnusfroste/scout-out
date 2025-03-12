@@ -24,6 +24,7 @@ const MyBusiness = () => {
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [webhookUrl, setWebhookUrl] = useState<string>('');
+  const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
 
   useEffect(() => {
     if (userProfile?.website_url) {
@@ -33,6 +34,7 @@ const MyBusiness = () => {
 
   useEffect(() => {
     const loadWebhookSettings = async () => {
+      setIsLoadingSettings(true);
       try {
         const settings = await fetchWebhookSettings();
         if (settings && settings.mybusiness_url) {
@@ -45,6 +47,8 @@ const MyBusiness = () => {
       } catch (error) {
         console.error('Error loading webhook settings:', error);
         setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
+      } finally {
+        setIsLoadingSettings(false);
       }
     };
 
@@ -73,8 +77,8 @@ const MyBusiness = () => {
 
     if (!webhookUrl) {
       toast({
-        title: "Error",
-        description: "Webhook URL is not configured",
+        title: "System Unavailable",
+        description: "The analysis service is currently unavailable. Please try again later.",
         variant: "destructive",
       });
       return;
@@ -88,7 +92,7 @@ const MyBusiness = () => {
       const response = await callMyBusinessWebhook(webhookUrl, websiteUrl);
       
       if (!response.ok) {
-        throw new Error(`Webhook request failed: ${response.status}`);
+        throw new Error(`Service temporarily unavailable`);
       }
       
       const responseData = await response.json();
@@ -116,7 +120,7 @@ const MyBusiness = () => {
       console.error('Error analyzing website:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to analyze your business website. Please try again.",
+        description: "Failed to analyze your business website. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -315,75 +319,81 @@ const MyBusiness = () => {
           )}
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="websiteUrl">Your Business Website</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="websiteUrl"
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  placeholder="https://yourbusiness.com"
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={handleAnalyzeWebsite} 
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Analyzing..." : "Analyze"}
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Enter your business website URL to generate a business profile
-              </p>
+          {isLoadingSettings ? (
+            <div className="flex justify-center items-center py-4">
+              <div className="animate-pulse text-muted-foreground">Loading business tools...</div>
             </div>
-
-            {businessData && (
-              <div className="mt-8 overflow-hidden rounded-lg border shadow">
-                <div className="business-mini-homepage">
-                  <CompanyHeader elevatorPitch={businessData.elevatorPitch} />
-                  <CompanyIntroduction elevatorPitch={businessData.elevatorPitch} />
-                  
-                  {businessData.elevatorPitch?.services && businessData.elevatorPitch.services.length > 0 && (
-                    <>
-                      <Separator />
-                      <ServicesSection services={businessData.elevatorPitch?.services} />
-                    </>
-                  )}
-                  
-                  {businessData.elevatorPitch?.value_proposition && (
-                    <>
-                      <Separator />
-                      <ValueProposition valueProposition={businessData.elevatorPitch?.value_proposition} />
-                    </>
-                  )}
-                  
-                  {businessData.elevatorPitch?.testimonials && businessData.elevatorPitch.testimonials.length > 0 && (
-                    <>
-                      <Separator />
-                      <TestimonialsSection testimonials={businessData.elevatorPitch?.testimonials} />
-                    </>
-                  )}
-                  
-                  {businessData.elevatorPitch?.clients && businessData.elevatorPitch.clients.length > 0 && (
-                    <>
-                      <Separator />
-                      <ClientsSection clients={businessData.elevatorPitch?.clients} />
-                    </>
-                  )}
-                  
-                  {businessData.contactInfo && (
-                    <>
-                      <Separator />
-                      <ContactSection contactInfo={businessData.contactInfo} />
-                    </>
-                  )}
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="websiteUrl">Your Business Website</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="websiteUrl"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://yourbusiness.com"
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleAnalyzeWebsite} 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Analyzing..." : "Analyze"}
+                  </Button>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Enter your business website URL to generate a business profile
+                </p>
               </div>
-            )}
-          </div>
+
+              {businessData && (
+                <div className="mt-8 overflow-hidden rounded-lg border shadow">
+                  <div className="business-mini-homepage">
+                    <CompanyHeader elevatorPitch={businessData.elevatorPitch} />
+                    <CompanyIntroduction elevatorPitch={businessData.elevatorPitch} />
+                    
+                    {businessData.elevatorPitch?.services && businessData.elevatorPitch.services.length > 0 && (
+                      <>
+                        <Separator />
+                        <ServicesSection services={businessData.elevatorPitch?.services} />
+                      </>
+                    )}
+                    
+                    {businessData.elevatorPitch?.value_proposition && (
+                      <>
+                        <Separator />
+                        <ValueProposition valueProposition={businessData.elevatorPitch?.value_proposition} />
+                      </>
+                    )}
+                    
+                    {businessData.elevatorPitch?.testimonials && businessData.elevatorPitch.testimonials.length > 0 && (
+                      <>
+                        <Separator />
+                        <TestimonialsSection testimonials={businessData.elevatorPitch?.testimonials} />
+                      </>
+                    )}
+                    
+                    {businessData.elevatorPitch?.clients && businessData.elevatorPitch.clients.length > 0 && (
+                      <>
+                        <Separator />
+                        <ClientsSection clients={businessData.elevatorPitch?.clients} />
+                      </>
+                    )}
+                    
+                    {businessData.contactInfo && (
+                      <>
+                        <Separator />
+                        <ContactSection contactInfo={businessData.contactInfo} />
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
-        {businessData && (
+        {businessData && !isLoadingSettings && (
           <CardFooter>
             <Button 
               onClick={handleSaveBusinessData} 

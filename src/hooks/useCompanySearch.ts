@@ -27,6 +27,9 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         const settings = await fetchWebhookSettings();
         if (settings?.url) {
           setWebhookUrl(settings.url);
+        } else {
+          // Set a default webhook URL or handle missing URL silently
+          console.log("No webhook URL configured");
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
@@ -53,6 +56,11 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     if (!webhookUrl) {
       // Silently handle missing webhook URL
       console.error("Webhook URL not configured");
+      toast({
+        title: "System Error",
+        description: "The service is currently unavailable. Please try again later.",
+        variant: "destructive",
+      });
       return;
     }
 

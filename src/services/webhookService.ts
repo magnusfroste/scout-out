@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -38,17 +39,26 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
       return null;
     }
     
+    // Non-admin users should still fetch webhook settings but without showing error toasts
     if (!profileData.is_admin) {
-      console.error('User is not an admin');
-      toast({
-        title: "Access Denied",
-        description: "You need admin privileges to access webhook settings",
-        variant: "destructive",
-      });
-      return null;
+      console.log('User is not an admin, fetching webhook settings silently');
+      
+      // Fetch the webhook settings without showing any toasts
+      const { data, error } = await supabase
+        .from('webhook_settings')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching webhook settings for non-admin:', error);
+        return null;
+      }
+      
+      return data;
     }
     
-    // Now fetch the webhook settings
+    // Now fetch the webhook settings for admin users
     const { data, error } = await supabase
       .from('webhook_settings')
       .select('*')
@@ -63,6 +73,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
         return null;
       }
       
+      // Only show toast for admin users
       toast({
         title: "Error",
         description: "Failed to fetch webhook settings: " + error.message,
@@ -75,11 +86,25 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
     return data;
   } catch (error) {
     console.error('Error in fetchWebhookSettings:', error);
-    toast({
-      title: "Error",
-      description: "An unexpected error occurred while fetching webhook settings",
-      variant: "destructive",
-    });
+    
+    // Only show toast for admin users - we check this inside the function
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', data.user.id)
+        .single();
+        
+      if (profileData?.is_admin) {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred while fetching webhook settings",
+          variant: "destructive",
+        });
+      }
+    }
+    
     return null;
   }
 };

@@ -21,17 +21,13 @@ export const callMyBusinessWebhook = async (webhookUrl: string, websiteUrl: stri
     if (!response.ok) {
       const errorText = await response.text();
       console.error('MyBusiness webhook error:', errorText);
-      throw new Error(`Webhook request failed: ${response.status} - ${errorText}`);
+      throw new Error(`Service unavailable. Please try again later.`);
     }
     
     return response;
   } catch (error) {
     console.error('Error in callMyBusinessWebhook:', error);
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to call My Business webhook",
-      variant: "destructive",
-    });
+    // Let the calling component handle the toast to provide a better user experience
     throw error;
   }
 };
