@@ -13,9 +13,11 @@ interface SearchResultsProps {
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions, isLoading = false }) => {
+  console.log("SearchResults rendering:", { isLoading, hasResult: !!result, companyName });
+  
   if (isLoading) {
     return (
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Searching for {companyName}</CardTitle>
           <CardDescription>
@@ -32,7 +34,23 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
     );
   }
   
-  if (!result) return null;
+  if (!result) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Search Complete</CardTitle>
+          <CardDescription>
+            No results found for {companyName}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <p className="text-muted-foreground">We couldn't find information for this company. Please try a different search.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   const renderContactInfo = () => {
     const contactInfo = result.contact_info;
@@ -114,7 +132,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   };
 
   return (
-    <Card>
+    <Card className="mt-6">
       <CardHeader>
         <CardTitle>Results for {companyName}</CardTitle>
         {result.contact_info && (

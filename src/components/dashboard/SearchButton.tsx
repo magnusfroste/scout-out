@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Button from '@/components/Button';
+import { Button } from '@/components/ui/button'; 
 import { Loader2 } from 'lucide-react';
 
 interface SearchButtonProps {
@@ -23,6 +23,7 @@ const SearchButton: React.FC<SearchButtonProps> = ({
       <Button 
         type="submit" 
         disabled={disabled}
+        className="min-w-[120px]"
       >
         {isLoading ? (
           <>

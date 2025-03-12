@@ -32,6 +32,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     searchRequested
   } = useCompanySearch(questions, onSearch);
 
+  console.log("Search status:", { 
+    searchRequested, 
+    isLoading, 
+    hasResult: !!result, 
+    companyName
+  });
+
   return (
     <div className="space-y-6">
       {isLoadingWebhook ? (
@@ -56,7 +63,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
-          {searchRequested && (isLoading || result) && (
+          {searchRequested && (
             <SearchResults 
               result={result} 
               companyName={companyName} 
