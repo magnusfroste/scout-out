@@ -1,15 +1,17 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
-import { Question } from '@/types/company';
+import { SearchResultType } from '@/types/company';
 import SearchForm from './SearchForm';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
 import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+
+type Question = {
+  id: string;
+  question: string;
+};
 
 interface CompanySearchProps {
   questions: Question[];
@@ -18,12 +20,6 @@ interface CompanySearchProps {
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
-  const [displayedResult, setDisplayedResult] = useState(null);
-  const [displayedSearchId, setDisplayedSearchId] = useState(null);
-  const [isDisplayReady, setIsDisplayReady] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const resultContainerRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   
   const {
     companyName,
@@ -32,95 +28,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     isDeductingCredit,
     isLoadingWebhook,
     result,
-    handleSearch,
-    searchId,
-    webhookUrl,
-    lastError
+    handleSearch
   } = useCompanySearch(questions, onSearch);
-
-  // Debug effect to log important state changes
-  useEffect(() => {
-    console.log("Search state update:", { 
-      isLoading, 
-      hasResult: !!result, 
-      searchId, 
-      webhookUrl,
-      lastError 
-    });
-    
-    // Update debug info
-    let status = "";
-    if (isLoadingWebhook) status = "Loading webhook configuration...";
-    else if (!webhookUrl) status = "No webhook URL configured";
-    else if (isLoading) status = "Search in progress...";
-    else if (lastError) status = `Error: ${lastError}`;
-    else if (result) status = "Search completed successfully";
-    else status = "Ready to search";
-    
-    setDebugInfo(status);
-  }, [isLoading, result, searchId, webhookUrl, isLoadingWebhook, lastError]);
-
-  // Process and update displayedResult when search completes
-  useEffect(() => {
-    if (result) {
-      console.log("Processing search result for display", { 
-        hasResult: !!result,
-        searchId
-      });
-      
-      try {
-        // Post-process results - deep clone to prevent reference issues
-        const resultClone = JSON.parse(JSON.stringify(result));
-        
-        // Ensure arrays and objects are properly initialized
-        if (!resultClone.results) resultClone.results = [];
-        if (!resultClone.contact_info) resultClone.contact_info = {};
-        
-        // Normalize all answer text fields
-        resultClone.results = resultClone.results.map(answer => ({
-          ...answer,
-          answer: answer.answer ? String(answer.answer).trim() : ""
-        }));
-        
-        // Update the displayed result state
-        setDisplayedResult(resultClone);
-        setDisplayedSearchId(searchId);
-        setIsDisplayReady(true);
-        
-        // Log that we've prepared results for display
-        console.log("Search results prepared for display", { 
-          resultsCount: resultClone.results?.length || 0,
-          hasContactInfo: !!resultClone.contact_info
-        });
-        
-        // Show a confirmation toast
-        toast({
-          title: "Results Ready",
-          description: "Company search results are now displayed below",
-        });
-        
-        // Scroll to results if they're not visible
-        if (resultContainerRef.current) {
-          setTimeout(() => {
-            resultContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }, 100);
-        }
-      } catch (error) {
-        console.error("Error preparing search results for display:", error);
-        setDebugInfo(`Error displaying results: ${error.message}`);
-      }
-    }
-  }, [result, searchId, toast]);
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Reset displayed results before starting a new search
-    setDisplayedResult(null);
-    setDisplayedSearchId(null);
-    setIsDisplayReady(false);
-    setDebugInfo("Starting search...");
-    handleSearch(e);
-  };
 
   return (
     <div className="space-y-6">
@@ -134,22 +43,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
         </Card>
       ) : (
         <>
-          {/* Debug status display - Always visible */}
-          <Alert variant={lastError ? "destructive" : "default"} className="mb-4">
-            <AlertDescription className="flex items-center gap-2">
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              <span>{debugInfo}</span>
-            </AlertDescription>
-          </Alert>
-          
-          {!webhookUrl && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>
-                No webhook URL is configured. Please contact the administrator.
-              </AlertDescription>
-            </Alert>
-          )}
-          
           <SearchForm 
             companyName={companyName}
             setCompanyName={setCompanyName}
@@ -157,26 +50,18 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
             isDeductingCredit={isDeductingCredit}
             questionsCount={questions.length}
             availableCredits={userProfile?.credits}
-            onSubmit={handleFormSubmit}
+            onSubmit={handleSearch}
           />
           
           <QuestionsList questions={questions} />
           
-          {/* Add more prominent result container with border when there are results */}
-          <div 
-            ref={resultContainerRef} 
-            className={`search-results-wrapper mt-6 ${displayedResult ? 'border rounded-lg p-1' : ''}`}
-          >
-            {displayedResult && (
-              <SearchResults 
-                key={displayedSearchId || 'current-search'}
-                result={displayedResult}
-                companyName={companyName}
-                questions={questions}
-                isLoading={isLoading}
-              />
-            )}
-          </div>
+          {result && (
+            <SearchResults 
+              result={result} 
+              companyName={companyName} 
+              questions={questions} 
+            />
+          )}
         </>
       )}
     </div>

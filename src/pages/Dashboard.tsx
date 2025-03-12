@@ -35,6 +35,7 @@ const Dashboard = () => {
 
   const { user, loading, userProfile } = useAuth();
 
+  // IMPORTANT: Moving the conditional return after all hooks
   useEffect(() => {
     if (user) {
       fetchQuestions();
@@ -78,6 +79,7 @@ const Dashboard = () => {
     }
   };
 
+  // During loading, show a loading indicator with the full layout
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -92,6 +94,7 @@ const Dashboard = () => {
     );
   }
   
+  // Silent redirect to auth page if not logged in - no toast message
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -128,7 +131,10 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="search">
-              <CompanySearch questions={questions} onSearch={fetchSearches} />
+              <CompanySearch 
+                questions={questions} 
+                onSearch={fetchSearches} 
+              />
             </TabsContent>
             
             <TabsContent value="questions">

@@ -78,28 +78,6 @@
     @apply bg-foreground/5 backdrop-blur-lg border border-foreground/10 shadow-glass;
   }
   
-  /* Completely disable all animations and transitions in search results for performance */
-  .search-results-container * {
-    animation: none !important;
-    transition: none !important;
-    transform: none !important;
-    will-change: auto !important;
-    backface-visibility: hidden !important;
-    perspective: 1000px !important;
-  }
-  
-  /* Ensure search results wrapper has stable dimensions and optimized rendering */
-  .search-results-wrapper {
-    transition: none !important;
-    position: relative;
-    contain: content;
-    content-visibility: auto;
-    isolation: isolate;
-    z-index: 1;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
-  
   .animated-gradient {
     background-size: 400% 400%;
     animation: gradient 8s ease infinite;
@@ -117,26 +95,25 @@
     }
   }
   
-  /* Remove page transition animations completely */
   .page-transition-enter {
-    opacity: 1;
-    transform: none;
+    opacity: 0;
+    transform: translateY(10px);
   }
   
   .page-transition-enter-active {
     opacity: 1;
-    transform: none;
-    transition: none;
+    transform: translateY(0);
+    transition: opacity 300ms, transform 300ms;
   }
   
   .page-transition-exit {
     opacity: 1;
-    transform: none;
+    transform: translateY(0);
   }
   
   .page-transition-exit-active {
-    opacity: 1;
-    transform: none;
-    transition: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 300ms, transform 300ms;
   }
 }

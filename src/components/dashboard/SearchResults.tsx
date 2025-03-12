@@ -1,82 +1,23 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, Globe, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Globe } from 'lucide-react';
 import { Question, Answer, ContactInfo, SearchResultType } from '@/types/company';
 
 interface SearchResultsProps {
   result: SearchResultType | null;
   companyName: string;
   questions: Question[];
-  isLoading?: boolean;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions, isLoading = false }) => {
-  // Log rendering for debugging purposes
-  useEffect(() => {
-    console.log("SearchResults rendered with:", {
-      hasResult: !!result, 
-      resultsCount: result?.results?.length || 0,
-      hasContactInfo: !!result?.contact_info
-    });
-    
-    // Log any issues with result structure
-    if (result && (!result.results || !Array.isArray(result.results))) {
-      console.warn("SearchResults received invalid results structure:", result);
-    }
-  }, [result]);
-  
-  if (isLoading) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Searching for {companyName}</CardTitle>
-          <CardDescription>
-            Our agent is gathering information...
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">This might take a moment as we analyze company information</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (!result) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>No Results</CardTitle>
-          <CardDescription>
-            No results found for {companyName}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">We couldn't find information for this company. Please try a different search.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // Ensure result.results is an array
-  const hasResults = result.results && Array.isArray(result.results) && result.results.length > 0;
+const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions }) => {
+  if (!result) return null;
   
   const renderContactInfo = () => {
     const contactInfo = result.contact_info;
     
     if (!contactInfo) return null;
-    
-    // Check if any contact info exists
-    const hasAnyInfo = contactInfo.contact || contactInfo.email || 
-                       contactInfo.phone || contactInfo.www;
-    
-    if (!hasAnyInfo) return null;
     
     return (
       <div className="mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border">
@@ -123,7 +64,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   };
 
   const renderResults = () => {
-    if (hasResults) {
+    if (result.results && Array.isArray(result.results)) {
       return (
         <div className="space-y-4">
           {result.results.map((item: Answer, index: number) => {
@@ -131,7 +72,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
             const questionText = questionObj ? questionObj.question : `Question ${index + 1}`;
             
             return (
-              <div key={`${item.question_id || index}-${index}`} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
+              <div key={item.question_id || index} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
                 <h3 className="font-medium text-lg mb-2">{questionText}</h3>
                 <p className="text-sm whitespace-pre-wrap">{item.answer || "No answer provided"}</p>
               </div>
@@ -141,19 +82,15 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
       );
     }
     
-    // If no results, show a message
     return (
-      <div className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
-        <p className="text-center text-muted-foreground py-2">
-          The search was completed, but no detailed answers were found for this company.
-          {result.contact_info ? " Contact information is available above." : ""}
-        </p>
-      </div>
+      <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
+        {JSON.stringify(result, null, 2)}
+      </pre>
     );
   };
 
   return (
-    <Card className="w-full search-results-container">
+    <Card>
       <CardHeader>
         <CardTitle>Results for {companyName}</CardTitle>
         {result.contact_info && (
