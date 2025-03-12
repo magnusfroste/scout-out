@@ -66,20 +66,21 @@ const Settings = () => {
   // Show loading state while fetching auth information or webhook settings
   if (loading || (isLoading && !adminChecked)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <p className="text-lg">Loading settings...</p>
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-pulse text-muted-foreground">Loading settings...</div>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
-  // Only redirect after admin check is complete
+  // Only redirect after admin check is complete - without toast message
   if (adminChecked && (!user || !userProfile?.is_admin)) {
-    console.log('Access denied, redirecting to dashboard');
-    toast({
-      title: "Access Denied",
-      description: "You need admin privileges to access this page.",
-      variant: "destructive",
-    });
+    console.log('Access check failed, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 

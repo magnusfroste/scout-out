@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,11 +18,12 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already logged in
+  // Check if user is already logged in - silently redirect without messages
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
+        console.log('User already has session, redirecting to dashboard');
         navigate('/dashboard');
       }
     };
@@ -34,6 +34,7 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session) {
+          console.log('Auth state changed, user logged in, redirecting to dashboard');
           navigate('/dashboard');
         }
       }

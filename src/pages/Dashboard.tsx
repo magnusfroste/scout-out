@@ -78,7 +78,7 @@ const Dashboard = () => {
     }
   };
 
-  // During loading, show nothing or a loading indicator instead of redirect
+  // During loading, show a loading indicator with the full layout
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -93,8 +93,8 @@ const Dashboard = () => {
     );
   }
   
-  // Only redirect after loading is complete AND user is not authenticated
-  if (!loading && !user) {
+  // Only redirect after loading is complete - without any toast message
+  if (!user) {
     return <Navigate to="/auth" replace />;
   }
 

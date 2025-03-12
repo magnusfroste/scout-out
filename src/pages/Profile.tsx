@@ -93,7 +93,23 @@ const Profile = () => {
     }
   };
 
-  if (!loading && !user) {
+  // Show loading state with full layout
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-pulse text-muted-foreground">Loading profile...</div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Silent redirect without toast message
+  if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
