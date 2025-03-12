@@ -78,7 +78,22 @@ const Dashboard = () => {
     }
   };
 
-  // Move the conditional return here, after all hooks are defined
+  // During loading, show nothing or a loading indicator instead of redirect
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
+  // Only redirect after loading is complete AND user is not authenticated
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
   }
