@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { deductCredits, calculateCreditCost } from '@/utils/creditUtils';
@@ -19,18 +19,29 @@ export const useCompanySearch = (
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
-  const [searchId, setSearchId] = useState('');
+  const [searchId, setSearchId] = useState<string | null>(null);
+  const isMounted = useRef(true);
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
+  // Component lifecycle management
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   // Load webhook URL on component mount
   useEffect(() => {
     const loadWebhookUrl = async () => {
+      if (!isMounted.current) return;
+      
       setIsLoadingWebhook(true);
       try {
         const settings = await fetchWebhookSettings();
-        if (settings?.url) {
+        if (settings?.url && isMounted.current) {
           setWebhookUrl(settings.url);
           console.log("Loaded webhook URL:", settings.url);
         } else {
@@ -39,7 +50,9 @@ export const useCompanySearch = (
       } catch (error) {
         console.error('Error loading webhook settings:', error);
       } finally {
-        setIsLoadingWebhook(false);
+        if (isMounted.current) {
+          setIsLoadingWebhook(false);
+        }
       }
     };
     loadWebhookUrl();
@@ -78,10 +91,7 @@ export const useCompanySearch = (
     
     // Reset result when starting a new search
     setResult(null);
-    
-    // Generate a unique search ID that includes timestamp for uniqueness
-    const newSearchId = `search-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    setSearchId(newSearchId);
+    setSearchId(null);
     
     // Start loading
     setIsLoading(true);
@@ -95,10 +105,14 @@ export const useCompanySearch = (
       refreshUserProfile
     );
     
-    setIsDeductingCredit(false);
+    if (isMounted.current) {
+      setIsDeductingCredit(false);
+    }
     
     if (!creditSuccess) {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -129,8 +143,15 @@ export const useCompanySearch = (
         contact_info: contactInfo
       };
       
-      // Update the result
-      setResult(searchResult);
+      // Generate a unique search ID that includes timestamp for uniqueness
+      const newSearchId = `search-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Update state only if component is still mounted
+      if (isMounted.current) {
+        // Set the result and searchId in a single render cycle
+        setResult(searchResult);
+        setSearchId(newSearchId);
+      }
       
       if (user.id) {
         console.log("Storing search results for user:", user.id);
@@ -150,22 +171,28 @@ export const useCompanySearch = (
         }
       }
       
-      // Show toast after all state updates are complete
-      toast({
-        title: "Success",
-        description: "Search completed successfully",
-      });
+      // Show toast only if component is still mounted
+      if (isMounted.current) {
+        toast({
+          title: "Success",
+          description: "Search completed successfully",
+        });
+      }
       
     } catch (error: any) {
       console.error("Error during company search:", error);
       
-      toast({
-        title: "Error",
-        description: "Unable to process your search at this time. Please try again later.",
-        variant: "destructive",
-      });
+      if (isMounted.current) {
+        toast({
+          title: "Error",
+          description: "Unable to process your search at this time. Please try again later.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch]);
 

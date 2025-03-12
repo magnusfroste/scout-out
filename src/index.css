@@ -78,10 +78,19 @@
     @apply bg-foreground/5 backdrop-blur-lg border border-foreground/10 shadow-glass;
   }
   
-  /* Disable animations that might cause flickering */
+  /* Completely disable all animations and transitions in search results */
   .search-results-container * {
     animation: none !important;
     transition: none !important;
+    transform: none !important;
+  }
+  
+  /* Ensure search results wrapper has stable dimensions */
+  .search-results-wrapper {
+    transition: none !important;
+    min-height: 0;
+    position: relative;
+    will-change: auto !important;
   }
   
   .animated-gradient {
@@ -101,7 +110,7 @@
     }
   }
   
-  /* Remove page transition animations as they might interfere with the search results */
+  /* Remove page transition animations completely */
   .page-transition-enter {
     opacity: 1;
     transform: none;

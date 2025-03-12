@@ -15,7 +15,8 @@ interface CompanySearchProps {
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
-  const [activeSearchId, setActiveSearchId] = useState<string | null>(null);
+  const [displayedResult, setDisplayedResult] = useState(null);
+  const [displayedSearchId, setDisplayedSearchId] = useState(null);
   const resultContainerRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -29,13 +30,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     searchId
   } = useCompanySearch(questions, onSearch);
 
-  // Update activeSearchId when search is completed
+  // Update displayedResult when search is completed
   useEffect(() => {
     if (searchId && !isLoading && result) {
-      // Use setTimeout to ensure DOM is ready before updating
-      setTimeout(() => {
-        setActiveSearchId(searchId);
-      }, 0);
+      // Only update display after loading is complete and results are available
+      // Clone the result to prevent reference issues
+      const resultClone = JSON.parse(JSON.stringify(result));
+      setDisplayedResult(resultClone);
+      setDisplayedSearchId(searchId);
     }
   }, [searchId, isLoading, result]);
 
@@ -68,12 +70,16 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
-          <div ref={resultContainerRef} className="search-results-wrapper">
-            {activeSearchId && (
+          <div 
+            ref={resultContainerRef} 
+            className="search-results-wrapper"
+            style={{ minHeight: displayedResult ? '200px' : '0' }}
+          >
+            {displayedSearchId && displayedResult && (
               <SearchResults 
-                key={activeSearchId}
-                result={result} 
-                companyName={companyName} 
+                key={displayedSearchId}
+                result={displayedResult}
+                companyName={companyName}
                 questions={questions}
                 isLoading={isLoading}
               />
