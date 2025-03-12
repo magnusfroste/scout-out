@@ -30,7 +30,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     result,
     handleSearch,
     searchRequested,
-    setSearchRequested
+    setSearchRequested,
+    searchId
   } = useCompanySearch(questions, onSearch);
 
   useEffect(() => {
@@ -40,9 +41,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
       isLoading, 
       hasResult: !!result, 
       companyName,
-      result
+      result,
+      searchId
     });
-  }, [searchRequested, isLoading, result, companyName]);
+  }, [searchRequested, isLoading, result, companyName, searchId]);
 
   return (
     <div className="space-y-6">
@@ -70,7 +72,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           {searchRequested && (
             <SearchResults 
-              key={`search-${companyName}-${Date.now()}`}
+              key={searchId}
               result={result} 
               companyName={companyName} 
               questions={questions}

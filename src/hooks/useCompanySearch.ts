@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,11 +16,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
   const [searchRequested, setSearchRequested] = useState(false);
+  const [searchId, setSearchId] = useState('initial');
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
-  // Reset search when company name changes
+  // Only reset search when manually clearing the company name input
   useEffect(() => {
     if (!isLoading && companyName === '') {
       setSearchRequested(false);
@@ -95,10 +95,14 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    // Reset previous results and set loading state
-    setResult(null);
-    setIsLoading(true);
+    // Create a new searchId to force re-render of results component
+    const newSearchId = `search-${companyName}-${Date.now()}`;
+    setSearchId(newSearchId);
+    console.log(`Creating new search with ID: ${newSearchId}`);
+
+    // Set search requested first, while keeping previous result until the new one arrives
     setSearchRequested(true);
+    setIsLoading(true);
 
     try {
       console.log("Making webhook call to:", webhookUrl);
@@ -181,6 +185,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     result,
     handleSearch,
     searchRequested,
-    setSearchRequested
+    setSearchRequested,
+    searchId
   };
 };
