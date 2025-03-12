@@ -1,3 +1,4 @@
+
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -30,11 +31,31 @@ export type WebhookParseResult = {
 };
 
 /**
- * Parses webhook response data for My Business feature in the standard format:
+ * Parses webhook response data for company search and my business features
+ * 
+ * Company Search format:
+ * [{
+ *   output: {
+ *     Company: {
+ *       www: string,
+ *       contact: string,
+ *       email: string,
+ *       phone: string
+ *     },
+ *     Questions: [
+ *       {
+ *         id: string,
+ *         answer: string
+ *       }
+ *     ]
+ *   }
+ * }]
+ * 
+ * My Business format:
  * [{
  *   output: {
  *     about_us: string,
- *     our_services: { [serviceName: string]: string }, // Object with service names as keys
+ *     our_services: { [serviceName: string]: string },
  *     delivered_value: string,
  *     clients: string[],
  *     clients_testimonials: Array<{name, position, company, testimonial}>
@@ -53,11 +74,30 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
     if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
       const output = responseData[0].output;
       
-      // Extract my business data if available
-      if (output.about_us || output.our_services || output.clients) {
+      // Extract company search data (new format)
+      if (output.Company && output.Questions) {
+        // Extract contact info
+        if (output.Company) {
+          contactInfo = {
+            www: output.Company.www || undefined,
+            contact: output.Company.contact || undefined,
+            email: output.Company.email || undefined,
+            phone: output.Company.phone || undefined
+          };
+        }
+        
+        // Extract questions and answers
+        if (Array.isArray(output.Questions)) {
+          processedResults = output.Questions.map(q => ({
+            question_id: q.id,
+            answer: q.answer
+          }));
+        }
+      }
+      // Extract my business data (existing format)
+      else if (output.about_us || output.our_services || output.clients) {
         // Get company name from output data or extract from URL
         const companyName = output.company_name || output.name || extractCompanyName();
-        console.log('Company name determined as:', companyName);
         
         // Transform our_services from object to array of {name, description}
         const servicesArray = transformServicesObject(output.our_services || {});
@@ -81,28 +121,30 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
         
         console.log('Extracted elevator pitch:', elevatorPitch);
       }
-      
-      // Extract contact info
-      if (output.basic_info) {
-        contactInfo = {
-          www: output.basic_info.www || undefined,
-          contact: output.basic_info.contact || undefined,
-          email: output.basic_info.email || undefined,
-          phone: output.basic_info.phone || undefined
-        };
-      }
-      
-      // Extract processed results (for company search feature)
-      if (output.questions && Array.isArray(output.questions)) {
-        processedResults = output.questions.map(q => ({
-          question_id: q.id,
-          answer: q.answer
-        }));
-      } else if (output.answers && Array.isArray(output.answers)) {
-        processedResults = output.answers.map(a => ({
-          question_id: a.id,
-          answer: a.answer
-        }));
+      // Support for legacy format
+      else {
+        // Extract contact info from basic_info
+        if (output.basic_info) {
+          contactInfo = {
+            www: output.basic_info.www || undefined,
+            contact: output.basic_info.contact || undefined,
+            email: output.basic_info.email || undefined,
+            phone: output.basic_info.phone || undefined
+          };
+        }
+        
+        // Extract legacy format questions/answers
+        if (output.questions && Array.isArray(output.questions)) {
+          processedResults = output.questions.map(q => ({
+            question_id: q.id,
+            answer: q.answer
+          }));
+        } else if (output.answers && Array.isArray(output.answers)) {
+          processedResults = output.answers.map(a => ({
+            question_id: a.id,
+            answer: a.answer
+          }));
+        }
       }
     }
   } catch (error) {
