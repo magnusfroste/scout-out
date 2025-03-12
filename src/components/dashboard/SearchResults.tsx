@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { User, Mail, Phone, Globe, Loader2 } from 'lucide-react';
@@ -13,12 +13,14 @@ interface SearchResultsProps {
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions, isLoading = false }) => {
-  console.log("SearchResults rendering:", { 
-    isLoading, 
-    hasResult: !!result, 
-    companyName,
-    resultData: result
-  });
+  // Log rendering for debugging purposes
+  useEffect(() => {
+    console.log("SearchResults rendered with:", {
+      hasResult: !!result, 
+      resultsCount: result?.results?.length || 0,
+      hasContactInfo: !!result?.contact_info
+    });
+  }, [result]);
   
   if (isLoading) {
     return (
@@ -61,6 +63,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
     const contactInfo = result.contact_info;
     
     if (!contactInfo) return null;
+    
+    // Check if any contact info exists
+    const hasAnyInfo = contactInfo.contact || contactInfo.email || 
+                       contactInfo.phone || contactInfo.www;
+    
+    if (!hasAnyInfo) return null;
     
     return (
       <div className="mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border">
@@ -115,7 +123,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
             const questionText = questionObj ? questionObj.question : `Question ${index + 1}`;
             
             return (
-              <div key={`${item.question_id || index}-${questionText}`} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
+              <div key={`${item.question_id || index}-${index}`} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
                 <h3 className="font-medium text-lg mb-2">{questionText}</h3>
                 <p className="text-sm whitespace-pre-wrap">{item.answer || "No answer provided"}</p>
               </div>
@@ -137,7 +145,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   };
 
   return (
-    <Card className="mt-6">
+    <Card className="mt-6 search-results-container">
       <CardHeader>
         <CardTitle>Results for {companyName}</CardTitle>
         {result.contact_info && (
@@ -147,7 +155,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
         )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-auto max-h-[500px] search-results-container">
+        <div className="overflow-auto max-h-[500px]">
           {renderContactInfo()}
           {renderResults()}
         </div>

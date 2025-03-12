@@ -78,21 +78,26 @@
     @apply bg-foreground/5 backdrop-blur-lg border border-foreground/10 shadow-glass;
   }
   
-  /* Completely disable all animations and transitions in search results */
+  /* Completely disable all animations and transitions in search results for performance */
   .search-results-container * {
     animation: none !important;
     transition: none !important;
     transform: none !important;
+    will-change: auto !important;
+    backface-visibility: hidden !important;
+    perspective: 1000px !important;
   }
   
-  /* Ensure search results wrapper has stable dimensions */
+  /* Ensure search results wrapper has stable dimensions and optimized rendering */
   .search-results-wrapper {
     transition: none !important;
-    min-height: 0;
     position: relative;
-    will-change: auto !important;
     contain: content;
     content-visibility: auto;
+    isolation: isolate;
+    z-index: 1;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
   
   .animated-gradient {
