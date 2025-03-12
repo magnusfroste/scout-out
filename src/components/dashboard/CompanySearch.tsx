@@ -43,6 +43,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Reset displayed results before starting a new search
+    setDisplayedResult(null);
+    setDisplayedSearchId(null);
     handleSearch(e);
   };
 

@@ -91,6 +91,8 @@
     min-height: 0;
     position: relative;
     will-change: auto !important;
+    contain: content;
+    content-visibility: auto;
   }
   
   .animated-gradient {
