@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
 import { Question } from '@/types/company';
@@ -15,7 +15,7 @@ interface CompanySearchProps {
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
-  const mountedRef = useRef(true);
+  const [displayResults, setDisplayResults] = useState(false);
   
   const {
     companyName,
@@ -25,29 +25,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     isLoadingWebhook,
     result,
     handleSearch,
-    searchRequested,
-    setSearchRequested,
     searchId
-  } = useCompanySearch(questions, onSearch);
-
-  // Set mounted ref to false when component unmounts
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    // Log detailed state information for debugging
-    console.log("Search component state:", { 
-      searchRequested, 
-      isLoading, 
-      hasResult: !!result, 
-      companyName,
-      searchId
-    });
-  }, [searchRequested, isLoading, result, companyName, searchId]);
+  } = useCompanySearch(questions, onSearch, () => setDisplayResults(true));
 
   return (
     <div className="space-y-6">
@@ -68,20 +47,21 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
             isDeductingCredit={isDeductingCredit}
             questionsCount={questions.length}
             availableCredits={userProfile?.credits}
-            onSubmit={handleSearch}
+            onSubmit={(e) => {
+              handleSearch(e);
+              setDisplayResults(true);
+            }}
           />
           
           <QuestionsList questions={questions} />
           
-          {searchRequested && (
-            <div key={searchId} className="search-results-container">
-              <SearchResults 
-                result={result} 
-                companyName={companyName} 
-                questions={questions}
-                isLoading={isLoading}
-              />
-            </div>
+          {displayResults && (
+            <SearchResults 
+              result={result} 
+              companyName={companyName} 
+              questions={questions}
+              isLoading={isLoading}
+            />
           )}
         </>
       )}

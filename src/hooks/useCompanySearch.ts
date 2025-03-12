@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { deductCredits, calculateCreditCost } from '@/utils/creditUtils';
@@ -9,17 +9,19 @@ import { storeSearchResults } from '@/services/companySearchService';
 import { callCompanyWebhook } from '@/services/companyWebhookService';
 import { Question, SearchResultType } from '@/types/company';
 
-export const useCompanySearch = (questions: Question[], onSearch: () => void) => {
+export const useCompanySearch = (
+  questions: Question[], 
+  onSearch: () => void,
+  onSearchComplete?: () => void
+) => {
   const [companyName, setCompanyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SearchResultType | null>(null);
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
-  const [searchRequested, setSearchRequested] = useState(false);
-  const [searchId, setSearchId] = useState(`initial-${Date.now()}`);
+  const [searchId, setSearchId] = useState(`search-${Date.now()}`);
   
-  const previousResultRef = useRef<SearchResultType | null>(null);
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
@@ -75,6 +77,11 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
     
+    // Set a new search ID for this search operation
+    setSearchId(`search-${companyName}-${Date.now()}`);
+    
+    // Start loading
+    setIsLoading(true);
     setIsDeductingCredit(true);
     
     const creditSuccess = await deductCredits(
@@ -88,24 +95,9 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setIsDeductingCredit(false);
     
     if (!creditSuccess) {
+      setIsLoading(false);
       return;
     }
-
-    // Save the current result before starting a new search
-    previousResultRef.current = result;
-
-    // Create a unique search ID for this search operation
-    const newSearchId = `search-${companyName}-${Date.now()}`;
-    setSearchId(newSearchId);
-    console.log(`Creating new search with ID: ${newSearchId}`);
-
-    // Set searchRequested to true if it's not already
-    if (!searchRequested) {
-      setSearchRequested(true);
-    }
-    
-    // Start loading
-    setIsLoading(true);
 
     try {
       console.log("Making webhook call to:", webhookUrl);
@@ -155,6 +147,11 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         }
       }
       
+      // Call the onSearchComplete callback if provided
+      if (onSearchComplete) {
+        onSearchComplete();
+      }
+      
       // Show toast after all state updates are complete
       toast({
         title: "Success",
@@ -164,9 +161,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } catch (error: any) {
       console.error("Error during company search:", error);
       
-      // If there was an error, restore the previous result
-      setResult(previousResultRef.current);
-      
       toast({
         title: "Error",
         description: "Unable to process your search at this time. Please try again later.",
@@ -175,7 +169,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } finally {
       setIsLoading(false);
     }
-  }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch, result, searchRequested]);
+  }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch, onSearchComplete]);
 
   return {
     companyName,
@@ -185,8 +179,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     isLoadingWebhook,
     result,
     handleSearch,
-    searchRequested,
-    setSearchRequested,
     searchId
   };
 };
