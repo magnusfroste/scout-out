@@ -70,6 +70,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
+          {/* Always render SearchResults when searchRequested, 
+              with a stable key to prevent unnecessary remounts */}
           {searchRequested && (
             <SearchResults 
               key={searchId}

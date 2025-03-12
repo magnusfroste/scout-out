@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,13 +96,15 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    // Create a new searchId to force re-render of results component
+    // Generate a stable searchId that doesn't change during the search process
     const newSearchId = `search-${companyName}-${Date.now()}`;
     setSearchId(newSearchId);
     console.log(`Creating new search with ID: ${newSearchId}`);
 
-    // Set search requested first, while keeping previous result until the new one arrives
+    // Setting searchRequested to true ensures the component stays visible
     setSearchRequested(true);
+    
+    // Start loading state but DO NOT clear the previous result yet
     setIsLoading(true);
 
     try {
@@ -130,12 +133,13 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         console.warn("No processed results found in the webhook response");
       }
       
-      // Set the result even if it's empty to show the user something happened
+      // Create the search result object
       const searchResult: SearchResultType = {
         results: processedResults || [],
         contact_info: contactInfo
       };
       
+      // Only now, after everything is ready, update the result
       setResult(searchResult);
       
       if (user.id) {
@@ -158,6 +162,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         console.error("Cannot store results - user.id is not available");
       }
       
+      // Show success toast AFTER setting all states
       toast({
         title: "Success",
         description: "Search completed successfully",
