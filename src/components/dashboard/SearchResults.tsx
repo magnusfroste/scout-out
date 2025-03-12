@@ -64,7 +64,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   };
 
   const renderResults = () => {
-    if (result.results && Array.isArray(result.results)) {
+    if (result.results && Array.isArray(result.results) && result.results.length > 0) {
       return (
         <div className="space-y-4">
           {result.results.map((item: Answer, index: number) => {
@@ -82,10 +82,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
       );
     }
     
+    // If no results, show a message
     return (
-      <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
-        {JSON.stringify(result, null, 2)}
-      </pre>
+      <div className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
+        <p className="text-center text-muted-foreground py-2">
+          The search was completed, but no detailed answers were found for this company.
+          {result.contact_info ? " Contact information is available above." : ""}
+        </p>
+      </div>
     );
   };
 
