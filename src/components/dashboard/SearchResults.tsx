@@ -115,7 +115,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
             const questionText = questionObj ? questionObj.question : `Question ${index + 1}`;
             
             return (
-              <div key={item.question_id || index} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
+              <div key={`${item.question_id || index}-${questionText}`} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
                 <h3 className="font-medium text-lg mb-2">{questionText}</h3>
                 <p className="text-sm whitespace-pre-wrap">{item.answer || "No answer provided"}</p>
               </div>

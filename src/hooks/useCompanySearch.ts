@@ -19,7 +19,7 @@ export const useCompanySearch = (
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
-  const [searchId, setSearchId] = useState(`search-${Date.now()}`);
+  const [searchId, setSearchId] = useState('');
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
@@ -76,8 +76,11 @@ export const useCompanySearch = (
       return;
     }
     
-    // Create a new search ID
-    const newSearchId = `search-${companyName}-${Date.now()}`;
+    // Reset result when starting a new search
+    setResult(null);
+    
+    // Generate a unique search ID that includes timestamp for uniqueness
+    const newSearchId = `search-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     setSearchId(newSearchId);
     
     // Start loading

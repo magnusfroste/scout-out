@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
 import { Question } from '@/types/company';
@@ -15,7 +15,7 @@ interface CompanySearchProps {
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
-  const [showResults, setShowResults] = useState(false);
+  const [activeSearchId, setActiveSearchId] = useState<string | null>(null);
   
   const {
     companyName,
@@ -28,10 +28,16 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     searchId
   } = useCompanySearch(questions, onSearch);
 
+  // Update activeSearchId when search is completed
+  useEffect(() => {
+    if (searchId && !isLoading && result) {
+      setActiveSearchId(searchId);
+    }
+  }, [searchId, isLoading, result]);
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSearch(e);
-    setShowResults(true);
   };
 
   return (
@@ -58,9 +64,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
-          {showResults && (
+          {activeSearchId && (
             <SearchResults 
-              key={`search-result-${searchId}`}
+              key={activeSearchId}
               result={result} 
               companyName={companyName} 
               questions={questions}
