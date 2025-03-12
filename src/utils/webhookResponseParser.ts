@@ -31,9 +31,43 @@ export type WebhookParseResult = {
 };
 
 /**
- * Parses webhook response data for company search and my business features
+ * Main parser that delegates to the appropriate specific parser
+ */
+export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
+  console.log('Parsing webhook response:', JSON.stringify(responseData));
+  
+  try {
+    // Check if responseData is valid
+    if (!Array.isArray(responseData) || responseData.length === 0 || !responseData[0].output) {
+      console.error('Invalid webhook response format');
+      return { processedResults: [] };
+    }
+    
+    const output = responseData[0].output;
+    
+    // Determine which parser to use based on the structure
+    if (output.Company && output.Questions) {
+      return parseCompanySearchResponse(responseData);
+    } else if (output.about_us || output.our_services || output.clients) {
+      return parseMyBusinessResponse(responseData);
+    } else {
+      // Legacy format - attempt to parse with both parsers
+      const companyResult = parseLegacyCompanySearchResponse(responseData);
+      if (companyResult.processedResults.length > 0 || companyResult.contactInfo) {
+        return companyResult;
+      }
+      return { processedResults: [] };
+    }
+  } catch (error) {
+    console.error('Error parsing webhook response:', error);
+    return { processedResults: [] };
+  }
+};
+
+/**
+ * Parses webhook response data for company search feature
  * 
- * Company Search format:
+ * Format:
  * [{
  *   output: {
  *     Company: {
@@ -50,8 +84,85 @@ export type WebhookParseResult = {
  *     ]
  *   }
  * }]
+ */
+const parseCompanySearchResponse = (responseData: any): WebhookParseResult => {
+  let processedResults: Answer[] = [];
+  let contactInfo: ContactInfo | undefined = undefined;
+  
+  try {
+    if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+      const output = responseData[0].output;
+      
+      // Extract contact info
+      if (output.Company) {
+        contactInfo = {
+          www: output.Company.www || undefined,
+          contact: output.Company.contact || undefined,
+          email: output.Company.email || undefined,
+          phone: output.Company.phone || undefined
+        };
+      }
+      
+      // Extract questions and answers
+      if (Array.isArray(output.Questions)) {
+        processedResults = output.Questions.map(q => ({
+          question_id: q.id,
+          answer: q.answer
+        }));
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing company search response:', error);
+  }
+  
+  return { processedResults, contactInfo };
+};
+
+/**
+ * Parses webhook response data for legacy company search format
+ */
+const parseLegacyCompanySearchResponse = (responseData: any): WebhookParseResult => {
+  let processedResults: Answer[] = [];
+  let contactInfo: ContactInfo | undefined = undefined;
+  
+  try {
+    if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+      const output = responseData[0].output;
+      
+      // Extract contact info from basic_info
+      if (output.basic_info) {
+        contactInfo = {
+          www: output.basic_info.www || undefined,
+          contact: output.basic_info.contact || undefined,
+          email: output.basic_info.email || undefined,
+          phone: output.basic_info.phone || undefined
+        };
+      }
+      
+      // Extract legacy format questions/answers
+      if (output.questions && Array.isArray(output.questions)) {
+        processedResults = output.questions.map(q => ({
+          question_id: q.id,
+          answer: q.answer
+        }));
+      } else if (output.answers && Array.isArray(output.answers)) {
+        processedResults = output.answers.map(a => ({
+          question_id: a.id,
+          answer: a.answer
+        }));
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing legacy company search response:', error);
+  }
+  
+  return { processedResults, contactInfo };
+};
+
+/**
+ * Parses webhook response data for My Business feature
  * 
- * My Business format:
+ * Format:
  * [{
  *   output: {
  *     about_us: string,
@@ -62,96 +173,43 @@ export type WebhookParseResult = {
  *   }
  * }]
  */
-export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
-  let processedResults: Answer[] = [];
-  let contactInfo: ContactInfo | undefined = undefined;
+const parseMyBusinessResponse = (responseData: any): WebhookParseResult => {
   let elevatorPitch: ElevatorPitch | undefined = undefined;
   
-  console.log('Parsing webhook response:', JSON.stringify(responseData));
-  
   try {
-    // Check if responseData is an array with output
     if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
       const output = responseData[0].output;
       
-      // Extract company search data (new format)
-      if (output.Company && output.Questions) {
-        // Extract contact info
-        if (output.Company) {
-          contactInfo = {
-            www: output.Company.www || undefined,
-            contact: output.Company.contact || undefined,
-            email: output.Company.email || undefined,
-            phone: output.Company.phone || undefined
-          };
-        }
-        
-        // Extract questions and answers
-        if (Array.isArray(output.Questions)) {
-          processedResults = output.Questions.map(q => ({
-            question_id: q.id,
-            answer: q.answer
-          }));
-        }
-      }
-      // Extract my business data (existing format)
-      else if (output.about_us || output.our_services || output.clients) {
-        // Get company name from output data or extract from URL
-        const companyName = output.company_name || output.name || extractCompanyName();
-        
-        // Transform our_services from object to array of {name, description}
-        const servicesArray = transformServicesObject(output.our_services || {});
-        
-        elevatorPitch = {
-          company_name: companyName,
-          tagline: extractTagline(output.about_us || ''),
-          about: output.about_us || '',
-          services: servicesArray,
-          value_proposition: output.delivered_value || '',
-          clients: Array.isArray(output.clients) ? output.clients : [],
-          testimonials: Array.isArray(output.clients_testimonials) 
-            ? output.clients_testimonials.map(t => ({
-                name: t.name || '',
-                position: t.position || '',
-                company: t.company || '',
-                testimonial: t.testimonial || ''
-              }))
-            : []
-        };
-        
-        console.log('Extracted elevator pitch:', elevatorPitch);
-      }
-      // Support for legacy format
-      else {
-        // Extract contact info from basic_info
-        if (output.basic_info) {
-          contactInfo = {
-            www: output.basic_info.www || undefined,
-            contact: output.basic_info.contact || undefined,
-            email: output.basic_info.email || undefined,
-            phone: output.basic_info.phone || undefined
-          };
-        }
-        
-        // Extract legacy format questions/answers
-        if (output.questions && Array.isArray(output.questions)) {
-          processedResults = output.questions.map(q => ({
-            question_id: q.id,
-            answer: q.answer
-          }));
-        } else if (output.answers && Array.isArray(output.answers)) {
-          processedResults = output.answers.map(a => ({
-            question_id: a.id,
-            answer: a.answer
-          }));
-        }
-      }
+      // Get company name from output data or extract from URL
+      const companyName = output.company_name || output.name || extractCompanyName();
+      
+      // Transform our_services from object to array of {name, description}
+      const servicesArray = transformServicesObject(output.our_services || {});
+      
+      elevatorPitch = {
+        company_name: companyName,
+        tagline: extractTagline(output.about_us || ''),
+        about: output.about_us || '',
+        services: servicesArray,
+        value_proposition: output.delivered_value || '',
+        clients: Array.isArray(output.clients) ? output.clients : [],
+        testimonials: Array.isArray(output.clients_testimonials) 
+          ? output.clients_testimonials.map(t => ({
+              name: t.name || '',
+              position: t.position || '',
+              company: t.company || '',
+              testimonial: t.testimonial || ''
+            }))
+          : []
+      };
+      
+      console.log('Extracted elevator pitch:', elevatorPitch);
     }
   } catch (error) {
-    console.error('Error parsing webhook response:', error);
+    console.error('Error parsing my business response:', error);
   }
-
-  return { processedResults, contactInfo, elevatorPitch };
+  
+  return { processedResults: [], elevatorPitch };
 };
 
 /**
