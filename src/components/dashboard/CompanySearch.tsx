@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
 import { SearchResultType } from '@/types/company';
@@ -29,15 +29,20 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     isLoadingWebhook,
     result,
     handleSearch,
-    searchRequested
+    searchRequested,
+    setSearchRequested
   } = useCompanySearch(questions, onSearch);
 
-  console.log("Search status:", { 
-    searchRequested, 
-    isLoading, 
-    hasResult: !!result, 
-    companyName
-  });
+  useEffect(() => {
+    // Log detailed state information for debugging
+    console.log("Search component state:", { 
+      searchRequested, 
+      isLoading, 
+      hasResult: !!result, 
+      companyName,
+      result
+    });
+  }, [searchRequested, isLoading, result, companyName]);
 
   return (
     <div className="space-y-6">
@@ -65,6 +70,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           {searchRequested && (
             <SearchResults 
+              key={`search-${companyName}-${Date.now()}`}
               result={result} 
               companyName={companyName} 
               questions={questions}

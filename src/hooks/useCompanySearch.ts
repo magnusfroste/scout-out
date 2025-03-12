@@ -21,6 +21,14 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
+  // Reset search when company name changes
+  useEffect(() => {
+    if (!isLoading && companyName === '') {
+      setSearchRequested(false);
+      setResult(null);
+    }
+  }, [companyName, isLoading]);
+
   useEffect(() => {
     const loadWebhookUrl = async () => {
       setIsLoadingWebhook(true);
@@ -87,8 +95,9 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    setIsLoading(true);
+    // Reset previous results and set loading state
     setResult(null);
+    setIsLoading(true);
     setSearchRequested(true);
 
     try {
@@ -118,10 +127,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       }
       
       // Set the result even if it's empty to show the user something happened
-      setResult({
+      const searchResult: SearchResultType = {
         results: processedResults || [],
         contact_info: contactInfo
-      });
+      };
+      
+      setResult(searchResult);
       
       if (user.id) {
         console.log("Attempting to store search results for user:", user.id);
@@ -169,6 +180,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     isLoadingWebhook,
     result,
     handleSearch,
-    searchRequested
+    searchRequested,
+    setSearchRequested
   };
 };

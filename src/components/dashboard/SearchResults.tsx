@@ -13,7 +13,12 @@ interface SearchResultsProps {
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, questions, isLoading = false }) => {
-  console.log("SearchResults rendering:", { isLoading, hasResult: !!result, companyName });
+  console.log("SearchResults rendering:", { 
+    isLoading, 
+    hasResult: !!result, 
+    companyName,
+    resultData: result
+  });
   
   if (isLoading) {
     return (
