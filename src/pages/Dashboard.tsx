@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -13,7 +14,6 @@ import CompanySearch from '@/components/dashboard/CompanySearch';
 import SearchHistory from '@/components/dashboard/SearchHistory';
 import CreditDisplay from '@/components/dashboard/CreditDisplay';
 import MyBusiness from '@/components/dashboard/MyBusiness';
-import TabsSearch from '@/components/dashboard/TabsSearch';
 
 type Question = {
   id: string;
@@ -128,7 +128,7 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="search">
-              <TabsSearch questions={questions} onSearch={fetchSearches} />
+              <CompanySearch questions={questions} onSearch={fetchSearches} />
             </TabsContent>
             
             <TabsContent value="questions">

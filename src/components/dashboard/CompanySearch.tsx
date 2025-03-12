@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanySearch } from '@/hooks/useCompanySearch';
 import { Question } from '@/types/company';
@@ -15,6 +15,7 @@ interface CompanySearchProps {
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
+  const mountedRef = useRef(true);
   
   const {
     companyName,
@@ -29,6 +30,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     searchId
   } = useCompanySearch(questions, onSearch);
 
+  // Set mounted ref to false when component unmounts
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     // Log detailed state information for debugging
     console.log("Search component state:", { 
@@ -36,7 +45,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
       isLoading, 
       hasResult: !!result, 
       companyName,
-      result,
       searchId
     });
   }, [searchRequested, isLoading, result, companyName, searchId]);
@@ -66,13 +74,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           <QuestionsList questions={questions} />
           
           {searchRequested && (
-            <SearchResults 
-              key={searchId}
-              result={result} 
-              companyName={companyName} 
-              questions={questions}
-              isLoading={isLoading}
-            />
+            <div key={searchId} className="search-results-container">
+              <SearchResults 
+                result={result} 
+                companyName={companyName} 
+                questions={questions}
+                isLoading={isLoading}
+              />
+            </div>
           )}
         </>
       )}

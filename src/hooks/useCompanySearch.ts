@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { deductCredits, calculateCreditCost } from '@/utils/creditUtils';
@@ -18,6 +19,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const [searchRequested, setSearchRequested] = useState(false);
   const [searchId, setSearchId] = useState(`initial-${Date.now()}`);
   
+  const previousResultRef = useRef<SearchResultType | null>(null);
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
@@ -40,13 +42,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       }
     };
     loadWebhookUrl();
-    
-    // Cleanup function to reset state when component unmounts
-    return () => {
-      setCompanyName('');
-      setResult(null);
-      setSearchRequested(false);
-    };
   }, []);
 
   // Memoized search handler to prevent recreation on each render
@@ -96,15 +91,20 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    // Create a unique stable searchId for this search operation
+    // Save the current result before starting a new search
+    previousResultRef.current = result;
+
+    // Create a unique search ID for this search operation
     const newSearchId = `search-${companyName}-${Date.now()}`;
     setSearchId(newSearchId);
     console.log(`Creating new search with ID: ${newSearchId}`);
 
-    // Always ensure searchRequested is true before starting the search
-    setSearchRequested(true);
+    // Set searchRequested to true if it's not already
+    if (!searchRequested) {
+      setSearchRequested(true);
+    }
     
-    // Start loading but keep the previous result until new one arrives
+    // Start loading
     setIsLoading(true);
 
     try {
@@ -134,7 +134,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         contact_info: contactInfo
       };
       
-      // Only update the result after everything is ready
+      // Update the result
       setResult(searchResult);
       
       if (user.id) {
@@ -164,6 +164,9 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } catch (error: any) {
       console.error("Error during company search:", error);
       
+      // If there was an error, restore the previous result
+      setResult(previousResultRef.current);
+      
       toast({
         title: "Error",
         description: "Unable to process your search at this time. Please try again later.",
@@ -172,7 +175,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } finally {
       setIsLoading(false);
     }
-  }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch]);
+  }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch, result, searchRequested]);
 
   return {
     companyName,
