@@ -31,6 +31,7 @@ const Dashboard = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [searches, setSearches] = useState<CompanySearch[]>([]);
   const [isLoadingSearches, setIsLoadingSearches] = useState(false);
+  const [activeTab, setActiveTab] = useState('mybusiness');
 
   const { user, loading, userProfile } = useAuth();
 
@@ -93,7 +94,7 @@ const Dashboard = () => {
     );
   }
   
-  // Only redirect after loading is complete - without any toast message
+  // Silent redirect to auth page if not logged in - no toast message
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -112,10 +113,27 @@ const Dashboard = () => {
             )}
           </div>
           
-          <Tabs defaultValue="mybusiness" className="w-full mb-10">
-            <TabsList className="mb-6">
-              <TabsTrigger value="mybusiness">My Business</TabsTrigger>
-              <TabsTrigger value="search">Search Company</TabsTrigger>
+          <Tabs 
+            defaultValue="mybusiness" 
+            className="w-full mb-10"
+            onValueChange={setActiveTab}
+            value={activeTab}
+          >
+            <TabsList className="mb-6 relative">
+              <TabsTrigger value="mybusiness" className="relative">
+                My Business
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ea384c] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#ea384c]"></span>
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="search" className="relative">
+                Search Company
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ea384c] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#ea384c]"></span>
+                </span>
+              </TabsTrigger>
               <TabsTrigger value="questions">Manage Questions</TabsTrigger>
               <TabsTrigger value="history">Search History</TabsTrigger>
             </TabsList>
