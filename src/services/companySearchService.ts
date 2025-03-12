@@ -29,9 +29,14 @@ export const storeSearchResults = async (
   processedResults: Answer[], 
   contactInfo?: ContactInfo
 ): Promise<boolean> => {
-  if (!userId) return false;
+  if (!userId) {
+    console.error('Cannot store search results: Missing user ID');
+    return false;
+  }
   
   try {
+    console.log(`Storing search results for user ${userId} and company ${company}`);
+    
     // Store the company search
     const searchRecord: CompanySearchRecord = {
       user_id: userId,
@@ -49,6 +54,7 @@ export const storeSearchResults = async (
       searchRecord.phone = contactInfo.phone || null;
     }
     
+    console.log('Inserting company search record:', JSON.stringify(searchRecord));
     const { data: insertedRecord, error: searchError } = await supabase
       .from('company_searches')
       .insert(searchRecord)
@@ -56,14 +62,19 @@ export const storeSearchResults = async (
       .single();
     
     if (searchError) {
-      console.error('Error storing company search:', searchError);
-      throw searchError;
+      console.error('Error storing company search:', searchError.message, searchError.details);
+      return false;
+    }
+    
+    if (!insertedRecord || !insertedRecord.id) {
+      console.error('No search record ID returned after insert');
+      return false;
     }
     
     console.log('Company search stored with ID:', insertedRecord.id);
     
     // Store individual answers if available
-    if (processedResults && Array.isArray(processedResults)) {
+    if (processedResults && Array.isArray(processedResults) && processedResults.length > 0) {
       const answersToInsert = processedResults
         .filter(result => result.question_id && result.answer) // Only valid results
         .map(result => ({
@@ -82,7 +93,7 @@ export const storeSearchResults = async (
           .insert(answersToInsert);
         
         if (answersError) {
-          console.error('Error storing answers:', answersError);
+          console.error('Error storing answers:', answersError.message, answersError.details);
           // Continue even if answer storage fails
         } else {
           console.log('Successfully stored answers for all questions');
@@ -90,6 +101,8 @@ export const storeSearchResults = async (
       } else {
         console.log('No valid answers found to store');
       }
+    } else {
+      console.log('No processed results to store as answers');
     }
     
     return true;

@@ -27,13 +27,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         const settings = await fetchWebhookSettings();
         if (settings?.url) {
           setWebhookUrl(settings.url);
+          console.log("Loaded webhook URL:", settings.url);
         } else {
-          // Set a default webhook URL or handle missing URL silently
           console.log("No webhook URL configured");
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
-        // Silently handle the error - no toast here
       } finally {
         setIsLoadingWebhook(false);
       }
@@ -54,7 +53,6 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     }
 
     if (!webhookUrl) {
-      // Silently handle missing webhook URL
       console.error("Webhook URL not configured");
       toast({
         title: "System Error",
@@ -67,7 +65,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     const questionsCount = questions.length;
     const creditCost = calculateCreditCost(questionsCount);
     
-    if (!user || !userProfile) return;
+    if (!user || !userProfile) {
+      console.error("User or user profile is missing", { user, userProfile });
+      return;
+    }
     
     setIsDeductingCredit(true);
     
@@ -90,6 +91,8 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
 
     try {
       console.log("Making webhook call to:", webhookUrl);
+      console.log("Searching for company:", companyName);
+      console.log("User ID:", user.id);
       
       const directResponse = await callCompanyWebhook(webhookUrl, companyName, questions);
       
@@ -98,20 +101,30 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       }
       
       const responseData = await directResponse.json();
+      console.log("Webhook raw response:", JSON.stringify(responseData));
       
-      const { processedResults, contactInfo } = parseWebhookResponse(responseData);
+      const parseResult = parseWebhookResponse(responseData);
+      console.log("Parsed webhook response:", JSON.stringify(parseResult));
       
+      const { processedResults, contactInfo } = parseResult;
+      
+      if (!processedResults || processedResults.length === 0) {
+        console.warn("No processed results found in the webhook response");
+      }
+      
+      // Set the result even if it's empty to show the user something happened
       setResult({
-        results: processedResults,
+        results: processedResults || [],
         contact_info: contactInfo
       });
       
       if (user.id) {
+        console.log("Attempting to store search results for user:", user.id);
         const storageSuccess = await storeSearchResults(
           user.id, 
           companyName, 
           responseData, 
-          processedResults, 
+          processedResults || [], 
           contactInfo
         );
         
@@ -120,19 +133,19 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
           onSearch(); // Trigger refetch of searches
         } else {
           console.warn("Failed to store search results to database");
-          // No toast for failed storage
         }
+      } else {
+        console.error("Cannot store results - user.id is not available");
       }
       
       toast({
         title: "Success",
-        description: "Questions answered successfully",
+        description: "Search completed successfully",
       });
       
     } catch (error: any) {
-      console.error("Error calling webhook:", error);
+      console.error("Error during company search:", error);
       
-      // Only show one focused error message instead of multiple system errors
       toast({
         title: "Error",
         description: "Unable to process your search at this time. Please try again later.",
