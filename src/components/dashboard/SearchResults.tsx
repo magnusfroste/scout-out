@@ -20,11 +20,16 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
       resultsCount: result?.results?.length || 0,
       hasContactInfo: !!result?.contact_info
     });
+    
+    // Log any issues with result structure
+    if (result && (!result.results || !Array.isArray(result.results))) {
+      console.warn("SearchResults received invalid results structure:", result);
+    }
   }, [result]);
   
   if (isLoading) {
     return (
-      <Card className="mt-6">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Searching for {companyName}</CardTitle>
           <CardDescription>
@@ -43,9 +48,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   
   if (!result) {
     return (
-      <Card className="mt-6">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle>Search Complete</CardTitle>
+          <CardTitle>No Results</CardTitle>
           <CardDescription>
             No results found for {companyName}
           </CardDescription>
@@ -58,6 +63,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
       </Card>
     );
   }
+  
+  // Ensure result.results is an array
+  const hasResults = result.results && Array.isArray(result.results) && result.results.length > 0;
   
   const renderContactInfo = () => {
     const contactInfo = result.contact_info;
@@ -115,7 +123,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   };
 
   const renderResults = () => {
-    if (result.results && Array.isArray(result.results) && result.results.length > 0) {
+    if (hasResults) {
       return (
         <div className="space-y-4">
           {result.results.map((item: Answer, index: number) => {
@@ -145,7 +153,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ result, companyName, ques
   };
 
   return (
-    <Card className="mt-6 search-results-container">
+    <Card className="w-full search-results-container">
       <CardHeader>
         <CardTitle>Results for {companyName}</CardTitle>
         {result.contact_info && (

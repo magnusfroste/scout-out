@@ -9,6 +9,7 @@ import SearchResults from './SearchResults';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface CompanySearchProps {
   questions: Question[];
@@ -22,6 +23,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
   const [isDisplayReady, setIsDisplayReady] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const resultContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
   const {
     companyName,
@@ -60,28 +62,55 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
 
   // Process and update displayedResult when search completes
   useEffect(() => {
-    if (searchId && result) {
-      console.log("Setting up displayed result", { hasResult: !!result });
+    if (result) {
+      console.log("Processing search result for display", { 
+        hasResult: !!result,
+        searchId
+      });
       
-      // Post-process results - deep clone to prevent reference issues
-      const resultClone = JSON.parse(JSON.stringify(result));
-      
-      // Ensure arrays and objects are properly initialized
-      if (!resultClone.results) resultClone.results = [];
-      if (!resultClone.contact_info) resultClone.contact_info = {};
-      
-      // Normalize all answer text fields
-      resultClone.results = resultClone.results.map(answer => ({
-        ...answer,
-        answer: answer.answer ? String(answer.answer).trim() : ""
-      }));
-      
-      // Update the displayed result state
-      setDisplayedResult(resultClone);
-      setDisplayedSearchId(searchId);
-      setIsDisplayReady(true);
+      try {
+        // Post-process results - deep clone to prevent reference issues
+        const resultClone = JSON.parse(JSON.stringify(result));
+        
+        // Ensure arrays and objects are properly initialized
+        if (!resultClone.results) resultClone.results = [];
+        if (!resultClone.contact_info) resultClone.contact_info = {};
+        
+        // Normalize all answer text fields
+        resultClone.results = resultClone.results.map(answer => ({
+          ...answer,
+          answer: answer.answer ? String(answer.answer).trim() : ""
+        }));
+        
+        // Update the displayed result state
+        setDisplayedResult(resultClone);
+        setDisplayedSearchId(searchId);
+        setIsDisplayReady(true);
+        
+        // Log that we've prepared results for display
+        console.log("Search results prepared for display", { 
+          resultsCount: resultClone.results?.length || 0,
+          hasContactInfo: !!resultClone.contact_info
+        });
+        
+        // Show a confirmation toast
+        toast({
+          title: "Results Ready",
+          description: "Company search results are now displayed below",
+        });
+        
+        // Scroll to results if they're not visible
+        if (resultContainerRef.current) {
+          setTimeout(() => {
+            resultContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
+        }
+      } catch (error) {
+        console.error("Error preparing search results for display:", error);
+        setDebugInfo(`Error displaying results: ${error.message}`);
+      }
     }
-  }, [searchId, result]);
+  }, [result, searchId, toast]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,14 +162,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           
           <QuestionsList questions={questions} />
           
+          {/* Add more prominent result container with border when there are results */}
           <div 
             ref={resultContainerRef} 
-            className="search-results-wrapper"
-            style={{ minHeight: displayedResult ? '200px' : '0' }}
+            className={`search-results-wrapper mt-6 ${displayedResult ? 'border rounded-lg p-1' : ''}`}
           >
-            {displayedSearchId && displayedResult && (
+            {displayedResult && (
               <SearchResults 
-                key={displayedSearchId}
+                key={displayedSearchId || 'current-search'}
                 result={displayedResult}
                 companyName={companyName}
                 questions={questions}
