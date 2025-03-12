@@ -58,11 +58,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     setDebugInfo(status);
   }, [isLoading, result, searchId, webhookUrl, isLoadingWebhook, lastError]);
 
-  // Post-process and update displayedResult when search completes
+  // Process and update displayedResult when search completes
   useEffect(() => {
-    if (searchId && !isLoading && result) {
-      // Delay setting results to ensure DOM stability
-      setIsDisplayReady(false);
+    if (searchId && result) {
+      console.log("Setting up displayed result", { hasResult: !!result });
       
       // Post-process results - deep clone to prevent reference issues
       const resultClone = JSON.parse(JSON.stringify(result));
@@ -77,24 +76,16 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
         answer: answer.answer ? String(answer.answer).trim() : ""
       }));
       
-      // Use setTimeout to ensure the DOM has settled before updating
-      const timer = setTimeout(() => {
-        setDisplayedResult(resultClone);
-        setDisplayedSearchId(searchId);
-        
-        // Give the browser another tick to process the state update
-        requestAnimationFrame(() => {
-          setIsDisplayReady(true);
-        });
-      }, 50); // Short delay to ensure DOM stability
-      
-      return () => clearTimeout(timer);
+      // Update the displayed result state
+      setDisplayedResult(resultClone);
+      setDisplayedSearchId(searchId);
+      setIsDisplayReady(true);
     }
-  }, [searchId, isLoading, result]);
+  }, [searchId, result]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Reset displayed results and display ready flag before starting a new search
+    // Reset displayed results before starting a new search
     setDisplayedResult(null);
     setDisplayedSearchId(null);
     setIsDisplayReady(false);
@@ -114,15 +105,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
         </Card>
       ) : (
         <>
-          {/* Debug status display */}
-          {debugInfo && (
-            <Alert variant={lastError ? "destructive" : "default"} className="mb-4">
-              <AlertDescription className="flex items-center gap-2">
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                <span>{debugInfo}</span>
-              </AlertDescription>
-            </Alert>
-          )}
+          {/* Debug status display - Always visible */}
+          <Alert variant={lastError ? "destructive" : "default"} className="mb-4">
+            <AlertDescription className="flex items-center gap-2">
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              <span>{debugInfo}</span>
+            </AlertDescription>
+          </Alert>
           
           {!webhookUrl && (
             <Alert variant="destructive" className="mb-4">
@@ -147,11 +136,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
           <div 
             ref={resultContainerRef} 
             className="search-results-wrapper"
-            style={{ 
-              minHeight: displayedResult && isDisplayReady ? '200px' : '0',
-              opacity: isDisplayReady ? 1 : 0,
-              transition: 'opacity 0.1s ease-in-out'
-            }}
+            style={{ minHeight: displayedResult ? '200px' : '0' }}
           >
             {displayedSearchId && displayedResult && (
               <SearchResults 

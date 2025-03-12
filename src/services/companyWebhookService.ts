@@ -25,6 +25,7 @@ export const callCompanyWebhook = async (
   console.log('Webhook payload:', JSON.stringify(payload));
   
   try {
+    console.log('Starting webhook request...');
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
@@ -35,10 +36,23 @@ export const callCompanyWebhook = async (
     });
     
     console.log('Webhook response status:', response.status);
+    console.log('Webhook response headers:', Object.fromEntries([...response.headers.entries()]));
+    
     if (!response.ok) {
       console.error('Webhook error status:', response.status);
       const text = await response.text();
       console.error('Webhook error body:', text);
+    } else {
+      console.log('Webhook successful');
+      // Clone response before consuming it
+      const clonedResponse = response.clone();
+      try {
+        const responseData = await clonedResponse.json();
+        console.log('Webhook response data preview:', 
+          JSON.stringify(responseData).substring(0, 200) + '...');
+      } catch (e) {
+        console.log('Could not preview response JSON');
+      }
     }
     
     return response;
