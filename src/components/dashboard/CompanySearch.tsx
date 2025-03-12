@@ -15,7 +15,7 @@ interface CompanySearchProps {
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) => {
   const { userProfile } = useAuth();
-  const [displayResults, setDisplayResults] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   
   const {
     companyName,
@@ -26,7 +26,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     result,
     handleSearch,
     searchId
-  } = useCompanySearch(questions, onSearch, () => setDisplayResults(true));
+  } = useCompanySearch(questions, onSearch);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(e);
+    setShowResults(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -47,16 +53,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
             isDeductingCredit={isDeductingCredit}
             questionsCount={questions.length}
             availableCredits={userProfile?.credits}
-            onSubmit={(e) => {
-              handleSearch(e);
-              setDisplayResults(true);
-            }}
+            onSubmit={handleFormSubmit}
           />
           
           <QuestionsList questions={questions} />
           
-          {displayResults && (
+          {showResults && (
             <SearchResults 
+              key={`search-result-${searchId}`}
               result={result} 
               companyName={companyName} 
               questions={questions}

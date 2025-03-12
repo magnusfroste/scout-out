@@ -11,8 +11,7 @@ import { Question, SearchResultType } from '@/types/company';
 
 export const useCompanySearch = (
   questions: Question[], 
-  onSearch: () => void,
-  onSearchComplete?: () => void
+  onSearch: () => void
 ) => {
   const [companyName, setCompanyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -77,8 +76,9 @@ export const useCompanySearch = (
       return;
     }
     
-    // Set a new search ID for this search operation
-    setSearchId(`search-${companyName}-${Date.now()}`);
+    // Create a new search ID
+    const newSearchId = `search-${companyName}-${Date.now()}`;
+    setSearchId(newSearchId);
     
     // Start loading
     setIsLoading(true);
@@ -147,11 +147,6 @@ export const useCompanySearch = (
         }
       }
       
-      // Call the onSearchComplete callback if provided
-      if (onSearchComplete) {
-        onSearchComplete();
-      }
-      
       // Show toast after all state updates are complete
       toast({
         title: "Success",
@@ -169,7 +164,7 @@ export const useCompanySearch = (
     } finally {
       setIsLoading(false);
     }
-  }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch, onSearchComplete]);
+  }, [companyName, webhookUrl, questions, user, userProfile, refreshUserProfile, toast, onSearch]);
 
   return {
     companyName,
