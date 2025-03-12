@@ -120,20 +120,8 @@ const Dashboard = () => {
             value={activeTab}
           >
             <TabsList className="mb-6 relative">
-              <TabsTrigger value="mybusiness" className="relative">
-                My Business
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ea384c] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#ea384c]"></span>
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="search" className="relative">
-                Search Company
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ea384c] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#ea384c]"></span>
-                </span>
-              </TabsTrigger>
+              <TabsTrigger value="mybusiness">My Business</TabsTrigger>
+              <TabsTrigger value="search">Search Company</TabsTrigger>
               <TabsTrigger value="questions">Manage Questions</TabsTrigger>
               <TabsTrigger value="history">Search History</TabsTrigger>
             </TabsList>

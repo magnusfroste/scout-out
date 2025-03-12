@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,35 +15,28 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const [result, setResult] = useState<SearchResultType | null>(null);
   const [isDeductingCredit, setIsDeductingCredit] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     const loadWebhookUrl = async () => {
+      setIsLoadingWebhook(true);
       try {
         const settings = await fetchWebhookSettings();
         if (settings?.url) {
           setWebhookUrl(settings.url);
-        } else {
-          console.error('No webhook URL found in settings');
-          toast({
-            title: "System Error",
-            description: "Application not properly configured. Please contact support.",
-            variant: "destructive",
-          });
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load application settings. Please try again later.",
-          variant: "destructive",
-        });
+        // Silently handle the error - no toast here
+      } finally {
+        setIsLoadingWebhook(false);
       }
     };
     loadWebhookUrl();
-  }, [toast]);
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +51,8 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     }
 
     if (!webhookUrl) {
-      toast({
-        title: "Error",
-        description: "System is not properly configured. Please try again later.",
-        variant: "destructive",
-      });
+      // Silently handle missing webhook URL
+      console.error("Webhook URL not configured");
       return;
     }
 
@@ -121,10 +112,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
           onSearch(); // Trigger refetch of searches
         } else {
           console.warn("Failed to store search results to database");
-          toast({
-            title: "Warning",
-            description: "Search results were retrieved but could not be saved to history.",
-          });
+          // No toast for failed storage
         }
       }
       
@@ -136,17 +124,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     } catch (error: any) {
       console.error("Error calling webhook:", error);
       
-      let errorMessage = "Failed to process company search";
-      
-      if (error.message === 'Failed to fetch') {
-        errorMessage = "Network error. Please try again later.";
-      } else {
-        errorMessage = error.message || "An unexpected error occurred";
-      }
-      
+      // Only show one focused error message instead of multiple system errors
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Unable to process your search at this time. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -159,6 +140,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     setCompanyName,
     isLoading,
     isDeductingCredit,
+    isLoadingWebhook,
     result,
     handleSearch
   };

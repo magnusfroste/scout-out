@@ -6,6 +6,7 @@ import { SearchResultType } from '@/types/company';
 import SearchForm from './SearchForm';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
+import { Card, CardContent, CardDescription } from '@/components/ui/card';
 
 type Question = {
   id: string;
@@ -25,30 +26,43 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch }) =>
     setCompanyName,
     isLoading,
     isDeductingCredit,
+    isLoadingWebhook,
     result,
     handleSearch
   } = useCompanySearch(questions, onSearch);
 
   return (
     <div className="space-y-6">
-      <SearchForm 
-        companyName={companyName}
-        setCompanyName={setCompanyName}
-        isLoading={isLoading}
-        isDeductingCredit={isDeductingCredit}
-        questionsCount={questions.length}
-        availableCredits={userProfile?.credits}
-        onSubmit={handleSearch}
-      />
-      
-      <QuestionsList questions={questions} />
-      
-      {result && (
-        <SearchResults 
-          result={result} 
-          companyName={companyName} 
-          questions={questions} 
-        />
+      {isLoadingWebhook ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-pulse text-muted-foreground">Loading company search...</div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <SearchForm 
+            companyName={companyName}
+            setCompanyName={setCompanyName}
+            isLoading={isLoading}
+            isDeductingCredit={isDeductingCredit}
+            questionsCount={questions.length}
+            availableCredits={userProfile?.credits}
+            onSubmit={handleSearch}
+          />
+          
+          <QuestionsList questions={questions} />
+          
+          {result && (
+            <SearchResults 
+              result={result} 
+              companyName={companyName} 
+              questions={questions} 
+            />
+          )}
+        </>
       )}
     </div>
   );
