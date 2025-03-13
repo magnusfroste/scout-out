@@ -8,8 +8,8 @@ const HowItWorks: React.FC = () => {
   const steps = [
     {
       icon: <FileText className="h-10 w-10" />,
-      title: "1. Generate Your Business Pitch",
-      description: "We autogenerate your company pitch and emphasize the challenges your solutions address for potential clients."
+      title: "1. Set Up Your Business Profile",
+      description: "We autogenerate your company profile and emphasize the challenges your solutions address for potential clients."
     },
     {
       icon: <Users className="h-10 w-10" />,

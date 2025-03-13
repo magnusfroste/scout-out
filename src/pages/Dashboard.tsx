@@ -240,7 +240,7 @@ const Dashboard = () => {
                   <span className={cn(
                     "text-xs",
                     activeTab === 'mybusiness' ? "font-medium" : ""
-                  )}>Business Pitch</span>
+                  )}>Business Profile</span>
                 </div>
                 
                 <div className={cn(
@@ -322,7 +322,7 @@ const Dashboard = () => {
                   <div className="flex items-start">
                     <Building className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
-                      <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business Pitch</h3>
+                      <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business Profile</h3>
                       <p className="text-muted-foreground">Configure your business profile and settings to personalize your experience.</p>
                     </div>
                   </div>
