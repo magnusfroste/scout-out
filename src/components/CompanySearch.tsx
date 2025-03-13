@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Database, Search as SearchIcon, Globe } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+
+import SearchForm from './company-search/SearchForm';
+import LoadingIndicator from './company-search/LoadingIndicator';
+import QuestionsList from './company-search/QuestionsList';
+import ResultsDisplay from './company-search/ResultsDisplay';
+import DeveloperLog from './company-search/DeveloperLog';
 
 const CompanySearch = () => {
   const [companyName, setCompanyName] = useState('');
@@ -200,150 +201,34 @@ const CompanySearch = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Company Information Search</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="webhookUrl">Webhook URL</Label>
-              <Input
-                id="webhookUrl"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                placeholder="Enter your webhook URL"
-                disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Example: https://agent.froste.eu/webhook/lovable
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                id="companyName"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Enter company name"
-                disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Will be sent in the request body as "company"
-              </p>
-            </div>
-            
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                "Search"
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <SearchForm 
+        webhookUrl={webhookUrl}
+        setWebhookUrl={setWebhookUrl}
+        companyName={companyName}
+        setCompanyName={setCompanyName}
+        isLoading={isLoading}
+        handleSearch={handleSearch}
+      />
 
-      {isLoading && (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full bg-primary/10 p-3">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-              <div>
-                <h3 className="font-medium">Searching for information...</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Our AI agent is working on your request:
-                </p>
-                <ul className="text-sm space-y-1 mt-2">
-                  <li className="flex items-center">
-                    <SearchIcon className="h-3.5 w-3.5 mr-2 text-primary" />
-                    <span>Searching company databases</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Globe className="h-3.5 w-3.5 mr-2 text-primary" />
-                    <span>Crawling relevant websites</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Database className="h-3.5 w-3.5 mr-2 text-primary" />
-                    <span>Accessing multiple knowledge bases</span>
-                  </li>
-                </ul>
-                <p className="text-xs text-muted-foreground mt-3">
-                  This may take a few moments. Thank you for your patience.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {isLoading && <LoadingIndicator />}
 
-      {agentQuestions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Agent Questions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground mb-4">
-              These questions will be answered when you search for a company.
-            </div>
-            <ul className="space-y-2 list-disc pl-5">
-              {agentQuestions.map(question => (
-                <li key={question.id}>{question.question}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+      <QuestionsList questions={agentQuestions} />
 
       {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Results
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-auto max-h-[500px]">
-              {renderResults()}
-            </div>
-          </CardContent>
-        </Card>
+        <ResultsDisplay 
+          result={result} 
+          agentQuestions={agentQuestions}
+          renderResults={renderResults}
+        />
       )}
       
       {(webhookUrl && companyName) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Developer Log</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium">Request Body</Label>
-                <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
-                  <code className="text-xs break-all text-slate-700 dark:text-slate-300">
-                    {requestBody ? JSON.stringify(requestBody, null, 2) : 'No request body yet'}
-                  </code>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  This is the complete request body being sent, including company name and all questions.
-                </p>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium">Total Questions</Label>
-                <div className="mt-1">
-                  <span className="text-sm">{agentQuestions.length}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <DeveloperLog 
+          webhookUrl={webhookUrl}
+          companyName={companyName}
+          requestBody={requestBody}
+          agentQuestions={agentQuestions}
+        />
       )}
     </div>
   );
