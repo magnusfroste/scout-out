@@ -1,4 +1,3 @@
-
 export type Question = {
   id: string;
   question: string;
@@ -12,6 +11,7 @@ export type Answer = {
 export type ContactInfo = {
   www?: string;
   contact?: string;
+  role?: string;
   email?: string;
   phone?: string;
 };

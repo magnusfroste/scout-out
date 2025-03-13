@@ -93,6 +93,7 @@ const parseCompanySearchResponse = (responseData: any): WebhookParseResult => {
         contactInfo = {
           www: output.Company.www || undefined,
           contact: output.Company.contact || undefined,
+          role: output.Company.role || undefined,
           email: output.Company.email || undefined,
           phone: output.Company.phone || undefined
         };

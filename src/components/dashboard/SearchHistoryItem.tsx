@@ -155,6 +155,18 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
                 <div className="mt-4 p-3 bg-muted rounded-md">
                   <h4 className="font-medium text-sm mb-2">Contact Information</h4>
                   <div className="space-y-1 text-sm">
+                    {contactInfo.contact && (
+                      <p>
+                        <span className="font-medium">Contact:</span>{' '}
+                        {contactInfo.contact}
+                      </p>
+                    )}
+                    {contactInfo.role && (
+                      <p>
+                        <span className="font-medium">Role:</span>{' '}
+                        {contactInfo.role}
+                      </p>
+                    )}
                     {contactInfo.email && (
                       <p>
                         <span className="font-medium">Email:</span>{' '}
@@ -171,6 +183,14 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
                       <p>
                         <span className="font-medium">Address:</span>{' '}
                         {contactInfo.address}
+                      </p>
+                    )}
+                    {contactInfo.www && (
+                      <p>
+                        <span className="font-medium">Website:</span>{' '}
+                        <a href={contactInfo.www} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          {contactInfo.www}
+                        </a>
                       </p>
                     )}
                   </div>
