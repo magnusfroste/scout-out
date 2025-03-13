@@ -1,4 +1,0 @@
-
-project_id = "pqskutdrekcinpymvigm"
-route = "/trigger-n8n-workflow"
-methods = ["GET", "POST", "OPTIONS"]
