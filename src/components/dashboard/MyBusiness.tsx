@@ -10,7 +10,18 @@ import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponsePars
 import { Separator } from '@/components/ui/separator';
 import { callMyBusinessWebhook } from '@/services/myBusinessWebhookService';
 import { ContactInfo } from '@/types/company';
-import { Globe, Mail, Phone, User } from 'lucide-react';
+import { Globe, Mail, Phone, User, RefreshCw, AlertCircle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface BusinessData {
   elevatorPitch?: ElevatorPitch;
@@ -28,6 +39,7 @@ const MyBusiness = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL); // Initialize with default
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
 
   useEffect(() => {
     if (userProfile?.website_url) {
@@ -150,6 +162,37 @@ const MyBusiness = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetBusinessData = async () => {
+    if (!user) return;
+    
+    setIsResetting(true);
+    try {
+      // Clear business data and website URL
+      await updateProfile({ 
+        business_data: null,
+        website_url: null
+      });
+      
+      // Reset local state
+      setBusinessData(null);
+      setWebsiteUrl('');
+      
+      toast({
+        title: "Success",
+        description: "Your business profile has been reset. You can now try with a different website.",
+      });
+    } catch (error) {
+      console.error('Error resetting business data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset your business profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -308,12 +351,50 @@ const MyBusiness = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>My Business Profile</CardTitle>
-          {businessData?.elevatorPitch?.company_name && (
-            <CardDescription>
-              Showing business profile for {businessData.elevatorPitch.company_name}
-            </CardDescription>
-          )}
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>My Business</CardTitle>
+              {businessData?.elevatorPitch?.company_name ? (
+                <CardDescription>
+                  Showing business profile for {businessData.elevatorPitch.company_name}
+                </CardDescription>
+              ) : (
+                <CardDescription>
+                  Analyze your business website to create a profile
+                </CardDescription>
+              )}
+            </div>
+            
+            {businessData && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <RefreshCw className="h-4 w-4" />
+                    Reset
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset Business Profile</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will clear all your business data and allow you to start fresh with a different website URL.
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleResetBusinessData}
+                      disabled={isResetting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isResetting ? 'Resetting...' : 'Reset Profile'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingSettings ? (

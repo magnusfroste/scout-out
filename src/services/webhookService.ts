@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -6,6 +5,7 @@ export interface WebhookSettings {
   id: string;
   url: string;
   mybusiness_url: string;
+  questions_url: string;
   created_at: string;
   updated_at: string;
 }
@@ -55,7 +55,16 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
         return null;
       }
       
-      return data;
+      // Ensure the returned data has all required fields
+      if (data) {
+        const webhookSettings: WebhookSettings = {
+          ...data,
+          questions_url: (data as any).questions_url || ''
+        };
+        return webhookSettings;
+      }
+      
+      return null;
     }
     
     // Now fetch the webhook settings for admin users
@@ -83,7 +92,17 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
     }
     
     console.log('Webhook settings fetched successfully:', data);
-    return data;
+    
+    // Ensure the returned data has all required fields
+    if (data) {
+      const webhookSettings: WebhookSettings = {
+        ...data,
+        questions_url: (data as any).questions_url || ''
+      };
+      return webhookSettings;
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error in fetchWebhookSettings:', error);
     
@@ -119,7 +138,12 @@ export const updateWebhookSettings = async (url: string): Promise<boolean> => {
       console.log('Creating new webhook settings record');
       const { error } = await supabase
         .from('webhook_settings')
-        .insert([{ url, updated_at: new Date().toISOString() }]);
+        .insert([{ 
+          url, 
+          mybusiness_url: '',
+          questions_url: '',
+          updated_at: new Date().toISOString() 
+        }]);
         
       if (error) {
         console.error('Error creating webhook settings:', error);
@@ -151,7 +175,10 @@ export const updateWebhookSettings = async (url: string): Promise<boolean> => {
     // Update existing settings
     const { error } = await supabase
       .from('webhook_settings')
-      .update({ url, updated_at: new Date().toISOString() })
+      .update({ 
+        url, 
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', current.id);
 
     if (error) {
@@ -200,7 +227,12 @@ export const updateMyBusinessWebhookSettings = async (mybusiness_url: string): P
       console.log('Creating new webhook settings record with mybusiness_url');
       const { error } = await supabase
         .from('webhook_settings')
-        .insert([{ mybusiness_url, updated_at: new Date().toISOString() }]);
+        .insert([{ 
+          url: current?.url || '',
+          mybusiness_url, 
+          questions_url: current?.questions_url || '',
+          updated_at: new Date().toISOString() 
+        }]);
         
       if (error) {
         console.error('Error creating My Business webhook settings:', error);
@@ -232,7 +264,10 @@ export const updateMyBusinessWebhookSettings = async (mybusiness_url: string): P
     // Update existing settings
     const { error } = await supabase
       .from('webhook_settings')
-      .update({ mybusiness_url, updated_at: new Date().toISOString() })
+      .update({ 
+        mybusiness_url, 
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', current.id);
 
     if (error) {
@@ -265,6 +300,95 @@ export const updateMyBusinessWebhookSettings = async (mybusiness_url: string): P
     toast({
       title: "Error",
       description: "An unexpected error occurred while updating My Business webhook settings",
+      variant: "destructive",
+    });
+    return false;
+  }
+};
+
+export const updateQuestionsWebhookSettings = async (questions_url: string): Promise<boolean> => {
+  try {
+    // Get the current settings first
+    const current = await fetchWebhookSettings();
+    
+    // If settings do not exist yet, create a new record
+    if (!current?.id) {
+      console.log('Creating new webhook settings record with questions_url');
+      const { error } = await supabase
+        .from('webhook_settings')
+        .insert([{ 
+          url: '',
+          mybusiness_url: '',
+          questions_url, 
+          updated_at: new Date().toISOString() 
+        }]);
+        
+      if (error) {
+        console.error('Error creating questions webhook settings:', error);
+        
+        if (error.code === 'PGRST301') {
+          toast({
+            title: "Access Error",
+            description: "You don't have permission to create questions webhook settings. Admin privileges required.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        toast({
+          title: "Error",
+          description: "Failed to create questions webhook settings: " + error.message,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Questions webhook settings created successfully",
+      });
+      return true;
+    }
+
+    // Update existing settings
+    const { error } = await supabase
+      .from('webhook_settings')
+      .update({ 
+        questions_url, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', current.id);
+
+    if (error) {
+      console.error('Error updating questions webhook settings:', error);
+      
+      if (error.code === 'PGRST301') {
+        toast({
+          title: "Access Error",
+          description: "You don't have permission to update questions webhook settings. Admin privileges required.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to update questions webhook settings: " + error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Success",
+      description: "Questions webhook settings updated successfully",
+    });
+    return true;
+  } catch (error) {
+    console.error('Error in updateQuestionsWebhookSettings:', error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred while updating questions webhook settings",
       variant: "destructive",
     });
     return false;

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,7 +84,7 @@ const Navigation = () => {
               {/* Show dashboard link on non-dashboard pages */}
               {location.pathname !== '/dashboard' && (
                 <Link to="/dashboard" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
-                  Dashboard
+                  Workflow
                 </Link>
               )}
               {/* Show admin settings only for admins */}

@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CompanySearch } from '@/types/search';
+import { Building, ListChecks, Search, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Import refactored components
 import QuestionManager from '@/components/dashboard/QuestionManager';
@@ -192,7 +194,7 @@ const Dashboard = () => {
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-3xl font-bold">Workflow</h1>
             
             {userProfile && (
               <CreditDisplay credits={userProfile.credits} />
@@ -205,14 +207,133 @@ const Dashboard = () => {
             onValueChange={setActiveTab}
             value={activeTab}
           >
-            <TabsList className="mb-6 relative">
-              <TabsTrigger value="mybusiness">My Business</TabsTrigger>
-              <TabsTrigger value="search">Company Search</TabsTrigger>
-              <TabsTrigger value="questions">Manage Questions</TabsTrigger>
-            </TabsList>
+            <div className="mb-8 relative">
+              {/* Step-based workflow navigation */}
+              <div className="flex items-center justify-between mb-2 relative">
+                {/* Connection lines */}
+                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted -z-10"></div>
+                
+                {/* Step 1: My Business */}
+                <div className="flex flex-col items-center z-10">
+                  <button 
+                    onClick={() => setActiveTab('mybusiness')}
+                    className={cn(
+                      "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 mb-2",
+                      activeTab === 'mybusiness' 
+                        ? "bg-primary text-primary-foreground border-primary" 
+                        : "bg-background border-muted hover:border-muted-foreground"
+                    )}
+                  >
+                    <Building className="h-5 w-5" />
+                  </button>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    activeTab === 'mybusiness' ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    Step 1
+                  </span>
+                  <span className="text-xs">My Business</span>
+                </div>
+                
+                {/* Arrow 1 */}
+                <div className="flex items-center">
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                
+                {/* Step 2: Questions */}
+                <div className="flex flex-col items-center z-10">
+                  <button 
+                    onClick={() => setActiveTab('questions')}
+                    className={cn(
+                      "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 mb-2",
+                      activeTab === 'questions' 
+                        ? "bg-primary text-primary-foreground border-primary" 
+                        : "bg-background border-muted hover:border-muted-foreground"
+                    )}
+                  >
+                    <ListChecks className="h-5 w-5" />
+                  </button>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    activeTab === 'questions' ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    Step 2
+                  </span>
+                  <span className="text-xs">Questions</span>
+                </div>
+                
+                {/* Arrow 2 */}
+                <div className="flex items-center">
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                
+                {/* Step 3: Search */}
+                <div className="flex flex-col items-center z-10">
+                  <button 
+                    onClick={() => setActiveTab('search')}
+                    className={cn(
+                      "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 mb-2",
+                      activeTab === 'search' 
+                        ? "bg-primary text-primary-foreground border-primary" 
+                        : "bg-background border-muted hover:border-muted-foreground"
+                    )}
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    activeTab === 'search' ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    Step 3
+                  </span>
+                  <span className="text-xs">Search</span>
+                </div>
+              </div>
+              
+              {/* Tab descriptions */}
+              <div className="bg-muted/30 p-4 rounded-lg text-sm">
+                {activeTab === 'mybusiness' && (
+                  <div className="flex items-start">
+                    <Building className="h-5 w-5 mr-2 mt-0.5 text-primary" />
+                    <div>
+                      <h3 className="font-medium">Step 1: Set Up Your Business</h3>
+                      <p className="text-muted-foreground">Configure your business profile and settings to personalize your experience.</p>
+                    </div>
+                  </div>
+                )}
+                
+                {activeTab === 'questions' && (
+                  <div className="flex items-start">
+                    <ListChecks className="h-5 w-5 mr-2 mt-0.5 text-primary" />
+                    <div>
+                      <h3 className="font-medium">Step 2: Manage Your Questions</h3>
+                      <p className="text-muted-foreground">Create and organize questions to ask potential business partners. Use the Magic button to generate questions based on your website.</p>
+                    </div>
+                  </div>
+                )}
+                
+                {activeTab === 'search' && (
+                  <div className="flex items-start">
+                    <Search className="h-5 w-5 mr-2 mt-0.5 text-primary" />
+                    <div>
+                      <h3 className="font-medium">Step 3: Search Companies</h3>
+                      <p className="text-muted-foreground">Search for companies and apply your questions to evaluate potential business partners.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             
             <TabsContent value="mybusiness">
               <MyBusiness />
+            </TabsContent>
+            
+            <TabsContent value="questions">
+              <QuestionManager 
+                questions={questions} 
+                setQuestions={setQuestions} 
+                userId={user?.id} 
+              />
             </TabsContent>
             
             <TabsContent value="search">
@@ -223,14 +344,6 @@ const Dashboard = () => {
                 isLoadingSearches={isLoadingSearches}
                 onSearchDeleted={fetchSearches}
                 isDeletingSearch={isDeletingSearch}
-              />
-            </TabsContent>
-            
-            <TabsContent value="questions">
-              <QuestionManager 
-                questions={questions} 
-                setQuestions={setQuestions} 
-                userId={user?.id} 
               />
             </TabsContent>
           </Tabs>
