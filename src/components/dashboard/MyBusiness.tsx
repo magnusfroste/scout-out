@@ -272,7 +272,7 @@ const MyBusiness = () => {
     
     return (
       <div className="py-8 px-6 md:px-8">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Trusted Partners</h2>
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Clients</h2>
         <div className="flex flex-wrap justify-center gap-3">
           {clients.map((client, index) => (
             <span 
@@ -484,3 +484,4 @@ const MyBusiness = () => {
 };
 
 export default MyBusiness;
+
