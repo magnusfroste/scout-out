@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ElevatorPitch } from '@/utils/webhookResponseParser';
 import { ContactInfo } from '@/types/company';
+import { fetchWebhookSettings } from './webhookService';
 
 export interface UserProfile {
   id: string;
@@ -22,6 +23,12 @@ export interface UserProfile {
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     console.log('Fetching profile for user:', userId);
+    
+    // Get default credits from webhook settings
+    const webhookSettings = await fetchWebhookSettings();
+    const defaultCredits = webhookSettings?.default_signup_credits || 50;
+    
+    console.log('Default signup credits:', defaultCredits);
     
     // Try to get the existing profile
     const { data, error } = await supabase
@@ -49,7 +56,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         .from('profiles')
         .insert({
           id: userId,
-          credits: 50,
+          credits: defaultCredits,
           first_name: null,
           last_name: null,
           avatar_url: null,
@@ -74,7 +81,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       console.log('New profile created:', newProfile);
       return {
         id: newProfile.id,
-        credits: newProfile.credits || 0,
+        credits: newProfile.credits || defaultCredits,
         first_name: newProfile.first_name,
         last_name: newProfile.last_name,
         avatar_url: newProfile.avatar_url,
@@ -89,7 +96,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     console.log('Profile found:', data);
     return {
       id: data.id,
-      credits: data.credits || 0,
+      credits: data.credits || defaultCredits,
       first_name: data.first_name,
       last_name: data.last_name,
       avatar_url: data.avatar_url,

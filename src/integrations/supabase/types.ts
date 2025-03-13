@@ -183,6 +183,7 @@ export type Database = {
       webhook_settings: {
         Row: {
           created_at: string | null
+          default_signup_credits: number | null
           id: string
           mybusiness_url: string | null
           questions_url: string | null
@@ -191,6 +192,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          default_signup_credits?: number | null
           id?: string
           mybusiness_url?: string | null
           questions_url?: string | null
@@ -199,6 +201,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          default_signup_credits?: number | null
           id?: string
           mybusiness_url?: string | null
           questions_url?: string | null

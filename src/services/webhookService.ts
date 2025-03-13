@@ -6,6 +6,7 @@ export interface WebhookSettings {
   url: string;
   mybusiness_url: string;
   questions_url: string;
+  default_signup_credits: number;
   created_at: string;
   updated_at: string;
 }
@@ -59,7 +60,8 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
       if (data) {
         const webhookSettings: WebhookSettings = {
           ...data,
-          questions_url: (data as any).questions_url || ''
+          questions_url: (data as any).questions_url || '',
+          default_signup_credits: data.default_signup_credits || 50
         };
         return webhookSettings;
       }
@@ -97,7 +99,8 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
     if (data) {
       const webhookSettings: WebhookSettings = {
         ...data,
-        questions_url: (data as any).questions_url || ''
+        questions_url: (data as any).questions_url || '',
+        default_signup_credits: data.default_signup_credits || 50
       };
       return webhookSettings;
     }
@@ -394,3 +397,95 @@ export const updateQuestionsWebhookSettings = async (questions_url: string): Pro
     return false;
   }
 };
+
+export const updateDefaultSignupCredits = async (default_signup_credits: number): Promise<boolean> => {
+  try {
+    // Get the current settings first
+    const current = await fetchWebhookSettings();
+    
+    // If settings do not exist yet, create a new record
+    if (!current?.id) {
+      console.log('Creating new webhook settings record with default_signup_credits');
+      const { error } = await supabase
+        .from('webhook_settings')
+        .insert([{ 
+          url: '',
+          mybusiness_url: '',
+          questions_url: '',
+          default_signup_credits,
+          updated_at: new Date().toISOString() 
+        }]);
+        
+      if (error) {
+        console.error('Error creating default signup credits settings:', error);
+        
+        if (error.code === 'PGRST301') {
+          toast({
+            title: "Access Error",
+            description: "You don't have permission to create default signup credits settings. Admin privileges required.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        toast({
+          title: "Error",
+          description: "Failed to create default signup credits settings: " + error.message,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Default signup credits settings created successfully",
+      });
+      return true;
+    }
+
+    // Update existing settings
+    const { error } = await supabase
+      .from('webhook_settings')
+      .update({ 
+        default_signup_credits, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', current.id);
+
+    if (error) {
+      console.error('Error updating default signup credits settings:', error);
+      
+      if (error.code === 'PGRST301') {
+        toast({
+          title: "Access Error",
+          description: "You don't have permission to update default signup credits settings. Admin privileges required.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to update default signup credits settings: " + error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Success",
+      description: "Default signup credits settings updated successfully",
+    });
+    return true;
+  } catch (error) {
+    console.error('Error in updateDefaultSignupCredits:', error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred while updating default signup credits settings",
+      variant: "destructive",
+    });
+    return false;
+  }
+};
+
+
