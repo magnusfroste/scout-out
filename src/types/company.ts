@@ -14,6 +14,7 @@ export type ContactInfo = {
   role?: string;
   email?: string;
   phone?: string;
+  address?: string;
 };
 
 export type SearchResultType = {

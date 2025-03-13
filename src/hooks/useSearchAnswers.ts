@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from '@/types/company';
@@ -10,6 +9,21 @@ export interface CompanyAnswer {
   answer: string;
 }
 
+interface CompanySearchRecord {
+  id: string;
+  user_id: string;
+  company_name: string;
+  result: any;
+  created_at: string;
+  contact_info?: any;
+  www?: string | null;
+  contact?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  [key: string]: any; 
+}
+
 export const useSearchAnswers = (questions: { id: string; question: string }[]) => {
   const [searchAnswers, setSearchAnswers] = useState<Record<string, CompanyAnswer[]>>({});
   const [contactInfo, setContactInfo] = useState<Record<string, ContactInfo>>({});
@@ -18,8 +32,7 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
   const fetchAnswersForSearch = async (searchId: string) => {
     setIsLoadingAnswers(prev => ({ ...prev, [searchId]: true }));
     try {
-      // First get the company search record to get contact info
-      const { data: searchData, error: searchError } = await supabase
+      const { data: searchDataRaw, error: searchError } = await supabase
         .from('company_searches')
         .select('*')
         .eq('id', searchId)
@@ -30,32 +43,36 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
         return;
       }
       
-      // Store contact info if it exists
-      if (searchData.contact_info) {
-        try {
-          // Ensure contact_info is an object (not an array)
-          const contactInfoData = typeof searchData.contact_info === 'object' && 
-                                 !Array.isArray(searchData.contact_info) ? 
-                                 searchData.contact_info : {};
+      const searchData = searchDataRaw as unknown as CompanySearchRecord;
+      
+      try {
+        const typedContactInfo: ContactInfo = {
+          www: searchData.www || undefined,
+          contact: searchData.contact || undefined,
+          email: searchData.email || undefined,
+          phone: searchData.phone || undefined,
+          role: searchData.role || undefined,
+          address: undefined 
+        };
+        
+        if (searchData.contact_info && typeof searchData.contact_info === 'object' && !Array.isArray(searchData.contact_info)) {
+          const contactInfoData = searchData.contact_info as Record<string, any>;
           
-          // Safely extract string values or undefined
-          const typedContactInfo: ContactInfo = {
-            www: typeof contactInfoData.www === 'string' ? contactInfoData.www : undefined,
-            contact: typeof contactInfoData.contact === 'string' ? contactInfoData.contact : undefined,
-            email: typeof contactInfoData.email === 'string' ? contactInfoData.email : undefined,
-            phone: typeof contactInfoData.phone === 'string' ? contactInfoData.phone : undefined
-          };
-          
+          if (typeof contactInfoData.address === 'string') {
+            typedContactInfo.address = contactInfoData.address;
+          }
+        }
+        
+        if (Object.values(typedContactInfo).some(value => value !== undefined)) {
           setContactInfo(prev => ({
             ...prev,
             [searchId]: typedContactInfo
           }));
-        } catch (error) {
-          console.error('Error processing contact info:', error, searchData.contact_info);
         }
+      } catch (error) {
+        console.error('Error processing contact info:', error, searchData);
       }
       
-      // Fetch answers for this search
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
         .select('*')
@@ -66,7 +83,6 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
         return;
       }
       
-      // Map answers to questions
       const mappedAnswers: CompanyAnswer[] = answersData.map(answer => {
         const question = questions.find(q => q.id === answer.question_id);
         return {

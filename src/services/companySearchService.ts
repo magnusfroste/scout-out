@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from '@/types/company';
 
@@ -12,11 +11,12 @@ export type CompanySearchRecord = {
   company_name: string;
   result: any;
   created_at: string;
-  contact_info?: ContactInfo;
-  website?: string | null;
-  contact_person?: string | null;
+  contact_info?: ContactInfo | null;
+  www?: string | null;
+  contact?: string | null;
   email?: string | null;
   phone?: string | null;
+  role?: string | null;
 };
 
 /**
@@ -47,11 +47,15 @@ export const storeSearchResults = async (
     
     // Add contact info if available
     if (contactInfo) {
+      // Store the full contact info in the JSON field for backward compatibility
       searchRecord.contact_info = contactInfo;
-      searchRecord.website = contactInfo.www || null;
-      searchRecord.contact_person = contactInfo.contact || null;
+      
+      // Store individual fields in their respective columns
+      searchRecord.www = contactInfo.www || null;
+      searchRecord.contact = contactInfo.contact || null;
       searchRecord.email = contactInfo.email || null;
       searchRecord.phone = contactInfo.phone || null;
+      searchRecord.role = contactInfo.role || null;
     }
     
     console.log('Inserting company search record:', JSON.stringify(searchRecord));
@@ -99,15 +103,13 @@ export const storeSearchResults = async (
           console.log('Successfully stored answers for all questions');
         }
       } else {
-        console.log('No valid answers found to store');
+        console.log('No valid answers to insert');
       }
-    } else {
-      console.log('No processed results to store as answers');
     }
     
     return true;
-  } catch (dbError) {
-    console.error('Database error storing search results:', dbError);
+  } catch (error) {
+    console.error('Error storing search results:', error);
     return false;
   }
 };
