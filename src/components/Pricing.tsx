@@ -120,7 +120,7 @@ const Pricing: React.FC = () => {
                 <p className="text-muted-foreground mt-2 min-h-[50px]">{plan.description}</p>
                 <div className="mt-6 mb-6">
                   <span className="text-4xl font-bold">
-                    ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                    €{isAnnual ? plan.annualPrice : plan.monthlyPrice}
                   </span>
                   <span className="text-muted-foreground ml-2">
                     {isAnnual ? '/year' : '/month'}
