@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from '@/types/company';
@@ -32,16 +33,14 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
   const fetchAnswersForSearch = async (searchId: string) => {
     setIsLoadingAnswers(prev => ({ ...prev, [searchId]: true }));
     try {
+      // Fetch the company search
       const { data: searchDataRaw, error: searchError } = await supabase
         .from('company_searches')
         .select('*')
         .eq('id', searchId)
         .single();
         
-      if (searchError) {
-        console.error('Error fetching search:', searchError);
-        return;
-      }
+      if (searchError) throw searchError;
       
       const searchData = searchDataRaw as unknown as CompanySearchRecord;
       
@@ -73,15 +72,23 @@ export const useSearchAnswers = (questions: { id: string; question: string }[]) 
         console.error('Error processing contact info:', error, searchData);
       }
       
+      // Fetch the questions and answers for this company
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
-        .select('*')
-        .eq('company_search_id', searchId);
+        .select(`
+          id,
+          answer,
+          question_id,
+          created_at,
+          agent_questions (
+            id,
+            question
+          )
+        `)
+        .eq('company_search_id', searchId)
+        .order('created_at', { ascending: true });
       
-      if (answersError) {
-        console.error('Error fetching answers:', answersError);
-        return;
-      }
+      if (answersError) throw answersError;
       
       const mappedAnswers: CompanyAnswer[] = answersData.map(answer => {
         const question = questions.find(q => q.id === answer.question_id);
