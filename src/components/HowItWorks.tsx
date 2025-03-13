@@ -50,7 +50,7 @@ const HowItWorks: React.FC = () => {
         </div>
         
         {/* Enhanced step visualization with connecting lines */}
-        <div className="relative mb-16">
+        <div className="relative mb-24">
           {/* Connecting line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-primary/10 -translate-x-1/2 hidden md:block"></div>
           
@@ -90,11 +90,11 @@ const HowItWorks: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto">
-          <h3 className="text-2xl font-bold mb-6">Example Sales Questions Our AI Agent Can Answer:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto mt-20">
+          <h3 className="text-2xl font-bold mb-8 text-center">Example Sales Questions Our AI Agent Can Answer:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {questions.map((question, index) => (
-              <div key={index} className="flex items-start space-x-3">
+              <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <ArrowRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <p className="text-muted-foreground">{question}</p>
               </div>
