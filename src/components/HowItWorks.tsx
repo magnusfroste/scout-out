@@ -1,25 +1,30 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, PenTool, SendHorizonal, ChevronRight, ArrowRight } from 'lucide-react';
+import { Search, FileText, ZapIcon, MessagesSquare, SendHorizonal, ArrowRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const HowItWorks: React.FC = () => {
   const steps = [
     {
+      icon: <FileText className="h-10 w-10" />,
+      title: "1. Define Your Business",
+      description: "Start by describing what your company offers and the challenges your solutions address for potential clients."
+    },
+    {
+      icon: <Users className="h-10 w-10" />,
+      title: "2. Customize Questions",
+      description: "Create or select tailored questions that will help identify the best sales opportunities for your business."
+    },
+    {
       icon: <Search className="h-10 w-10" />,
-      title: "1. Input Client Name",
-      description: "Simply enter the name of your potential client to start the research process."
+      title: "3. Research Companies",
+      description: "Input potential client names to research business opportunities based on your product or service offering."
     },
     {
-      icon: <PenTool className="h-10 w-10" />,
-      title: "2. Define Questions",
-      description: "Customize your sales questions or let our AI automatically create them by analyzing the client's website."
-    },
-    {
-      icon: <SendHorizonal className="h-10 w-10" />,
-      title: "3. Get Actionable Insights",
-      description: "Receive comprehensive answers, contact details, and a personalized email draft ready to send."
+      icon: <ZapIcon className="h-10 w-10" />,
+      title: "4. Get Actionable Insights",
+      description: "Receive comprehensive answers, verified contact details, and strategic recommendations to approach prospects."
     }
   ];
 
@@ -38,9 +43,9 @@ const HowItWorks: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <p className="text-sm font-medium text-primary mb-3">How It Works</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">AI-Powered Research Made Simple</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Streamlined Workflow for Sales Success</h2>
           <p className="text-xl text-muted-foreground">
-            Our AI Agent takes the guesswork out of research by using multiple knowledge bases to find answers to your sales questions.
+            Our platform guides you through a simple process to research and connect with high-potential clients.
           </p>
         </div>
         
@@ -49,7 +54,7 @@ const HowItWorks: React.FC = () => {
           {/* Connecting line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-primary/10 -translate-x-1/2 hidden md:block"></div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
             {steps.map((step, index) => (
               <div key={index} className="relative">
                 {/* Step number with accent color background */}
@@ -90,7 +95,7 @@ const HowItWorks: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {questions.map((question, index) => (
               <div key={index} className="flex items-start space-x-3">
-                <ChevronRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <ArrowRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <p className="text-muted-foreground">{question}</p>
               </div>
             ))}
