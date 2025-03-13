@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -102,7 +103,7 @@ const Header = () => {
           {user ? (
             <>
               <Link to="/dashboard" className={`text-sm ${isActive('/dashboard')} transition-colors`}>
-                Dashboard
+                Workflow
               </Link>
               {userProfile?.is_admin && (
                 <Link to="/settings" className={`text-sm ${isActive('/settings')} transition-colors`}>
@@ -181,7 +182,7 @@ const Header = () => {
                       className={`block text-base ${isActive('/dashboard')} transition-colors`}
                       onClick={closeMobileMenu}
                     >
-                      Dashboard
+                      Workflow
                     </Link>
                   </li>
                   {userProfile?.is_admin && (
