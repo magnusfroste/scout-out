@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -210,7 +209,6 @@ const Dashboard = () => {
               <TabsTrigger value="mybusiness">My Business</TabsTrigger>
               <TabsTrigger value="search">Company Search</TabsTrigger>
               <TabsTrigger value="questions">Manage Questions</TabsTrigger>
-              <TabsTrigger value="history">Search History</TabsTrigger>
             </TabsList>
             
             <TabsContent value="mybusiness">
@@ -220,8 +218,11 @@ const Dashboard = () => {
             <TabsContent value="search">
               <CompanySearchComponent 
                 questions={questions}
-                onSearch={fetchSearches} 
-                onNavigateToHistory={() => setActiveTab('history')}
+                onSearch={fetchSearches}
+                searches={searches}
+                isLoadingSearches={isLoadingSearches}
+                onSearchDeleted={fetchSearches}
+                isDeletingSearch={isDeletingSearch}
               />
             </TabsContent>
             
@@ -231,18 +232,6 @@ const Dashboard = () => {
                 setQuestions={setQuestions} 
                 userId={user?.id} 
               />
-            </TabsContent>
-            
-            <TabsContent value="history">
-              <div className="md:col-span-2">
-                <SearchHistory 
-                  searches={searches} 
-                  isLoadingSearches={isLoadingSearches}
-                  questions={questions}
-                  onSearchDeleted={fetchSearches}
-                  isDeletingSearch={isDeletingSearch}
-                />
-              </div>
             </TabsContent>
           </Tabs>
         </div>

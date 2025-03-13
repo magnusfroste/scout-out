@@ -40,56 +40,11 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
     e.stopPropagation();
     e.preventDefault();
     
-    console.log("Delete button clicked for search ID:", search.id);
-    
-    if (!search.id) {
-      console.error("Cannot delete search: Invalid ID");
-      return;
-    }
-    
-    setLocalIsDeleting(true);
-    
-    try {
-      // Direct approach: delete answers first
-      console.log("Deleting answers for search ID:", search.id);
-      await supabase
-        .from('company_question_answers')
-        .delete()
-        .eq('company_search_id', search.id);
-      
-      // Then delete the search
-      console.log("Deleting search with ID:", search.id);
-      const { error } = await supabase
-        .from('company_searches')
-        .delete()
-        .eq('id', search.id);
-      
-      if (error) {
-        console.error("Error deleting search:", error);
-        throw error;
-      }
-      
-      console.log("Search deleted successfully");
-      setIsDeleted(true);
-      
-      // Notify parent to refresh the list
-      onSearchDeleted();
-      
-      toast({
-        title: "Success",
-        description: "Search deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error in delete handler:", error);
-      
-      toast({
-        title: "Error",
-        description: "Failed to delete search. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLocalIsDeleting(false);
-    }
+    toast({
+      title: "Not Implemented",
+      description: "Delete functionality is not implemented yet.",
+      variant: "default",
+    });
   };
   
   if (isDeleted) {
@@ -121,15 +76,10 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
             variant="outline"
             size="sm"
             onClick={handleDelete}
-            disabled={isDeleting || localIsDeleting}
             aria-label="Delete search"
-            className="z-10 hover:bg-red-50 dark:hover:bg-red-900"
+            className="z-10 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
-            {(isDeleting || localIsDeleting) ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4 text-red-500" />
-            )}
+            <Trash2 className="h-4 w-4" />
             <span className="ml-2">Delete</span>
           </Button>
         </div>

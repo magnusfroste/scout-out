@@ -19,11 +19,16 @@ import { storeSearchResults } from '@/services/companySearchService';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import QuestionsList from './QuestionsList';
 import { supabase } from '@/integrations/supabase/client';
+import SearchHistory from './SearchHistory';
 
 // Define types for our component
 interface CompanySearchProps {
   questions: { id: string; question: string }[];
-  onSearch: () => void; // Callback to refresh search history
+  onSearch: () => void;
+  searches: any[];
+  isLoadingSearches: boolean;
+  onSearchDeleted: () => void;
+  isDeletingSearch: string | null;
   onNavigateToHistory?: () => void; // Optional callback to navigate to search history
 }
 
@@ -42,7 +47,7 @@ interface SearchResult {
   }[];
 }
 
-const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, onNavigateToHistory }) => {
+const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, searches, isLoadingSearches, onSearchDeleted, isDeletingSearch, onNavigateToHistory }) => {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { toast } = useToast();
   const [companyName, setCompanyName] = useState('');
@@ -529,6 +534,18 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, onNa
           </div>
         </div>
       )}
+      
+      {/* Search History Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Recent Searches</h2>
+        <SearchHistory 
+          searches={searches} 
+          isLoadingSearches={isLoadingSearches}
+          questions={questions}
+          onSearchDeleted={onSearchDeleted}
+          isDeletingSearch={isDeletingSearch}
+        />
+      </div>
     </div>
   );
 };
