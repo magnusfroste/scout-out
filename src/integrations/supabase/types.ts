@@ -14,6 +14,7 @@ export type Database = {
           created_at: string
           id: string
           question: string
+          rationale: string | null
           updated_at: string
           user_id: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           created_at?: string
           id?: string
           question: string
+          rationale?: string | null
           updated_at?: string
           user_id: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           created_at?: string
           id?: string
           question?: string
+          rationale?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -179,6 +182,7 @@ export type Database = {
           created_at: string | null
           id: string
           mybusiness_url: string | null
+          questions_url: string | null
           updated_at: string | null
           url: string
         }
@@ -186,6 +190,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           mybusiness_url?: string | null
+          questions_url?: string | null
           updated_at?: string | null
           url?: string
         }
@@ -193,6 +198,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           mybusiness_url?: string | null
+          questions_url?: string | null
           updated_at?: string | null
           url?: string
         }

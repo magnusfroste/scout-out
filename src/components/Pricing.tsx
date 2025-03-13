@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 import Button from './Button';
@@ -15,10 +14,7 @@ const Pricing: React.FC = () => {
       features: [
         'Up to 5 projects',
         '10GB storage',
-        'Basic analytics',
-        'Email support',
-        'Community access',
-        'API access'
+        'Email support'
       ],
       ctaText: 'Start Free Trial',
       highlight: false
@@ -31,12 +27,8 @@ const Pricing: React.FC = () => {
       features: [
         'Unlimited projects',
         '100GB storage',
-        'Advanced analytics',
         'Priority support',
-        'Team collaboration',
-        'API access',
-        'Custom integrations',
-        'Audit logs'
+        'Team collaboration'
       ],
       ctaText: 'Start Free Trial',
       highlight: true
@@ -49,13 +41,8 @@ const Pricing: React.FC = () => {
       features: [
         'Unlimited everything',
         '1TB storage',
-        'Custom analytics',
         'Dedicated support',
         'Advanced collaboration',
-        'Premium API access',
-        'SSO & SAML',
-        'Audit logs',
-        'Service Level Agreement',
         'Custom training'
       ],
       ctaText: 'Contact Sales',
