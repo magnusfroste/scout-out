@@ -13,7 +13,7 @@ const Features: React.FC = () => {
     {
       icon: <Bot className="h-6 w-6" />,
       title: 'Intelligent Questions',
-      description: 'Our AI automatically generates relevant sales questions by analyzing the client\'s web presence and industry.'
+      description: 'Our AI automatically generates relevant sales questions by analyzing your web presence and industry.'
     },
     {
       icon: <Database className="h-6 w-6" />,
