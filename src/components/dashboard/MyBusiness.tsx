@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,6 @@ interface BusinessData {
   contactInfo?: ContactInfo;
 }
 
-// Default webhook URL as fallback
 const DEFAULT_WEBHOOK_URL = 'https://agent.froste.eu/webhook/mybusiness';
 
 const MyBusiness = () => {
@@ -38,7 +36,7 @@ const MyBusiness = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL); // Initialize with default
+  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const [isResetting, setIsResetting] = useState<boolean>(false);
 
@@ -91,7 +89,6 @@ const MyBusiness = () => {
       return;
     }
 
-    // Always use either the loaded webhook URL or the default one
     const currentWebhookUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
     
     setIsLoading(true);
@@ -171,13 +168,11 @@ const MyBusiness = () => {
     
     setIsResetting(true);
     try {
-      // Clear business data and website URL
       await updateProfile({ 
         business_data: null,
         website_url: null
       });
       
-      // Reset local state
       setBusinessData(null);
       setWebsiteUrl('');
       
@@ -354,14 +349,14 @@ const MyBusiness = () => {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>Your Business Pitch</CardTitle>
+              <CardTitle>Business Profile</CardTitle>
               {businessData?.elevatorPitch?.company_name ? (
                 <CardDescription>
-                  Compelling pitch for {businessData.elevatorPitch.company_name} that highlights client challenges and your solutions
+                  Profile for {businessData.elevatorPitch.company_name} that highlights client challenges and your solutions
                 </CardDescription>
               ) : (
                 <CardDescription>
-                  Generate a compelling business pitch that emphasizes how you solve client challenges
+                  Generate a company profile that emphasizes how you solve client challenges
                 </CardDescription>
               )}
             </div>
@@ -376,9 +371,9 @@ const MyBusiness = () => {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Reset Business Pitch</AlertDialogTitle>
+                    <AlertDialogTitle>Reset Business Profile</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will clear all your business pitch data and allow you to start fresh with a different website URL.
+                      This will clear all your business profile data and allow you to start fresh with a different website URL.
                       This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -389,7 +384,7 @@ const MyBusiness = () => {
                       disabled={isResetting}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {isResetting ? 'Resetting...' : 'Reset Pitch'}
+                      {isResetting ? 'Resetting...' : 'Reset Profile'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -418,11 +413,11 @@ const MyBusiness = () => {
                     onClick={handleAnalyzeWebsite} 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Analyzing..." : "Generate Pitch"}
+                    {isLoading ? "Analyzing..." : "Generate Profile"}
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Enter your business website URL to generate a compelling pitch that highlights client challenges and your solutions
+                  Enter your business website URL to generate a comprehensive profile that highlights client challenges and your solutions
                 </p>
               </div>
 
@@ -479,7 +474,7 @@ const MyBusiness = () => {
               disabled={isSaving}
               className="ml-auto"
             >
-              {isSaving ? "Saving..." : "Save Business Pitch"}
+              {isSaving ? "Saving..." : "Save Business Profile"}
             </Button>
           </CardFooter>
         )}
