@@ -1,4 +1,3 @@
-
 import { ContactInfo } from '@/types/company';
 
 export type Answer = {
@@ -51,12 +50,8 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
     } else if (output.about_us || output.our_services || output.clients) {
       return parseMyBusinessResponse(responseData);
     } else {
-      // Legacy format - attempt to parse with both parsers
-      const companyResult = parseLegacyCompanySearchResponse(responseData);
-      if (companyResult.processedResults.length > 0 || companyResult.contactInfo) {
-        return companyResult;
-      }
-      return { processedResults: [] };
+      // Try legacy format as fallback
+      return parseLegacyCompanySearchResponse(responseData);
     }
   } catch (error) {
     console.error('Error parsing webhook response:', error);

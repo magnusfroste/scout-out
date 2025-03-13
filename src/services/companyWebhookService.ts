@@ -1,17 +1,47 @@
-
 import { Answer } from '@/utils/webhookResponseParser';
 import { Question } from '@/types/company';
+import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
+
+// Check if we're in mock mode from environment variable
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+
+// Log the environment configuration
+console.log('Webhook Service Configuration:', { 
+  isDev: import.meta.env.DEV,
+  useMockData: USE_MOCK_DATA,
+  mockDataEnv: import.meta.env.VITE_USE_MOCK_DATA
+});
 
 /**
  * Calls the webhook endpoint with company search data
+ * Uses mock data if VITE_USE_MOCK_DATA is set to 'true'
  */
 export const callCompanyWebhook = async (
   webhookUrl: string,
   companyName: string,
   questions: Question[]
 ): Promise<Response> => {
+  console.log('Calling webhook with company:', companyName);
   console.log('Calling webhook with questions:', JSON.stringify(questions));
+  console.log('Using webhook URL:', webhookUrl);
   
+  // Use mock data if in development mode and mock flag is enabled
+  if (import.meta.env.DEV && USE_MOCK_DATA) {
+    console.log('MOCK MODE ACTIVE: Using mock data for company search');
+    
+    // Simulate error response if company name contains "error" for testing error handling
+    if (companyName.toLowerCase().includes('error')) {
+      console.log('MOCK MODE: Simulating error response for company containing "error"');
+      return getMockErrorResponse();
+    }
+    
+    // Return mock response for normal operation
+    console.log('MOCK MODE: Returning mock data for company:', companyName);
+    return getMockResponse(companyName);
+  }
+  
+  // Otherwise make the actual API call
+  console.log('LIVE MODE: Making actual API call to webhook');
   return fetch(webhookUrl, {
     method: 'POST',
     headers: {

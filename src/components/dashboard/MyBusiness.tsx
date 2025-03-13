@@ -17,13 +17,16 @@ interface BusinessData {
   contactInfo?: ContactInfo;
 }
 
+// Default webhook URL as fallback
+const DEFAULT_WEBHOOK_URL = 'https://agent.froste.eu/webhook/mybusiness';
+
 const MyBusiness = () => {
   const { user, userProfile, updateProfile } = useAuth();
   const [websiteUrl, setWebsiteUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [webhookUrl, setWebhookUrl] = useState<string>('');
+  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL); // Initialize with default
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
 
   useEffect(() => {
@@ -42,11 +45,11 @@ const MyBusiness = () => {
           setWebhookUrl(settings.mybusiness_url);
         } else {
           console.warn('No My Business webhook URL configured in settings');
-          setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
+          setWebhookUrl(DEFAULT_WEBHOOK_URL);
         }
       } catch (error) {
         console.error('Error loading webhook settings:', error);
-        setWebhookUrl('https://agent.froste.eu/webhook/mybusiness');
+        setWebhookUrl(DEFAULT_WEBHOOK_URL);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -75,21 +78,15 @@ const MyBusiness = () => {
       return;
     }
 
-    if (!webhookUrl) {
-      toast({
-        title: "System Unavailable",
-        description: "The analysis service is currently unavailable. Please try again later.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Always use either the loaded webhook URL or the default one
+    const currentWebhookUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
+    
     setIsLoading(true);
     try {
-      console.log(`Calling my business webhook: ${webhookUrl}`);
+      console.log(`Calling my business webhook: ${currentWebhookUrl}`);
       console.log(`With website: ${websiteUrl}`);
       
-      const response = await callMyBusinessWebhook(webhookUrl, websiteUrl);
+      const response = await callMyBusinessWebhook(currentWebhookUrl, websiteUrl);
       
       if (!response.ok) {
         throw new Error(`Service temporarily unavailable`);

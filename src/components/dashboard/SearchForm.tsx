@@ -1,9 +1,13 @@
-
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import CompanyInput from './CompanyInput';
 import SearchButton from './SearchButton';
 import { calculateCreditCost } from '@/utils/creditUtils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+
+// Import the SearchState enum
+import { SearchState } from '@/hooks/useCompanySearch';
 
 interface SearchFormProps {
   companyName: string;
@@ -13,6 +17,10 @@ interface SearchFormProps {
   questionsCount: number;
   availableCredits?: number;
   onSubmit: (e: React.FormEvent) => void;
+  searchState?: SearchState;
+  errorMessage?: string | null;
+  creditCost?: number; // Optional memoized credit cost
+  isSearching?: boolean; // Add the direct flag
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({
@@ -22,10 +30,18 @@ const SearchForm: React.FC<SearchFormProps> = ({
   isDeductingCredit,
   questionsCount,
   availableCredits,
-  onSubmit
+  onSubmit,
+  searchState = SearchState.IDLE,
+  errorMessage,
+  creditCost: propCreditCost, // Renamed to avoid conflict
+  isSearching = false // Default to false
 }) => {
-  const creditCost = calculateCreditCost(questionsCount);
+  // Use provided credit cost or calculate it
+  const creditCost = propCreditCost ?? calculateCreditCost(questionsCount);
   const insufficientCredits = availableCredits !== undefined && availableCredits < creditCost;
+
+  // Determine if input should be disabled - use both flags
+  const isDisabled = isSearching || searchState === SearchState.SEARCHING;
 
   return (
     <Card>
@@ -37,18 +53,36 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <CompanyInput 
             companyName={companyName}
             setCompanyName={setCompanyName}
-            isDisabled={isLoading}
+            isDisabled={isDisabled}
           />
           
           <SearchButton 
             isLoading={isLoading}
             isProcessing={isDeductingCredit}
-            disabled={isLoading || questionsCount === 0 || isDeductingCredit || insufficientCredits}
+            disabled={questionsCount === 0 || insufficientCredits}
             creditCost={creditCost}
             questionsCount={questionsCount}
+            searchState={searchState}
+            isSearching={isSearching}
           />
+
+          {insufficientCredits && (
+            <div className="text-sm text-red-500 mt-2">
+              You don't have enough credits for this search. Available: {availableCredits}, Required: {creditCost}
+            </div>
+          )}
         </form>
       </CardContent>
+      
+      {errorMessage && (
+        <CardFooter className="pt-0">
+          <Alert variant="destructive" className="w-full">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        </CardFooter>
+      )}
     </Card>
   );
 };
