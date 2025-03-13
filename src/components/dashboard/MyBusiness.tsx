@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -228,7 +229,7 @@ const MyBusiness = () => {
     
     return (
       <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Our Services</h2>
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Solutions to Client Challenges</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {services.map((service, index) => (
             <div 
@@ -249,7 +250,7 @@ const MyBusiness = () => {
     
     return (
       <div className="py-8 px-6 md:px-8 bg-slate-50 dark:bg-slate-800/30">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">What Our Clients Say</h2>
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Client Success Stories</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {testimonials.map((testimonial, index) => (
             <div key={index} className="p-5 rounded-lg bg-white dark:bg-slate-800 shadow-sm">
@@ -276,7 +277,7 @@ const MyBusiness = () => {
     
     return (
       <div className="py-8 px-6 md:px-8">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Our Clients</h2>
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Trusted Partners</h2>
         <div className="flex flex-wrap justify-center gap-3">
           {clients.map((client, index) => (
             <span 
@@ -297,7 +298,7 @@ const MyBusiness = () => {
     return (
       <div className="py-8 px-6 md:px-8 text-center">
         <div className="p-6 rounded-lg bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 max-w-2xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-3 text-slate-800 dark:text-white">Our Value</h2>
+          <h2 className="text-2xl font-semibold mb-3 text-slate-800 dark:text-white">Unique Value Proposition</h2>
           <p className="text-lg text-slate-800 dark:text-white">{valueProposition}</p>
         </div>
       </div>
@@ -309,7 +310,7 @@ const MyBusiness = () => {
     
     return (
       <div className="py-8 px-6 md:px-8 bg-white dark:bg-slate-800/50 rounded-b-lg">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Contact Us</h2>
+        <h2 className="text-2xl font-semibold text-center mb-6 text-slate-800 dark:text-white">Connect With Us</h2>
         <div className="max-w-md mx-auto space-y-4">
           {contactInfo.email && contactInfo.email !== "Not Found" && (
             <div className="flex items-center gap-3">
@@ -353,14 +354,14 @@ const MyBusiness = () => {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>My Business</CardTitle>
+              <CardTitle>Your Business Pitch</CardTitle>
               {businessData?.elevatorPitch?.company_name ? (
                 <CardDescription>
-                  Showing business profile for {businessData.elevatorPitch.company_name}
+                  Compelling pitch for {businessData.elevatorPitch.company_name} that highlights client challenges and your solutions
                 </CardDescription>
               ) : (
                 <CardDescription>
-                  Analyze your business website to create a profile
+                  Generate a compelling business pitch that emphasizes how you solve client challenges
                 </CardDescription>
               )}
             </div>
@@ -375,9 +376,9 @@ const MyBusiness = () => {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Reset Business Profile</AlertDialogTitle>
+                    <AlertDialogTitle>Reset Business Pitch</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will clear all your business data and allow you to start fresh with a different website URL.
+                      This will clear all your business pitch data and allow you to start fresh with a different website URL.
                       This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -388,7 +389,7 @@ const MyBusiness = () => {
                       disabled={isResetting}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {isResetting ? 'Resetting...' : 'Reset Profile'}
+                      {isResetting ? 'Resetting...' : 'Reset Pitch'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -417,11 +418,11 @@ const MyBusiness = () => {
                     onClick={handleAnalyzeWebsite} 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Analyzing..." : "Analyze"}
+                    {isLoading ? "Analyzing..." : "Generate Pitch"}
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Enter your business website URL to generate a business profile
+                  Enter your business website URL to generate a compelling pitch that highlights client challenges and your solutions
                 </p>
               </div>
 
@@ -478,7 +479,7 @@ const MyBusiness = () => {
               disabled={isSaving}
               className="ml-auto"
             >
-              {isSaving ? "Saving..." : "Save Business Profile"}
+              {isSaving ? "Saving..." : "Save Business Pitch"}
             </Button>
           </CardFooter>
         )}
