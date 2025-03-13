@@ -1,3 +1,4 @@
+
 export interface CompanySearch {
   id: string;
   company_name: string;
@@ -6,4 +7,17 @@ export interface CompanySearch {
   created_at: string;
   user_id?: string;
   result?: any;
+}
+
+export interface SearchResult {
+  results: Array<{
+    question_id: string;
+    answer: string;
+  }>;
+  contact_info?: {
+    www?: string;
+    contact?: string;
+    email?: string;
+    phone?: string;
+  };
 }

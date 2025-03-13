@@ -1,3 +1,4 @@
+
 import { Answer } from '@/utils/webhookResponseParser';
 import { Question } from '@/types/company';
 import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
@@ -9,7 +10,8 @@ const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 console.log('Webhook Service Configuration:', { 
   isDev: import.meta.env.DEV,
   useMockData: USE_MOCK_DATA,
-  mockDataEnv: import.meta.env.VITE_USE_MOCK_DATA
+  mockDataEnv: import.meta.env.VITE_USE_MOCK_DATA,
+  mockDataType: typeof import.meta.env.VITE_USE_MOCK_DATA
 });
 
 /**
@@ -24,6 +26,7 @@ export const callCompanyWebhook = async (
   console.log('Calling webhook with company:', companyName);
   console.log('Calling webhook with questions:', JSON.stringify(questions));
   console.log('Using webhook URL:', webhookUrl);
+  console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
   
   // Use mock data if in development mode and mock flag is enabled
   if (import.meta.env.DEV && USE_MOCK_DATA) {
@@ -57,3 +60,4 @@ export const callCompanyWebhook = async (
     })
   });
 };
+
