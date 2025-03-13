@@ -307,7 +307,7 @@ const Dashboard = () => {
                   <span className={cn(
                     "text-xs",
                     activeTab === 'search' ? "font-medium" : ""
-                  )}>Search</span>
+                  )}>Search Company</span>
                 </div>
               </div>
               
@@ -341,8 +341,8 @@ const Dashboard = () => {
                   <div className="flex items-start">
                     <Search className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
-                      <h3 className="font-semibold text-base mb-1">Step 3: Search Companies</h3>
-                      <p className="text-muted-foreground">Search for companies and apply your questions to evaluate potential business partners.</p>
+                      <h3 className="font-semibold text-base mb-1">Step 3: Search Company</h3>
+                      <p className="text-muted-foreground">Research potential business opportunities based on your product or service offering. Our AI analyzes companies to help you identify the best prospects for your business.</p>
                     </div>
                   </div>
                 )}
