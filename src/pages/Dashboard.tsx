@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -192,7 +193,7 @@ const Dashboard = () => {
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Company Intelligence Dashboard</h1>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
             
             {userProfile && (
               <CreditDisplay credits={userProfile.credits} />
