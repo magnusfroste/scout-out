@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, PenTool, SendHorizonal, ChevronRight } from 'lucide-react';
+import { Search, PenTool, SendHorizonal, ChevronRight, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const HowItWorks: React.FC = () => {
   const steps = [
@@ -43,22 +44,45 @@ const HowItWorks: React.FC = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {steps.map((step, index) => (
-            <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="pb-2">
-                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                  {step.icon}
+        {/* Enhanced step visualization with connecting lines */}
+        <div className="relative mb-16">
+          {/* Connecting line */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-primary/10 -translate-x-1/2 hidden md:block"></div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            {steps.map((step, index) => (
+              <div key={index} className="relative">
+                {/* Step number with accent color background */}
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto",
+                  "bg-primary text-primary-foreground shadow-lg"
+                )}>
+                  {index + 1}
                 </div>
-                <CardTitle className="text-xl">{step.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {step.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+                
+                {/* Arrow connector - only show between cards */}
+                {index < steps.length - 1 && (
+                  <div className="hidden md:flex absolute top-5 left-[calc(100%_-_10px)] transform -translate-x-1/2 z-10">
+                    <ArrowRight className="h-6 w-6 text-primary" />
+                  </div>
+                )}
+                
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 h-full bg-gradient-to-b from-white to-primary/5">
+                  <CardHeader className="pb-2">
+                    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4 mx-auto">
+                      {step.icon}
+                    </div>
+                    <CardTitle className="text-xl text-center">{step.title.split('.')[1].trim()}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base text-center">
+                      {step.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
         </div>
         
         <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto">

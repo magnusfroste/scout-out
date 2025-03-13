@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { CompanySearch } from '@/types/search';
 import { Building, ListChecks, Search, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 
 // Import refactored components
 import QuestionManager from '@/components/dashboard/QuestionManager';
@@ -33,7 +35,6 @@ const Dashboard = () => {
 
   const { user, loading, userProfile } = useAuth();
 
-  // IMPORTANT: Moving the conditional return after all hooks
   useEffect(() => {
     if (user) {
       fetchQuestions();
@@ -56,7 +57,6 @@ const Dashboard = () => {
     }
   };
 
-  // Use useCallback to memoize the fetchSearches function
   const fetchSearches = useCallback(async () => {
     if (!user) {
       console.log("fetchSearches called but no user is logged in");
@@ -66,7 +66,6 @@ const Dashboard = () => {
     console.log("fetchSearches called - refreshing search history");
     setIsLoadingSearches(true);
     try {
-      // Clear the searches first to ensure UI updates
       setSearches([]);
       
       const { data, error } = await supabase
@@ -83,7 +82,6 @@ const Dashboard = () => {
       
       console.log(`Fetched ${data?.length || 0} searches for user ${user.id}`);
       
-      // Debug: Log the search IDs to help with debugging
       if (data && data.length > 0) {
         console.log('Search IDs:', data.map(s => s.id).join(', '));
       }
@@ -101,7 +99,6 @@ const Dashboard = () => {
     }
   }, [user, toast]);
 
-  // Direct delete function in the Dashboard component
   const handleDeleteSearch = async (id: string) => {
     if (!id || !user) {
       console.error("Invalid search ID or user not logged in");
@@ -112,8 +109,6 @@ const Dashboard = () => {
     setIsDeletingSearch(id);
 
     try {
-      // First, delete related answers
-      console.log(`Deleting answers for search ID: ${id}`);
       const { error: answersError } = await supabase
         .from('company_question_answers')
         .delete()
@@ -126,8 +121,6 @@ const Dashboard = () => {
         console.log('Successfully deleted answers');
       }
 
-      // Then delete the search record
-      console.log(`Deleting search record with ID: ${id}`);
       const { error: deleteError } = await supabase
         .from('company_searches')
         .delete()
@@ -141,10 +134,8 @@ const Dashboard = () => {
 
       console.log(`Successfully deleted search with ID: ${id}`);
       
-      // Update local state to remove the deleted search immediately
       setSearches(prev => prev.filter(search => search.id !== id));
       
-      // Also refresh the list from the server to ensure consistency
       await fetchSearches();
       
       toast({
@@ -160,14 +151,21 @@ const Dashboard = () => {
         variant: "destructive",
       });
       
-      // Try to refresh the list anyway
       fetchSearches();
     } finally {
       setIsDeletingSearch(null);
     }
   };
 
-  // During loading, show a loading indicator with the full layout
+  const getProgressPercentage = () => {
+    switch (activeTab) {
+      case 'mybusiness': return 33;
+      case 'questions': return 66;
+      case 'search': return 100;
+      default: return 0;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -182,7 +180,6 @@ const Dashboard = () => {
     );
   }
   
-  // Silent redirect to auth page if not logged in - no toast message
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -208,95 +205,123 @@ const Dashboard = () => {
             value={activeTab}
           >
             <div className="mb-8 relative">
-              {/* Step-based workflow navigation */}
-              <div className="flex items-center justify-between mb-2 relative">
-                {/* Connection lines */}
-                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted -z-10"></div>
+              <div className="mb-6">
+                <Progress value={getProgressPercentage()} className="h-2" />
+              </div>
+              
+              <div className="flex items-center justify-between mb-4 relative">
+                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/60 -z-10"></div>
                 
-                {/* Step 1: My Business */}
                 <div className="flex flex-col items-center z-10">
                   <button 
                     onClick={() => setActiveTab('mybusiness')}
                     className={cn(
-                      "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 mb-2",
+                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
                       activeTab === 'mybusiness' 
-                        ? "bg-primary text-primary-foreground border-primary" 
-                        : "bg-background border-muted hover:border-muted-foreground"
+                        ? "bg-primary text-primary-foreground border-primary scale-110" 
+                        : activeTab === 'questions' || activeTab === 'search'
+                          ? "bg-primary/20 border-primary/30 text-primary" 
+                          : "bg-background border-muted hover:border-muted-foreground"
                     )}
                   >
-                    <Building className="h-5 w-5" />
+                    <Building className="h-6 w-6" />
                   </button>
                   <span className={cn(
-                    "text-sm font-medium",
-                    activeTab === 'mybusiness' ? "text-primary" : "text-muted-foreground"
+                    "text-sm font-semibold mb-1",
+                    activeTab === 'mybusiness' 
+                      ? "text-primary" 
+                      : activeTab === 'questions' || activeTab === 'search'
+                        ? "text-primary/70"
+                        : "text-muted-foreground"
                   )}>
                     Step 1
                   </span>
-                  <span className="text-xs">My Business</span>
+                  <span className={cn(
+                    "text-xs",
+                    activeTab === 'mybusiness' ? "font-medium" : ""
+                  )}>My Business</span>
                 </div>
                 
-                {/* Arrow 1 */}
-                <div className="flex items-center">
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <div className={cn(
+                  "flex items-center transition-opacity duration-300",
+                  activeTab === 'questions' || activeTab === 'search' ? "text-primary" : "text-muted-foreground"
+                )}>
+                  <ArrowRight className="h-5 w-5" />
                 </div>
                 
-                {/* Step 2: Questions */}
                 <div className="flex flex-col items-center z-10">
                   <button 
                     onClick={() => setActiveTab('questions')}
                     className={cn(
-                      "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 mb-2",
+                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
                       activeTab === 'questions' 
-                        ? "bg-primary text-primary-foreground border-primary" 
-                        : "bg-background border-muted hover:border-muted-foreground"
+                        ? "bg-primary text-primary-foreground border-primary scale-110" 
+                        : activeTab === 'search'
+                          ? "bg-primary/20 border-primary/30 text-primary" 
+                          : "bg-background border-muted hover:border-muted-foreground"
                     )}
                   >
-                    <ListChecks className="h-5 w-5" />
+                    <ListChecks className="h-6 w-6" />
                   </button>
                   <span className={cn(
-                    "text-sm font-medium",
-                    activeTab === 'questions' ? "text-primary" : "text-muted-foreground"
+                    "text-sm font-semibold mb-1",
+                    activeTab === 'questions' 
+                      ? "text-primary" 
+                      : activeTab === 'search'
+                        ? "text-primary/70"
+                        : "text-muted-foreground"
                   )}>
                     Step 2
                   </span>
-                  <span className="text-xs">Questions</span>
+                  <span className={cn(
+                    "text-xs",
+                    activeTab === 'questions' ? "font-medium" : ""
+                  )}>Questions</span>
                 </div>
                 
-                {/* Arrow 2 */}
-                <div className="flex items-center">
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <div className={cn(
+                  "flex items-center transition-opacity duration-300",
+                  activeTab === 'search' ? "text-primary" : "text-muted-foreground"
+                )}>
+                  <ArrowRight className="h-5 w-5" />
                 </div>
                 
-                {/* Step 3: Search */}
                 <div className="flex flex-col items-center z-10">
                   <button 
                     onClick={() => setActiveTab('search')}
                     className={cn(
-                      "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 mb-2",
+                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
                       activeTab === 'search' 
-                        ? "bg-primary text-primary-foreground border-primary" 
+                        ? "bg-primary text-primary-foreground border-primary scale-110" 
                         : "bg-background border-muted hover:border-muted-foreground"
                     )}
                   >
-                    <Search className="h-5 w-5" />
+                    <Search className="h-6 w-6" />
                   </button>
                   <span className={cn(
-                    "text-sm font-medium",
+                    "text-sm font-semibold mb-1",
                     activeTab === 'search' ? "text-primary" : "text-muted-foreground"
                   )}>
                     Step 3
                   </span>
-                  <span className="text-xs">Search</span>
+                  <span className={cn(
+                    "text-xs",
+                    activeTab === 'search' ? "font-medium" : ""
+                  )}>Search</span>
                 </div>
               </div>
               
-              {/* Tab descriptions */}
-              <div className="bg-muted/30 p-4 rounded-lg text-sm">
+              <div className={cn(
+                "p-5 rounded-lg text-sm border-l-4 shadow-sm transition-all duration-300",
+                activeTab === 'mybusiness' ? "bg-primary/5 border-primary" :
+                activeTab === 'questions' ? "bg-primary/5 border-primary" :
+                "bg-primary/5 border-primary"
+              )}>
                 {activeTab === 'mybusiness' && (
                   <div className="flex items-start">
-                    <Building className="h-5 w-5 mr-2 mt-0.5 text-primary" />
+                    <Building className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
-                      <h3 className="font-medium">Step 1: Set Up Your Business</h3>
+                      <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business</h3>
                       <p className="text-muted-foreground">Configure your business profile and settings to personalize your experience.</p>
                     </div>
                   </div>
@@ -304,9 +329,9 @@ const Dashboard = () => {
                 
                 {activeTab === 'questions' && (
                   <div className="flex items-start">
-                    <ListChecks className="h-5 w-5 mr-2 mt-0.5 text-primary" />
+                    <ListChecks className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
-                      <h3 className="font-medium">Step 2: Manage Your Questions</h3>
+                      <h3 className="font-semibold text-base mb-1">Step 2: Manage Your Questions</h3>
                       <p className="text-muted-foreground">Create and organize questions to ask potential business partners. Use the Magic button to generate questions based on your website.</p>
                     </div>
                   </div>
@@ -314,9 +339,9 @@ const Dashboard = () => {
                 
                 {activeTab === 'search' && (
                   <div className="flex items-start">
-                    <Search className="h-5 w-5 mr-2 mt-0.5 text-primary" />
+                    <Search className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
-                      <h3 className="font-medium">Step 3: Search Companies</h3>
+                      <h3 className="font-semibold text-base mb-1">Step 3: Search Companies</h3>
                       <p className="text-muted-foreground">Search for companies and apply your questions to evaluate potential business partners.</p>
                     </div>
                   </div>
