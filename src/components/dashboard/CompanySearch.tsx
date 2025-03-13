@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { deductCredits } from '@/utils/creditUtils';
 import { storeSearchResults } from '@/services/companySearchService';
-import { mockCompanyResponses, defaultMockResponse } from '@/mocks/companySearchMock';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import QuestionsList from './QuestionsList';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,21 +56,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, onNa
 
   // Credit cost for a search
   const CREDIT_COST = 1;
-
-  // Function to get mock response based on company name
-  const getMockResponse = (name: string) => {
-    const normalizedName = name.toLowerCase();
-    
-    // Check if we have a specific mock for this company
-    for (const [company, data] of Object.entries(mockCompanyResponses)) {
-      if (normalizedName.includes(company.toLowerCase())) {
-        return data;
-      }
-    }
-    
-    // Return default mock if no specific mock is found
-    return defaultMockResponse;
-  };
 
   // Process credits separately to avoid timing issues
   const processCredits = async (reason: string) => {
@@ -147,11 +131,34 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, onNa
         description: "Searching for company data...",
       });
 
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get webhook settings from database
+      const { data: webhookSettings } = await supabase
+        .from('webhook_settings')
+        .select('*')
+        .single();
       
-      // Get mock response for the company
-      const responseData = getMockResponse(companyName);
+      if (!webhookSettings || !webhookSettings.url) {
+        throw new Error("Webhook URL not configured. Please contact an administrator.");
+      }
+      
+      // Import the webhook service
+      const { callCompanyWebhook } = await import('@/services/companyWebhookService');
+      
+      // Make the actual API call using the webhook service
+      console.log(`Making webhook call to ${webhookSettings.url} for company ${companyName}`);
+      const response = await callCompanyWebhook(
+        webhookSettings.url,
+        companyName,
+        questions
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Webhook request failed with status: ${response.status}`);
+      }
+      
+      // Parse the response
+      const responseData = await response.json();
+      console.log('Webhook response:', responseData);
       setRawResponseData(responseData);
       
       // Process the response data using the existing parser
@@ -185,9 +192,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, onNa
         throw new Error("No results found for this company");
       }
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Search Error",
-        description: "There was an error processing your search. Please try again.",
+        description: error.message || "There was an error processing your search. Please try again.",
         variant: "destructive",
       });
     } finally {

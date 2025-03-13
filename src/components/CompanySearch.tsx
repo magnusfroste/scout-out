@@ -127,52 +127,35 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
-      const functionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-n8n-workflow';
+      const { callCompanyWebhook } = await import('@/services/companyWebhookService');
       
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token;
+      console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
+      const response = await callCompanyWebhook(
+        webhookUrl,
+        companyName,
+        requestBody.questions
+      );
       
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          company: companyName,
-          questions: requestBody.questions,
-          webhookUrl,
-          userId: user?.id
-        })
-      });
+      console.log("Webhook response status:", response.status);
       
-      console.log("Function response status:", response.status);
-      
-      const responseText = await response.text();
-      
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-        console.log("Response data:", responseData);
-        
-        if (responseData.success && responseData.data) {
-          setResult(responseData.data);
-          
-          // We don't need to save to the database here anymore
-          // since the edge function handles it
-        } else {
-          setResult(responseData);
-        }
-      } catch (e) {
-        console.error("Error parsing JSON:", e);
-        setResult({ response: responseText });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`Request failed with status ${response.status}`);
       }
-
-      toast({
-        title: "Success",
-        description: "Webhook called successfully",
-      });
+      
+      const data = await response.json();
+      
+      console.log("Webhook response data:", data);
+      
+      if (data.success && data.data) {
+        setResult(data.data);
+        
+        // We don't need to save to the database here anymore
+        // since the edge function handles it
+      } else {
+        setResult(data);
+      }
     } catch (error: any) {
       console.error("Error calling webhook:", error);
       setResult({ error: error.message || "Failed to call webhook" });
