@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -239,7 +240,7 @@ const Dashboard = () => {
                   <span className={cn(
                     "text-xs",
                     activeTab === 'mybusiness' ? "font-medium" : ""
-                  )}>My Business</span>
+                  )}>Business Pitch</span>
                 </div>
                 
                 <div className={cn(
@@ -321,7 +322,7 @@ const Dashboard = () => {
                   <div className="flex items-start">
                     <Building className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
-                      <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business</h3>
+                      <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business Pitch</h3>
                       <p className="text-muted-foreground">Configure your business profile and settings to personalize your experience.</p>
                     </div>
                   </div>
