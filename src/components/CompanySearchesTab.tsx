@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const CompanySearchesTab = () => {
   const [activeTab, setActiveTab] = useState<'history' | 'new'>('history');
-  const { searches, isLoading, isDeleting, deleteSearch, refetchSearches } = useCompanySearches();
+  const { searches, isLoading, isDeleting, handleDeleteSearch, fetchSearches } = useCompanySearches();
   
   return (
     <div className="space-y-6">
@@ -36,8 +36,8 @@ const CompanySearchesTab = () => {
               searches={searches} 
               isLoading={isLoading} 
               isDeleting={isDeleting}
-              onDelete={deleteSearch}
-              onRefresh={refetchSearches}
+              onDelete={handleDeleteSearch}
+              onRefresh={fetchSearches}
             />
           )}
         </CardContent>
