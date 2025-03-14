@@ -41,38 +41,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   
   const isAdmin = userProfile?.is_admin || false;
 
-  const exampleWebhookRequestBody = {
-    company_id: searchId || "example-id-12345",
-    company_name: "Royal Smilde",
-    search_data: {
-      company_name: "Royal Smilde",
-      industry: "Food Manufacturing",
-      products: ["Margarines", "Shortenings", "Frying fats", "Vegetable oils"],
-      website: "https://www.royalsmilde.com",
-      founded: 1920,
-      employees: "500-1000",
-      headquarters: "Heerenveen, Netherlands",
-      revenue: "€100-500 million",
-    },
-    questions: [
-      {
-        id: "q1",
-        question: "What are Royal Smilde's main products?",
-        answer: "Royal Smilde specializes in producing high-quality margarines, shortenings, frying fats, and vegetable oils for both consumer and industrial markets. They have a strong focus on sustainable and innovative food solutions."
-      },
-      {
-        id: "q2",
-        question: "Who are their primary customers?",
-        answer: "Royal Smilde serves both B2B clients (food manufacturers, bakeries, restaurants) and B2C consumers through their retail brands. They have a strong presence in European markets and export globally."
-      },
-      {
-        id: "q3",
-        question: "What challenges might they be facing?",
-        answer: "The company likely faces challenges related to sustainability demands, volatile raw material prices, shifting consumer preferences toward plant-based alternatives, and increasing regulatory pressures in the food industry."
-      }
-    ]
-  };
-
   useEffect(() => {
     if (searchId) {
       fetchCompanyDetails();
@@ -130,6 +98,54 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const generateWebhookExampleBody = () => {
+    if (!companySearch || !questionAnswers.length) {
+      return {
+        company_id: "example-id-12345",
+        company_name: "Example Company",
+        search_data: {
+          company_name: "Example Company",
+          industry: "Technology",
+          products: ["Software", "Hardware", "Services"],
+          website: "https://example.com",
+          employees: "100-500",
+          headquarters: "New York, USA",
+        },
+        questions: [
+          {
+            id: "q1",
+            question: "What are your company's main products?",
+            answer: "Our company specializes in developing enterprise software solutions."
+          },
+        ]
+      };
+    }
+
+    const searchData = {
+      company_name: companySearch.company_name,
+      website: companySearch.www || "https://example.com",
+      industry: "Industry information would appear here",
+      products: ["Product information would appear here"],
+      founded: "Foundation year would appear here",
+      employees: "Employee count would appear here",
+      headquarters: "Headquarters location would appear here",
+      revenue: "Revenue information would appear here",
+    };
+
+    const questions = questionAnswers.map((qa, index) => ({
+      id: qa.question_id,
+      question: qa.agent_questions.question,
+      answer: qa.answer || "No answer available"
+    }));
+
+    return {
+      company_id: searchId,
+      company_name: companySearch.company_name,
+      search_data: searchData,
+      questions: questions
+    };
   };
 
   const handleSave = async () => {
@@ -248,6 +264,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       </div>
     );
   }
+
+  const webhookExampleBody = generateWebhookExampleBody();
 
   return (
     <div className="space-y-6">
@@ -427,11 +445,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               <CollapsibleContent className="p-4">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    This is an example of the webhook request body for value proposition generation, using Royal Smilde as an example:
+                    This is an example of the webhook request body for value proposition generation for {companySearch.company_name}:
                   </p>
                   <ScrollArea className="h-[300px] rounded-md border p-4">
                     <pre className="text-xs whitespace-pre-wrap">
-                      {JSON.stringify(exampleWebhookRequestBody, null, 2)}
+                      {JSON.stringify(webhookExampleBody, null, 2)}
                     </pre>
                   </ScrollArea>
                   <p className="text-xs text-muted-foreground">
