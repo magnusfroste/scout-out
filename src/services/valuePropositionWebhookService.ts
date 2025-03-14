@@ -94,3 +94,66 @@ export const getValuePropositionWebhookUrl = async (): Promise<string | null> =>
     return null;
   }
 };
+
+/**
+ * Saves value proposition data to the database
+ */
+export const saveValuePropositionData = async (
+  searchId: string,
+  score: number | null,
+  advice: string | null,
+  introduction: string | null
+): Promise<boolean> => {
+  try {
+    console.log('Saving value proposition data to database for search ID:', searchId);
+    console.log('Data to save:', { score, advice, introduction });
+    
+    // First verify the search exists and the current user has permission
+    const { data: checkData, error: checkError } = await supabase
+      .from('company_searches')
+      .select('id, user_id')
+      .eq('id', searchId)
+      .maybeSingle();
+      
+    if (checkError) {
+      console.error('Error verifying search existence:', checkError);
+      throw new Error(`Could not verify search exists: ${checkError.message}`);
+    }
+    
+    if (!checkData) {
+      console.error('Search not found or user does not have permission to update it');
+      throw new Error('Search not found or you do not have permission to update it');
+    }
+    
+    console.log('Search verified, proceeding with update');
+
+    // Update the company search record
+    const { data, error } = await supabase
+      .from('company_searches')
+      .update({
+        score: score,
+        advice: advice,
+        introduction: introduction
+      })
+      .eq('id', searchId)
+      .select();
+
+    if (error) {
+      console.error('Error updating value proposition data:', error);
+      throw error;
+    }
+    
+    console.log('Database update response:', data);
+    
+    if (!data || data.length === 0) {
+      console.error('Update operation did not affect any rows');
+      throw new Error('Update operation did not affect any rows');
+    }
+    
+    console.log('Successfully saved value proposition data for search ID:', searchId);
+    return true;
+  } catch (error) {
+    console.error('Error in saveValuePropositionData:', error);
+    throw error;
+  }
+};

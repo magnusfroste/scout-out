@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -24,17 +24,14 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Local state for displaying the value proposition data
   const [displayScore, setDisplayScore] = useState<string>('');
   const [displayAdvice, setDisplayAdvice] = useState<string>('');
   const [displayIntroduction, setDisplayIntroduction] = useState<string>('');
   
-  // Database values
   const [dbScore, setDbScore] = useState<string>('');
   const [dbAdvice, setDbAdvice] = useState<string>('');
   const [dbIntroduction, setDbIntroduction] = useState<string>('');
   
-  // Unsaved changes tracking
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   const { user } = useAuth();
@@ -61,12 +58,10 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.log('Fetched company search data:', searchData);
       setCompanySearch(searchData);
 
-      // Update all states with the latest values from database
       setDbScore(searchData.score?.toString() || '');
       setDbAdvice(searchData.advice || '');
       setDbIntroduction(searchData.introduction || '');
       
-      // Set display values initially from database
       setDisplayScore(searchData.score?.toString() || '');
       setDisplayAdvice(searchData.advice || '');
       setDisplayIntroduction(searchData.introduction || '');
@@ -113,73 +108,42 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         introduction: displayIntroduction
       });
 
-      // First verify the search exists and we have permission to update it
-      const { data: checkData, error: checkError } = await supabase
-        .from('company_searches')
-        .select('id')
-        .eq('id', searchId)
-        .single();
+      const scoreValue = displayScore ? parseInt(displayScore) : null;
+      
+      const success = await saveValuePropositionData(
+        searchId,
+        scoreValue,
+        displayAdvice,
+        displayIntroduction
+      );
+
+      if (success) {
+        setDbScore(displayScore);
+        setDbAdvice(displayAdvice);
+        setDbIntroduction(displayIntroduction);
         
-      if (checkError) {
-        console.error('Error verifying search existence:', checkError);
-        throw new Error(`Could not verify search exists: ${checkError.message}`);
-      }
-      
-      if (!checkData) {
-        throw new Error('Search not found or you do not have permission to update it');
-      }
-      
-      console.log('Search verified, proceeding with update');
+        setHasUnsavedChanges(false);
 
-      // Update all fields in database
-      const { data, error } = await supabase
-        .from('company_searches')
-        .update({
-          score: displayScore ? parseInt(displayScore) : null,
-          advice: displayAdvice,
-          introduction: displayIntroduction
-        })
-        .eq('id', searchId)
-        .select();
-
-      if (error) throw error;
-      
-      console.log('Database response:', data);
-      
-      if (!data || data.length === 0) {
-        throw new Error('Update operation did not affect any rows');
-      }
-      
-      console.log('Updated value proposition data in database successfully');
-
-      // Update the db state values to match what was just saved
-      setDbScore(displayScore);
-      setDbAdvice(displayAdvice);
-      setDbIntroduction(displayIntroduction);
-      
-      // Reset the unsaved changes flag
-      setHasUnsavedChanges(false);
-
-      // Update the companySearch object to reflect the new values
-      setCompanySearch({
-        ...companySearch,
-        score: displayScore ? parseInt(displayScore) : null,
-        advice: displayAdvice,
-        introduction: displayIntroduction
-      });
-
-      toast({
-        title: 'Success',
-        description: 'Value proposition updated successfully',
-      });
-
-      if (onUpdate) {
-        onUpdate(searchId, {
+        setCompanySearch({
           ...companySearch,
-          score: displayScore ? parseInt(displayScore) : null,
+          score: scoreValue,
           advice: displayAdvice,
           introduction: displayIntroduction
         });
+
+        toast({
+          title: 'Success',
+          description: 'Value proposition updated successfully',
+        });
+
+        if (onUpdate) {
+          onUpdate(searchId, {
+            ...companySearch,
+            score: scoreValue,
+            advice: displayAdvice,
+            introduction: displayIntroduction
+          });
+        }
       }
     } catch (error: any) {
       console.error('Error updating company details:', error);
@@ -197,12 +161,10 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string) => {
     console.log('Magic value proposition generated:', { newScore, newAdvice, newIntroduction });
     
-    // Update the display values without saving to database yet
     setDisplayScore(newScore.toString());
     setDisplayAdvice(newAdvice);
     setDisplayIntroduction(newIntroduction);
     
-    // Set the unsaved changes flag
     setHasUnsavedChanges(true);
   };
 
@@ -426,3 +388,4 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 };
 
 export default CompanySearchDetail;
+
