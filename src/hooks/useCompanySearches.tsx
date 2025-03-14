@@ -11,6 +11,14 @@ export interface CompanySearch {
   user_id: string;
   result: any;
   answer_count: number;
+  www?: string;
+  contact?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  score?: number;
+  advice?: string;
+  introduction?: string;
 }
 
 export function useCompanySearches() {
@@ -106,6 +114,43 @@ export function useCompanySearches() {
     }
   };
 
+  const updateSearchDetails = async (id: string, data: Partial<CompanySearch>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('company_searches')
+        .update({
+          score: data.score,
+          advice: data.advice,
+          introduction: data.introduction
+        })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setSearches(prevSearches => 
+        prevSearches.map(search => 
+          search.id === id ? { ...search, ...data } : search
+        )
+      );
+
+      toast({
+        title: 'Success',
+        description: 'Company details updated successfully',
+      });
+    } catch (error: any) {
+      console.error('Error updating company search:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to update company search: ${error.message || 'Unknown error'}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchSearches();
@@ -117,6 +162,7 @@ export function useCompanySearches() {
     isLoading,
     isDeleting,
     fetchSearches,
-    handleDeleteSearch
+    handleDeleteSearch,
+    updateSearchDetails
   };
 }

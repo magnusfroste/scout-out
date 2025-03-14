@@ -10,7 +10,7 @@ import CompanySearchDetail from './CompanySearchDetail';
 
 const CompanySearchesList = () => {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
-  const { searches, isLoading, isDeleting, fetchSearches, handleDeleteSearch } = useCompanySearches();
+  const { searches, isLoading, isDeleting, fetchSearches, handleDeleteSearch, updateSearchDetails } = useCompanySearches();
 
   // Show company search detail if a search is selected
   if (selectedSearchId) {
@@ -18,6 +18,10 @@ const CompanySearchesList = () => {
       <CompanySearchDetail 
         searchId={selectedSearchId}
         onBack={() => setSelectedSearchId(null)}
+        onUpdate={(id, data) => {
+          updateSearchDetails(id, data);
+          setSelectedSearchId(null);
+        }}
       />
     );
   }

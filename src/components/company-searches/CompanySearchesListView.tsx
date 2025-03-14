@@ -2,7 +2,7 @@
 import React from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { Loader2, Trash2, Eye } from 'lucide-react';
+import { Loader2, Trash2, Eye, Star } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -30,13 +30,32 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
+  const renderScore = (score: number | null) => {
+    if (score === null || score === undefined) return 'Not rated';
+    
+    // Display stars based on score (1-5)
+    const normalizedScore = Math.max(0, Math.min(5, score));
+    return (
+      <div className="flex items-center">
+        {[...Array(normalizedScore)].map((_, i) => (
+          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+        ))}
+        {[...Array(5 - normalizedScore)].map((_, i) => (
+          <Star key={i + normalizedScore} className="h-4 w-4 text-gray-300" />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Company Name</TableHead>
           <TableHead>Created</TableHead>
-          <TableHead>Answers</TableHead>
+          <TableHead>Score</TableHead>
+          <TableHead>Website</TableHead>
+          <TableHead>Contact</TableHead>
           <TableHead className="w-[150px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -47,7 +66,22 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
             <TableCell className="text-muted-foreground text-sm">
               {formatDate(search.created_at)}
             </TableCell>
-            <TableCell>{search.answer_count}</TableCell>
+            <TableCell>{renderScore(search.score)}</TableCell>
+            <TableCell>
+              {search.www ? (
+                <a 
+                  href={search.www.startsWith('http') ? search.www : `https://${search.www}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {search.www}
+                </a>
+              ) : '-'}
+            </TableCell>
+            <TableCell>
+              {search.contact ? search.contact : '-'}
+            </TableCell>
             <TableCell>
               <div className="flex space-x-2">
                 <Button

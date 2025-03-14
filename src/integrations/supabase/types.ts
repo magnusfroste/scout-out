@@ -80,41 +80,50 @@ export type Database = {
       }
       company_searches: {
         Row: {
+          advice: string | null
           company_name: string
           contact: string | null
           contact_info: Json | null
           created_at: string
           email: string | null
           id: string
+          introduction: string | null
           phone: string | null
           result: Json | null
           role: string | null
+          score: number | null
           user_id: string
           www: string | null
         }
         Insert: {
+          advice?: string | null
           company_name: string
           contact?: string | null
           contact_info?: Json | null
           created_at?: string
           email?: string | null
           id?: string
+          introduction?: string | null
           phone?: string | null
           result?: Json | null
           role?: string | null
+          score?: number | null
           user_id: string
           www?: string | null
         }
         Update: {
+          advice?: string | null
           company_name?: string
           contact?: string | null
           contact_info?: Json | null
           created_at?: string
           email?: string | null
           id?: string
+          introduction?: string | null
           phone?: string | null
           result?: Json | null
           role?: string | null
+          score?: number | null
           user_id?: string
           www?: string | null
         }

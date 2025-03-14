@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -9,17 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CompanySearch } from '@/types/search';
-import { Building, ListChecks, Search, ArrowRight } from 'lucide-react';
+import { Building, ListChecks, Search, ArrowRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 
-// Import refactored components
 import QuestionManager from '@/components/dashboard/QuestionManager';
 import SearchHistory from '@/components/dashboard/SearchHistory';
 import CreditDisplay from '@/components/dashboard/CreditDisplay';
 import MyBusiness from '@/components/dashboard/MyBusiness';
 import CompanySearchComponent from '@/components/dashboard/CompanySearch';
+import ValuePropositionTab from '@/components/dashboard/ValuePropositionTab';
 
 type Question = {
   id: string;
@@ -160,9 +159,10 @@ const Dashboard = () => {
 
   const getProgressPercentage = () => {
     switch (activeTab) {
-      case 'mybusiness': return 33;
-      case 'questions': return 66;
-      case 'search': return 100;
+      case 'mybusiness': return 25;
+      case 'questions': return 50;
+      case 'search': return 75;
+      case 'valueproposition': return 100;
       default: return 0;
     }
   };
@@ -220,7 +220,7 @@ const Dashboard = () => {
                       "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
                       activeTab === 'mybusiness' 
                         ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : activeTab === 'questions' || activeTab === 'search'
+                        : activeTab === 'questions' || activeTab === 'search' || activeTab === 'valueproposition'
                           ? "bg-primary/20 border-primary/30 text-primary" 
                           : "bg-background border-muted hover:border-muted-foreground"
                     )}
@@ -231,7 +231,7 @@ const Dashboard = () => {
                     "text-sm font-semibold mb-1",
                     activeTab === 'mybusiness' 
                       ? "text-primary" 
-                      : activeTab === 'questions' || activeTab === 'search'
+                      : activeTab === 'questions' || activeTab === 'search' || activeTab === 'valueproposition'
                         ? "text-primary/70"
                         : "text-muted-foreground"
                   )}>
@@ -245,7 +245,7 @@ const Dashboard = () => {
                 
                 <div className={cn(
                   "flex items-center transition-opacity duration-300",
-                  activeTab === 'questions' || activeTab === 'search' ? "text-primary" : "text-muted-foreground"
+                  activeTab === 'questions' || activeTab === 'search' || activeTab === 'valueproposition' ? "text-primary" : "text-muted-foreground"
                 )}>
                   <ArrowRight className="h-5 w-5" />
                 </div>
@@ -257,7 +257,7 @@ const Dashboard = () => {
                       "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
                       activeTab === 'questions' 
                         ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : activeTab === 'search'
+                        : activeTab === 'search' || activeTab === 'valueproposition'
                           ? "bg-primary/20 border-primary/30 text-primary" 
                           : "bg-background border-muted hover:border-muted-foreground"
                     )}
@@ -268,7 +268,7 @@ const Dashboard = () => {
                     "text-sm font-semibold mb-1",
                     activeTab === 'questions' 
                       ? "text-primary" 
-                      : activeTab === 'search'
+                      : activeTab === 'search' || activeTab === 'valueproposition'
                         ? "text-primary/70"
                         : "text-muted-foreground"
                   )}>
@@ -282,7 +282,7 @@ const Dashboard = () => {
                 
                 <div className={cn(
                   "flex items-center transition-opacity duration-300",
-                  activeTab === 'search' ? "text-primary" : "text-muted-foreground"
+                  activeTab === 'search' || activeTab === 'valueproposition' ? "text-primary" : "text-muted-foreground"
                 )}>
                   <ArrowRight className="h-5 w-5" />
                 </div>
@@ -294,14 +294,20 @@ const Dashboard = () => {
                       "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
                       activeTab === 'search' 
                         ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : "bg-background border-muted hover:border-muted-foreground"
+                        : activeTab === 'valueproposition'
+                          ? "bg-primary/20 border-primary/30 text-primary" 
+                          : "bg-background border-muted hover:border-muted-foreground"
                     )}
                   >
                     <Search className="h-6 w-6" />
                   </button>
                   <span className={cn(
                     "text-sm font-semibold mb-1",
-                    activeTab === 'search' ? "text-primary" : "text-muted-foreground"
+                    activeTab === 'search' 
+                      ? "text-primary" 
+                      : activeTab === 'valueproposition'
+                        ? "text-primary/70"
+                        : "text-muted-foreground"
                   )}>
                     Step 3
                   </span>
@@ -310,12 +316,46 @@ const Dashboard = () => {
                     activeTab === 'search' ? "font-medium" : ""
                   )}>Search Company</span>
                 </div>
+                
+                <div className={cn(
+                  "flex items-center transition-opacity duration-300",
+                  activeTab === 'valueproposition' ? "text-primary" : "text-muted-foreground"
+                )}>
+                  <ArrowRight className="h-5 w-5" />
+                </div>
+                
+                <div className="flex flex-col items-center z-10">
+                  <button 
+                    onClick={() => setActiveTab('valueproposition')}
+                    className={cn(
+                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
+                      activeTab === 'valueproposition' 
+                        ? "bg-primary text-primary-foreground border-primary scale-110" 
+                        : "bg-background border-muted hover:border-muted-foreground"
+                    )}
+                  >
+                    <Star className="h-6 w-6" />
+                  </button>
+                  <span className={cn(
+                    "text-sm font-semibold mb-1",
+                    activeTab === 'valueproposition' 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
+                  )}>
+                    Step 4
+                  </span>
+                  <span className={cn(
+                    "text-xs",
+                    activeTab === 'valueproposition' ? "font-medium" : ""
+                  )}>Value Proposition</span>
+                </div>
               </div>
               
               <div className={cn(
                 "p-5 rounded-lg text-sm border-l-4 shadow-sm transition-all duration-300",
                 activeTab === 'mybusiness' ? "bg-primary/5 border-primary" :
                 activeTab === 'questions' ? "bg-primary/5 border-primary" :
+                activeTab === 'search' ? "bg-primary/5 border-primary" :
                 "bg-primary/5 border-primary"
               )}>
                 {activeTab === 'mybusiness' && (
@@ -333,7 +373,7 @@ const Dashboard = () => {
                     <ListChecks className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
                       <h3 className="font-semibold text-base mb-1">Step 2: Manage Your Questions</h3>
-                      <p className="text-muted-foreground">Create and organize questions to ask potential business partners. Use the Magic button to generate questions based on your website.</p>
+                      <p className="text-muted-foreground">Create and organize questions to ask potential clients. Use the Magic button to generate questions based on your website.</p>
                     </div>
                   </div>
                 )}
@@ -344,6 +384,16 @@ const Dashboard = () => {
                     <div>
                       <h3 className="font-semibold text-base mb-1">Step 3: Search Company</h3>
                       <p className="text-muted-foreground">Research potential business opportunities based on your product or service offering. Our AI analyzes companies to help you identify the best prospects for your business.</p>
+                    </div>
+                  </div>
+                )}
+                
+                {activeTab === 'valueproposition' && (
+                  <div className="flex items-start">
+                    <Star className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                    <div>
+                      <h3 className="font-semibold text-base mb-1">Step 4: Value Proposition</h3>
+                      <p className="text-muted-foreground">Review your researched companies, rate their potential, and prepare your value proposition to approach them effectively.</p>
                     </div>
                   </div>
                 )}
@@ -371,6 +421,10 @@ const Dashboard = () => {
                 onSearchDeleted={fetchSearches}
                 isDeletingSearch={isDeletingSearch}
               />
+            </TabsContent>
+            
+            <TabsContent value="valueproposition">
+              <ValuePropositionTab />
             </TabsContent>
           </Tabs>
         </div>
