@@ -50,6 +50,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.log('Fetched company search data:', searchData);
       setCompanySearch(searchData);
 
+      // Update state with the latest values
       setScore(searchData.score?.toString() || '');
       setAdvice(searchData.advice || '');
       setIntroduction(searchData.introduction || '');

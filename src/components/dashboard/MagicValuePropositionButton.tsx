@@ -50,19 +50,28 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       }
 
       const data = await response.json();
+      console.log('Raw webhook response:', JSON.stringify(data));
       
       // Extract the data from the response structure
-      // The webhook response may be in an array with output property
-      const responseData = Array.isArray(data) && data.length > 0 && data[0].output 
-        ? data[0].output 
-        : data;
+      // Check if data is structured as an array with output property
+      let responseData;
+      if (Array.isArray(data) && data.length > 0 && data[0].output) {
+        responseData = data[0].output;
+        console.log('Extracted data from array structure:', responseData);
+      } else if (data.output) {
+        responseData = data.output;
+        console.log('Extracted data from output property:', responseData);
+      } else {
+        responseData = data;
+        console.log('Using raw data as responseData:', responseData);
+      }
       
       // Ensure we have valid data
       const score = typeof responseData.score === 'number' ? responseData.score : 0;
       const advice = typeof responseData.advice === 'string' ? responseData.advice : '';
       const introduction = typeof responseData.introduction === 'string' ? responseData.introduction : '';
       
-      console.log('Value proposition data received from webhook:', { score, advice, introduction });
+      console.log('Value proposition data extracted for database:', { score, advice, introduction });
       
       // Update the company search record with the generated data
       const { data: updatedData, error: updateError } = await supabase
@@ -76,7 +85,10 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
         .eq('user_id', user.id) // Ensure user owns this record
         .select();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating company search record:', updateError);
+        throw updateError;
+      }
       
       console.log('Updated company search record:', updatedData);
 
