@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import CompanySearchesList from '@/components/CompanySearchesList';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,11 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySearch } from '@/hooks/useCompanySearches';
+import { useCompanySearches } from '@/hooks/useCompanySearches';
 
 const ValuePropositionTab = () => {
   const { user, userProfile } = useAuth();
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const { toast } = useToast();
+  const { searches, isLoading, isDeleting, handleDeleteSearch, fetchSearches } = useCompanySearches();
 
   const handleGenerateAllPropositions = async (searches: CompanySearch[]) => {
     if (!user || !userProfile || searches.length === 0) return;
@@ -78,6 +80,10 @@ const ValuePropositionTab = () => {
           description: 'No new value propositions were generated',
         });
       }
+      
+      // Refresh the searches to show updated data
+      await fetchSearches();
+      
     } catch (error: any) {
       console.error('Error generating value propositions:', error);
       toast({
@@ -101,6 +107,11 @@ const ValuePropositionTab = () => {
         </CardHeader>
         <CardContent>
           <CompanySearchesList 
+            searches={searches}
+            isLoading={isLoading}
+            isDeleting={isDeleting}
+            onDelete={handleDeleteSearch}
+            onRefresh={fetchSearches}
             onBatchAction={(searches) => handleGenerateAllPropositions(searches)}
             batchActionButton={
               <Button 
