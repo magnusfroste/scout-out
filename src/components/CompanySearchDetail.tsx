@@ -10,6 +10,7 @@ import Button from '@/components/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -130,6 +131,22 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     }
   };
 
+  const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string) => {
+    setScore(newScore.toString());
+    setAdvice(newAdvice);
+    setIntroduction(newIntroduction);
+    
+    // Update the local state
+    if (companySearch) {
+      setCompanySearch({
+        ...companySearch,
+        score: newScore,
+        advice: newAdvice,
+        introduction: newIntroduction
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
@@ -224,7 +241,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             
             {/* Value Proposition */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Value Proposition</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Value Proposition</h3>
+                <MagicValuePropositionButton 
+                  companyId={searchId} 
+                  onSuccess={handleMagicSuccess} 
+                />
+              </div>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="score">Score (1-5)</Label>

@@ -8,7 +8,12 @@ import CompanySearchesEmptyState from './company-searches/CompanySearchesEmptySt
 import CompanySearchesListView from './company-searches/CompanySearchesListView';
 import CompanySearchDetail from './CompanySearchDetail';
 
-const CompanySearchesList = () => {
+interface CompanySearchesListProps {
+  onBatchAction?: (searches: any[]) => void;
+  batchActionButton?: React.ReactNode;
+}
+
+const CompanySearchesList = ({ onBatchAction, batchActionButton }: CompanySearchesListProps) => {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
   const { searches, isLoading, isDeleting, fetchSearches, handleDeleteSearch, updateSearchDetails } = useCompanySearches();
 
@@ -36,7 +41,14 @@ const CompanySearchesList = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <div>
+          {batchActionButton && (
+            <div onClick={() => onBatchAction && onBatchAction(searches)}>
+              {batchActionButton}
+            </div>
+          )}
+        </div>
         <Button variant="outline" onClick={fetchSearches} size="sm">
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
