@@ -324,6 +324,30 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
           <Separator />
 
+          {questionAnswers.length > 0 ? (
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">Questions & Answers</h3>
+              <div className="space-y-6">
+                {questionAnswers.map((qa) => (
+                  <div key={qa.id} className="pb-4">
+                    <h4 className="font-medium text-md mb-2">{qa.agent_questions.question}</h4>
+                    <div className="bg-muted p-4 rounded-md">
+                      <p className="whitespace-pre-wrap text-sm">{qa.answer || 'No answer available'}</p>
+                    </div>
+                    <Separator className="mt-4" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">Questions & Answers</h3>
+              <p className="text-muted-foreground">No questions or answers available for this company.</p>
+            </div>
+          )}
+
+          <Separator />
+
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Company Data</h3>
             <ScrollArea className="h-[200px] rounded-md border">
@@ -355,34 +379,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           </Button>
         </CardFooter>
       </Card>
-
-      {questionAnswers.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Questions & Answers</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {questionAnswers.map((qa) => (
-              <div key={qa.id} className="pb-4">
-                <h4 className="font-medium text-md mb-2">{qa.agent_questions.question}</h4>
-                <div className="bg-muted p-4 rounded-md">
-                  <p className="whitespace-pre-wrap text-sm">{qa.answer || 'No answer available'}</p>
-                </div>
-                <Separator className="mt-4" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Questions & Answers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">No questions or answers available for this company.</p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
