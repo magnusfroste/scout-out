@@ -105,24 +105,27 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
     setIsSaving(true);
     try {
-      console.log('Saving value proposition data:', {
+      console.log('Starting save operation for search ID:', searchId);
+      console.log('Value proposition data to save:', {
         score: displayScore ? parseInt(displayScore) : null,
         advice: displayAdvice,
         introduction: displayIntroduction
       });
 
       // Update all fields in database
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('company_searches')
         .update({
           score: displayScore ? parseInt(displayScore) : null,
           advice: displayAdvice,
           introduction: displayIntroduction
         })
-        .eq('id', searchId);
+        .eq('id', searchId)
+        .select();
 
       if (error) throw error;
       
+      console.log('Database response:', data);
       console.log('Updated value proposition data in database successfully');
 
       // Update the db state values to match what was just saved
@@ -156,6 +159,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       }
     } catch (error: any) {
       console.error('Error updating company details:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         title: 'Error',
         description: `Failed to update value proposition: ${error.message}`,

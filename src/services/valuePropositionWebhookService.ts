@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -44,17 +45,25 @@ export const callValuePropositionWebhook = async (
   
   // Otherwise make the actual API call
   console.log('LIVE MODE: Making actual API call to webhook');
-  return fetch(webhookUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify({ 
-      company: companyData,
-      business: businessData
-    })
-  });
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ 
+        company: companyData,
+        business: businessData
+      })
+    });
+    
+    console.log('Webhook response status:', response.status);
+    return response;
+  } catch (error) {
+    console.error('Error in webhook call:', error);
+    throw error;
+  }
 };
 
 /**
@@ -72,6 +81,7 @@ export const getValuePropositionWebhookUrl = async (): Promise<string | null> =>
       return null;
     }
     
+    console.log('Retrieved webhook URL:', data?.value_proposition_url);
     return data?.value_proposition_url || null;
   } catch (error) {
     console.error('Error in getValuePropositionWebhookUrl:', error);
