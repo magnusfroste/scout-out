@@ -223,11 +223,30 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">{companySearch.company_name}</CardTitle>
-          <CardDescription>
-            Searched on {formatDate(companySearch.created_at)}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl">{companySearch.company_name}</CardTitle>
+            <CardDescription>
+              Searched on {formatDate(companySearch.created_at)}
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving || !hasUnsavedChanges}
+            className={`${hasUnsavedChanges ? 'bg-green-600 hover:bg-green-700' : ''}`}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                {hasUnsavedChanges ? 'Save Changes' : 'No Changes to Save'}
+              </>
+            )}
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
@@ -346,42 +365,10 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             </div>
           )}
 
-          <Separator />
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Company Data</h3>
-            <ScrollArea className="h-[200px] rounded-md border">
-              <div className="p-4">
-                <pre className="text-sm whitespace-pre-wrap">
-                  {JSON.stringify(companySearch.result, null, 2)}
-                </pre>
-              </div>
-            </ScrollArea>
-          </div>
         </CardContent>
-        <CardFooter>
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving || !hasUnsavedChanges}
-            className={`ml-auto ${hasUnsavedChanges ? 'bg-green-600 hover:bg-green-700' : ''}`}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                {hasUnsavedChanges ? 'Save Changes' : 'No Changes to Save'}
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
 };
 
 export default CompanySearchDetail;
-
