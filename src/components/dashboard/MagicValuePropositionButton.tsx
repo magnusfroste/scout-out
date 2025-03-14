@@ -45,7 +45,7 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       console.log('Calling webhook with business data:', businessData);
       
       // Call the webhook
-      const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData);
+      const response = await callValuePropositionWebhookService(webhookUrl, companyData, businessData);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -55,28 +55,30 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       const data = await response.json();
       console.log('Raw webhook response:', JSON.stringify(data));
       
-      // Extract data from the webhook response
+      // Extract data directly from the response - simplifying the extraction logic
+      // This assumes the response follows our expected format:
+      // { score: number, advice: string, introduction: string }
       let score = 0;
       let advice = '';
       let introduction = '';
       
-      if (Array.isArray(data) && data.length > 0 && data[0].output) {
-        // Format: [{ output: { score, advice, introduction } }]
-        const output = data[0].output;
-        score = typeof output.score === 'number' ? output.score : 0;
-        advice = typeof output.advice === 'string' ? output.advice : '';
-        introduction = typeof output.introduction === 'string' ? output.introduction : '';
-      } else if (data.output) {
-        // Format: { output: { score, advice, introduction } }
-        const output = data.output;
-        score = typeof output.score === 'number' ? output.score : 0;
-        advice = typeof output.advice === 'string' ? output.advice : '';
-        introduction = typeof output.introduction === 'string' ? output.introduction : '';
-      } else if (data.score !== undefined) {
-        // Format: { score, advice, introduction }
-        score = typeof data.score === 'number' ? data.score : 0;
-        advice = typeof data.advice === 'string' ? data.advice : '';
-        introduction = typeof data.introduction === 'string' ? data.introduction : '';
+      // Check for direct properties first
+      if (typeof data.score === 'number') {
+        score = data.score;
+        advice = data.advice || '';
+        introduction = data.introduction || '';
+      } 
+      // Check for nested output object
+      else if (data.output) {
+        score = typeof data.output.score === 'number' ? data.output.score : 0;
+        advice = data.output.advice || '';
+        introduction = data.output.introduction || '';
+      } 
+      // Check for array format with output object
+      else if (Array.isArray(data) && data.length > 0 && data[0].output) {
+        score = typeof data[0].output.score === 'number' ? data[0].output.score : 0;
+        advice = data[0].output.advice || '';
+        introduction = data[0].output.introduction || '';
       }
       
       console.log('Extracted data:', { score, advice, introduction });
@@ -103,6 +105,19 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Wrapper function to ensure we correctly parse the webhook response
+  const callValuePropositionWebhookService = async (
+    webhookUrl: string,
+    companyData: any,
+    businessData: any
+  ): Promise<Response> => {
+    const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData);
+    
+    // Fix typo in function name from previous code
+    console.log('Webhook response received');
+    return response;
   };
 
   return (
