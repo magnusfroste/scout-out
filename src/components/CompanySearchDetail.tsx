@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +49,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.log('Fetched company search data:', searchData);
       setCompanySearch(searchData);
 
-      // Update state with the latest values
+      // Update state with the latest values from database
       setScore(searchData.score?.toString() || '');
       setAdvice(searchData.advice || '');
       setIntroduction(searchData.introduction || '');
@@ -97,8 +96,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           introduction: introduction
         })
         .eq('id', searchId)
-        .eq('user_id', user.id)  // Ensure user owns this record
-        .select();
+        .eq('user_id', user.id);  // Ensure user owns this record
 
       if (error) throw error;
       

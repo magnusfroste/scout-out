@@ -53,7 +53,6 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       console.log('Raw webhook response:', JSON.stringify(data));
       
       // Extract the data from the response structure
-      // Check if data is structured as an array with output property
       let responseData;
       if (Array.isArray(data) && data.length > 0 && data[0].output) {
         responseData = data[0].output;
@@ -74,7 +73,7 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       console.log('Value proposition data extracted for database:', { score, advice, introduction });
       
       // Update the company search record with the generated data
-      const { data: updatedData, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from('company_searches')
         .update({
           score: score,
@@ -82,15 +81,14 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
           introduction: introduction
         })
         .eq('id', companyId)
-        .eq('user_id', user.id) // Ensure user owns this record
-        .select();
+        .eq('user_id', user.id); // Ensure user owns this record
 
       if (updateError) {
         console.error('Error updating company search record:', updateError);
         throw updateError;
       }
       
-      console.log('Updated company search record:', updatedData);
+      console.log('Successfully updated company search record with score, advice, and introduction');
 
       // Call the success callback with valid data
       onSuccess(score, advice, introduction);

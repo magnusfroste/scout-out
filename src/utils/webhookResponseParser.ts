@@ -37,22 +37,39 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   
   try {
     // Check if responseData is valid
-    if (!Array.isArray(responseData) || responseData.length === 0 || !responseData[0].output) {
-      console.error('Invalid webhook response format');
+    if (!Array.isArray(responseData) || responseData.length === 0) {
+      console.error('Invalid webhook response format (not an array or empty array)');
       return { processedResults: [] };
     }
     
-    const output = responseData[0].output;
-    
-    // Determine which parser to use based on the structure
-    if (output.Company && output.Questions) {
-      return parseCompanySearchResponse(responseData);
-    } else if (output.about_us || output.our_services || output.clients) {
-      return parseMyBusinessResponse(responseData);
-    } else {
-      // Try legacy format as fallback
-      return parseLegacyCompanySearchResponse(responseData);
+    // Check if it's a value proposition response
+    if (responseData[0].output && 
+        (responseData[0].output.score !== undefined || 
+         responseData[0].output.advice !== undefined || 
+         responseData[0].output.introduction !== undefined)) {
+      console.log('Detected value proposition response format');
+      // This is a value proposition response, not meant for this parser
+      return { processedResults: [] };
     }
+    
+    // For regular company search responses
+    if (responseData[0].output) {
+      const output = responseData[0].output;
+      
+      // Determine which parser to use based on the structure
+      if (output.Company && output.Questions) {
+        return parseCompanySearchResponse(responseData);
+      } else if (output.about_us || output.our_services || output.clients) {
+        return parseMyBusinessResponse(responseData);
+      } else {
+        // Try legacy format as fallback
+        return parseLegacyCompanySearchResponse(responseData);
+      }
+    }
+    
+    // Default case if we couldn't determine the format
+    console.error('Unknown webhook response format');
+    return { processedResults: [] };
   } catch (error) {
     console.error('Error parsing webhook response:', error);
     return { processedResults: [] };
