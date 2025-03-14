@@ -1,16 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Code } from 'lucide-react';
 import Button from '@/components/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -33,9 +35,43 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const [dbIntroduction, setDbIntroduction] = useState<string>('');
   
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isDevLogOpen, setIsDevLogOpen] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Example webhook request body for Royal Smilde
+  const exampleWebhookRequestBody = {
+    company_id: searchId || "example-id-12345",
+    company_name: "Royal Smilde",
+    search_data: {
+      company_name: "Royal Smilde",
+      industry: "Food Manufacturing",
+      products: ["Margarines", "Shortenings", "Frying fats", "Vegetable oils"],
+      website: "https://www.royalsmilde.com",
+      founded: 1920,
+      employees: "500-1000",
+      headquarters: "Heerenveen, Netherlands",
+      revenue: "€100-500 million",
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "What are Royal Smilde's main products?",
+        answer: "Royal Smilde specializes in producing high-quality margarines, shortenings, frying fats, and vegetable oils for both consumer and industrial markets. They have a strong focus on sustainable and innovative food solutions."
+      },
+      {
+        id: "q2",
+        question: "Who are their primary customers?",
+        answer: "Royal Smilde serves both B2B clients (food manufacturers, bakeries, restaurants) and B2C consumers through their retail brands. They have a strong presence in European markets and export globally."
+      },
+      {
+        id: "q3",
+        question: "What challenges might they be facing?",
+        answer: "The company likely faces challenges related to sustainability demands, volatile raw material prices, shifting consumer preferences toward plant-based alternatives, and increasing regulatory pressures in the food industry."
+      }
+    ]
+  };
 
   useEffect(() => {
     if (searchId) {
@@ -364,6 +400,37 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               <p className="text-muted-foreground">No questions or answers available for this company.</p>
             </div>
           )}
+
+          <Collapsible
+            open={isDevLogOpen}
+            onOpenChange={setIsDevLogOpen}
+            className="border rounded-md"
+          >
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full flex justify-between">
+                <span className="flex items-center">
+                  <Code className="h-4 w-4 mr-2" />
+                  Developer Log: Value Proposition Webhook Example
+                </span>
+                <span>{isDevLogOpen ? '▲' : '▼'}</span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  This is an example of the webhook request body for value proposition generation, using Royal Smilde as an example:
+                </p>
+                <ScrollArea className="h-[300px] rounded-md border p-4">
+                  <pre className="text-xs whitespace-pre-wrap">
+                    {JSON.stringify(exampleWebhookRequestBody, null, 2)}
+                  </pre>
+                </ScrollArea>
+                <p className="text-xs text-muted-foreground">
+                  Your webhook should respond with a JSON object containing: <code>score</code> (number 1-5), <code>advice</code> (string), and <code>introduction</code> (string).
+                </p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
         </CardContent>
       </Card>
