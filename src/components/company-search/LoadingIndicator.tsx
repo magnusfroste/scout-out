@@ -3,7 +3,13 @@ import React from 'react';
 import { Loader2, Database, Search as SearchIcon, Globe } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-const LoadingIndicator: React.FC = () => {
+interface LoadingIndicatorProps {
+  message?: string;
+}
+
+const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ 
+  message = "Searching for information..." 
+}) => {
   return (
     <Card className="border-primary/30 bg-primary/5">
       <CardContent className="pt-6">
@@ -12,7 +18,7 @@ const LoadingIndicator: React.FC = () => {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
           <div>
-            <h3 className="font-medium">Searching for information...</h3>
+            <h3 className="font-medium">{message}</h3>
             <p className="text-sm text-muted-foreground mt-1">
               Our AI agent is working on your request:
             </p>
@@ -21,11 +27,11 @@ const LoadingIndicator: React.FC = () => {
                 <SearchIcon className="h-3.5 w-3.5 mr-2 text-primary" />
                 <span>Searching company databases</span>
               </li>
-              <li className="flex items-center">
+              <li className="flex items-center opacity-75">
                 <Globe className="h-3.5 w-3.5 mr-2 text-primary" />
                 <span>Crawling relevant websites</span>
               </li>
-              <li className="flex items-center">
+              <li className="flex items-center opacity-50">
                 <Database className="h-3.5 w-3.5 mr-2 text-primary" />
                 <span>Accessing multiple knowledge bases</span>
               </li>

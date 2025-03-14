@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface SearchFormProps {
@@ -58,14 +58,17 @@ const SearchForm: React.FC<SearchFormProps> = ({
             </p>
           </div>
           
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} variant="primary" className="w-full">
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Searching...
+                <span className="animate-pulse">Searching...</span>
               </>
             ) : (
-              "Search"
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </>
             )}
           </Button>
         </form>

@@ -128,6 +128,11 @@ const CompanySearch = () => {
     setResult(null);
 
     try {
+      toast({
+        title: "Search Started",
+        description: "Searching for company information...",
+      });
+      
       const { callCompanyWebhook } = await import('@/services/companyWebhookService');
       
       console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
@@ -150,10 +155,11 @@ const CompanySearch = () => {
       console.log("Webhook response data:", data);
       
       if (data.success && data.data) {
+        toast({
+          title: "Search Complete",
+          description: "Results retrieved successfully!",
+        });
         setResult(data.data);
-        
-        // We don't need to save to the database here anymore
-        // since the edge function handles it
       } else {
         setResult(data);
       }
