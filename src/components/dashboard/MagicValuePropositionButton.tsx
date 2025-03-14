@@ -41,6 +41,9 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       // Get business data from user profile
       const businessData = userProfile?.business_data || {};
 
+      console.log('Calling webhook with company data:', companyData);
+      console.log('Calling webhook with business data:', businessData);
+      
       // Call the webhook
       const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData);
       
@@ -52,27 +55,39 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       const data = await response.json();
       console.log('Raw webhook response:', JSON.stringify(data));
       
-      // Extract the data from the response structure
-      let responseData;
+      // Extract data from the webhook response
+      let score = 0;
+      let advice = '';
+      let introduction = '';
+      
       if (Array.isArray(data) && data.length > 0 && data[0].output) {
-        responseData = data[0].output;
-        console.log('Extracted data from array structure:', responseData);
+        // Format: [{ output: { score, advice, introduction } }]
+        const output = data[0].output;
+        score = typeof output.score === 'number' ? output.score : 0;
+        advice = typeof output.advice === 'string' ? output.advice : '';
+        introduction = typeof output.introduction === 'string' ? output.introduction : '';
       } else if (data.output) {
-        responseData = data.output;
-        console.log('Extracted data from output property:', responseData);
-      } else {
-        responseData = data;
-        console.log('Using raw data as responseData:', responseData);
+        // Format: { output: { score, advice, introduction } }
+        const output = data.output;
+        score = typeof output.score === 'number' ? output.score : 0;
+        advice = typeof output.advice === 'string' ? output.advice : '';
+        introduction = typeof output.introduction === 'string' ? output.introduction : '';
+      } else if (data.score !== undefined) {
+        // Format: { score, advice, introduction }
+        score = typeof data.score === 'number' ? data.score : 0;
+        advice = typeof data.advice === 'string' ? data.advice : '';
+        introduction = typeof data.introduction === 'string' ? data.introduction : '';
       }
       
-      // Ensure we have valid data
-      const score = typeof responseData.score === 'number' ? responseData.score : 0;
-      const advice = typeof responseData.advice === 'string' ? responseData.advice : '';
-      const introduction = typeof responseData.introduction === 'string' ? responseData.introduction : '';
+      console.log('Extracted data:', { score, advice, introduction });
       
-      console.log('Value proposition data extracted for database:', { score, advice, introduction });
+      // Ensure we have valid data
+      if (!score && !advice && !introduction) {
+        throw new Error('Could not extract valid data from webhook response');
+      }
       
       // Update the company search record with the generated data
+      console.log('Updating database with data:', { score, advice, introduction });
       const { error: updateError } = await supabase
         .from('company_searches')
         .update({
