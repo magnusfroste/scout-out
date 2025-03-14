@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +8,6 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import Button from '@/components/Button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -88,20 +88,20 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
     setIsSaving(true);
     try {
-      const scoreValue = score ? parseInt(score, 10) : null;
-      
+      // Only update the introduction field
       const { error } = await supabase
         .from('company_searches')
         .update({
-          introduction
+          introduction: introduction
         })
-        .eq('id', searchId);
+        .eq('id', searchId)
+        .eq('user_id', user.id);  // Ensure user owns this record
 
       if (error) throw error;
 
       toast({
         title: 'Success',
-        description: 'Company details updated successfully',
+        description: 'Introduction updated successfully',
       });
 
       if (onUpdate) {
@@ -114,7 +114,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.error('Error updating company details:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update company details',
+        description: 'Failed to update introduction',
         variant: 'destructive',
       });
     } finally {
@@ -311,7 +311,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                Save Introduction
               </>
             )}
           </Button>
