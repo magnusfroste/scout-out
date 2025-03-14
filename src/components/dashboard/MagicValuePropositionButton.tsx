@@ -45,7 +45,7 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       console.log('Calling webhook with business data:', businessData);
       
       // Call the webhook
-      const response = await callValuePropositionWebhookService(webhookUrl, companyData, businessData);
+      const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -55,40 +55,42 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       const data = await response.json();
       console.log('Raw webhook response:', JSON.stringify(data));
       
-      // Extract data directly from the response - simplifying the extraction logic
-      // This assumes the response follows our expected format:
-      // { score: number, advice: string, introduction: string }
+      // Extract data from the response with more robust parsing
       let score = 0;
       let advice = '';
       let introduction = '';
       
-      // Check for direct properties first
-      if (typeof data.score === 'number') {
-        score = data.score;
+      // Direct format
+      if (typeof data.score === 'number' || typeof data.score === 'string') {
+        score = typeof data.score === 'number' ? data.score : parseInt(data.score, 10) || 0;
         advice = data.advice || '';
         introduction = data.introduction || '';
       } 
-      // Check for nested output object
+      // Nested in output object
       else if (data.output) {
-        score = typeof data.output.score === 'number' ? data.output.score : 0;
-        advice = data.output.advice || '';
-        introduction = data.output.introduction || '';
+        const output = data.output;
+        score = typeof output.score === 'number' ? output.score : parseInt(output.score, 10) || 0;
+        advice = output.advice || '';
+        introduction = output.introduction || '';
       } 
-      // Check for array format with output object
-      else if (Array.isArray(data) && data.length > 0 && data[0].output) {
-        score = typeof data[0].output.score === 'number' ? data[0].output.score : 0;
-        advice = data[0].output.advice || '';
-        introduction = data[0].output.introduction || '';
+      // Array format with output object
+      else if (Array.isArray(data) && data.length > 0) {
+        const firstItem = data[0];
+        if (firstItem.output) {
+          const output = firstItem.output;
+          score = typeof output.score === 'number' ? output.score : parseInt(output.score, 10) || 0;
+          advice = output.advice || '';
+          introduction = output.introduction || '';
+        } else if (typeof firstItem.score === 'number' || typeof firstItem.score === 'string') {
+          score = typeof firstItem.score === 'number' ? firstItem.score : parseInt(firstItem.score, 10) || 0;
+          advice = firstItem.advice || '';
+          introduction = firstItem.introduction || '';
+        }
       }
       
-      console.log('Extracted data:', { score, advice, introduction });
+      console.log('Extracted data for callback:', { score, advice, introduction });
       
-      // Ensure we have valid data
-      if (!score && !advice && !introduction) {
-        throw new Error('Could not extract valid data from webhook response');
-      }
-      
-      // Call the success callback with the extracted data WITHOUT saving to database
+      // Call the success callback with the extracted data
       onSuccess(score, advice, introduction);
 
       toast({
@@ -105,19 +107,6 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Wrapper function to ensure we correctly parse the webhook response
-  const callValuePropositionWebhookService = async (
-    webhookUrl: string,
-    companyData: any,
-    businessData: any
-  ): Promise<Response> => {
-    const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData);
-    
-    // Fix typo in function name from previous code
-    console.log('Webhook response received');
-    return response;
   };
 
   return (
