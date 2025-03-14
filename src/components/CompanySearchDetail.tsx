@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -106,6 +105,12 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
     setIsSaving(true);
     try {
+      console.log('Saving value proposition data:', {
+        score: displayScore ? parseInt(displayScore) : null,
+        advice: displayAdvice,
+        introduction: displayIntroduction
+      });
+
       // Update all fields in database
       const { error } = await supabase
         .from('company_searches')
@@ -114,12 +119,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           advice: displayAdvice,
           introduction: displayIntroduction
         })
-        .eq('id', searchId)
-        .eq('user_id', user.id);  // Ensure user owns this record
+        .eq('id', searchId);
 
       if (error) throw error;
       
-      console.log('Updated value proposition data in database');
+      console.log('Updated value proposition data in database successfully');
 
       // Update the db state values to match what was just saved
       setDbScore(displayScore);
@@ -128,6 +132,14 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       
       // Reset the unsaved changes flag
       setHasUnsavedChanges(false);
+
+      // Update the companySearch object to reflect the new values
+      setCompanySearch({
+        ...companySearch,
+        score: displayScore ? parseInt(displayScore) : null,
+        advice: displayAdvice,
+        introduction: displayIntroduction
+      });
 
       toast({
         title: 'Success',
@@ -146,7 +158,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.error('Error updating company details:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update value proposition',
+        description: `Failed to update value proposition: ${error.message}`,
         variant: 'destructive',
       });
     } finally {
@@ -166,7 +178,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     setHasUnsavedChanges(true);
   };
 
-  // Update textarea heights when content changes
   useEffect(() => {
     const introTextarea = document.getElementById('introduction') as HTMLTextAreaElement;
     if (introTextarea) {
@@ -175,7 +186,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     }
   }, [displayIntroduction]);
 
-  // Check for unsaved changes
   useEffect(() => {
     const hasChanges = 
       displayScore !== dbScore || 
