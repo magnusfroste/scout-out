@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -152,6 +153,31 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
+  // Automatic textarea height adjustment for better UX
+  const adjustTextareaHeight = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  // Set initial heights when content is loaded
+  useEffect(() => {
+    if (advice || introduction) {
+      const adviceTextarea = document.getElementById('advice') as HTMLTextAreaElement;
+      const introTextarea = document.getElementById('introduction') as HTMLTextAreaElement;
+      
+      if (adviceTextarea) {
+        adviceTextarea.style.height = 'auto';
+        adviceTextarea.style.height = `${adviceTextarea.scrollHeight}px`;
+      }
+      
+      if (introTextarea) {
+        introTextarea.style.height = 'auto';
+        introTextarea.style.height = `${introTextarea.scrollHeight}px`;
+      }
+    }
+  }, [advice, introduction]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -266,9 +292,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                   <Textarea
                     id="advice"
                     value={advice}
-                    onChange={(e) => setAdvice(e.target.value)}
+                    onChange={(e) => {
+                      setAdvice(e.target.value);
+                      adjustTextareaHeight(e);
+                    }}
                     placeholder="Write your advice about approaching this company..."
-                    className="min-h-[100px]"
+                    className="min-h-[120px] resize-none overflow-hidden"
+                    onFocus={(e) => adjustTextareaHeight(e as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -276,9 +306,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                   <Textarea
                     id="introduction"
                     value={introduction}
-                    onChange={(e) => setIntroduction(e.target.value)}
+                    onChange={(e) => {
+                      setIntroduction(e.target.value);
+                      adjustTextareaHeight(e);
+                    }}
                     placeholder="Draft an introduction email or message..."
-                    className="min-h-[150px]"
+                    className="min-h-[180px] resize-none overflow-hidden"
+                    onFocus={(e) => adjustTextareaHeight(e as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
                   />
                 </div>
               </div>
@@ -290,11 +324,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           {/* Raw JSON Data */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Company Data</h3>
-            <div className="overflow-auto max-h-[200px]">
-              <pre className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
-                {JSON.stringify(companySearch.result, null, 2)}
-              </pre>
-            </div>
+            <ScrollArea className="h-[200px] rounded-md border">
+              <div className="p-4">
+                <pre className="text-sm whitespace-pre-wrap">
+                  {JSON.stringify(companySearch.result, null, 2)}
+                </pre>
+              </div>
+            </ScrollArea>
           </div>
         </CardContent>
         <CardFooter>
