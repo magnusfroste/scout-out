@@ -51,20 +51,33 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
 
       const data = await response.json();
       
+      // Extract the data from the response structure
+      // The webhook response may be in an array with output property
+      const responseData = Array.isArray(data) && data.length > 0 && data[0].output 
+        ? data[0].output 
+        : data;
+      
+      // Ensure we have valid data
+      const score = typeof responseData.score === 'number' ? responseData.score : 0;
+      const advice = typeof responseData.advice === 'string' ? responseData.advice : '';
+      const introduction = typeof responseData.introduction === 'string' ? responseData.introduction : '';
+      
+      console.log('Value proposition data:', { score, advice, introduction });
+      
       // Update the company search record with the generated data
       const { error: updateError } = await supabase
         .from('company_searches')
         .update({
-          score: data.score,
-          advice: data.advice,
-          introduction: data.introduction
+          score: score,
+          advice: advice,
+          introduction: introduction
         })
         .eq('id', companyId);
 
       if (updateError) throw updateError;
 
-      // Call the success callback
-      onSuccess(data.score, data.advice, data.introduction);
+      // Call the success callback with valid data
+      onSuccess(score, advice, introduction);
 
       toast({
         title: 'Success',
