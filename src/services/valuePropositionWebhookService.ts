@@ -59,6 +59,11 @@ export const callValuePropositionWebhook = async (
     });
     
     console.log('Webhook response status:', response.status);
+    // Check if response status is OK before returning
+    if (!response.ok) {
+      console.error('Webhook response not OK:', response.status, response.statusText);
+      // We'll still return the response so the caller can handle it
+    }
     return response;
   } catch (error) {
     console.error('Error in webhook call:', error);
@@ -71,6 +76,7 @@ export const callValuePropositionWebhook = async (
  */
 export const getValuePropositionWebhookUrl = async (): Promise<string | null> => {
   try {
+    console.log('Fetching value proposition webhook URL from settings');
     const { data, error } = await supabase
       .from('webhook_settings')
       .select('value_proposition_url')

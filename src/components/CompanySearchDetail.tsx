@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -112,6 +113,24 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         introduction: displayIntroduction
       });
 
+      // First verify the search exists and we have permission to update it
+      const { data: checkData, error: checkError } = await supabase
+        .from('company_searches')
+        .select('id')
+        .eq('id', searchId)
+        .single();
+        
+      if (checkError) {
+        console.error('Error verifying search existence:', checkError);
+        throw new Error(`Could not verify search exists: ${checkError.message}`);
+      }
+      
+      if (!checkData) {
+        throw new Error('Search not found or you do not have permission to update it');
+      }
+      
+      console.log('Search verified, proceeding with update');
+
       // Update all fields in database
       const { data, error } = await supabase
         .from('company_searches')
@@ -126,6 +145,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       if (error) throw error;
       
       console.log('Database response:', data);
+      
+      if (!data || data.length === 0) {
+        throw new Error('Update operation did not affect any rows');
+      }
+      
       console.log('Updated value proposition data in database successfully');
 
       // Update the db state values to match what was just saved
