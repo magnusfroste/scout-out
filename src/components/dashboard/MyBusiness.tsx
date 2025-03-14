@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { parseWebhookResponse, ElevatorPitch } from '@/utils/webhookResponsePars
 import { Separator } from '@/components/ui/separator';
 import { callMyBusinessWebhook } from '@/services/myBusinessWebhookService';
 import { ContactInfo } from '@/types/company';
-import { Globe, Mail, Phone, User, RefreshCw, AlertCircle } from 'lucide-react';
+import { Globe, Mail, Phone, User, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,11 +40,13 @@ const MyBusiness = () => {
   const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const [isResetting, setIsResetting] = useState<boolean>(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
 
   useEffect(() => {
     if (userProfile?.website_url) {
       setWebsiteUrl(userProfile.website_url);
     }
+    setIsLoadingProfile(false);
   }, [userProfile?.website_url]);
 
   useEffect(() => {
@@ -76,6 +79,8 @@ const MyBusiness = () => {
       
       setBusinessData(savedData);
       console.log('Loaded saved business data:', savedData);
+    } else {
+      setBusinessData(null);
     }
   }, [userProfile]);
 
@@ -92,9 +97,16 @@ const MyBusiness = () => {
     const currentWebhookUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
     
     setIsLoading(true);
+    setBusinessData(null); // Clear previous data while loading
+    
     try {
       console.log(`Calling my business webhook: ${currentWebhookUrl}`);
       console.log(`With website: ${websiteUrl}`);
+      
+      toast({
+        title: "Processing",
+        description: "Analyzing your business website. This may take a moment...",
+      });
       
       const response = await callMyBusinessWebhook(currentWebhookUrl, websiteUrl);
       
@@ -113,8 +125,10 @@ const MyBusiness = () => {
         contactInfo: parsedData.contactInfo
       };
       
+      // Update state with the new data
       setBusinessData(newBusinessData);
       
+      // Save website URL to profile immediately
       if (user && websiteUrl !== userProfile?.website_url) {
         await updateProfile({ website_url: websiteUrl });
       }
@@ -342,6 +356,84 @@ const MyBusiness = () => {
       </div>
     );
   };
+  
+  const LoadingBusinessProfile = () => {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 p-12 border rounded-lg bg-background/50">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="text-center">
+          <h3 className="text-lg font-medium">Analyzing Your Business</h3>
+          <p className="text-muted-foreground">This may take a minute or two...</p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBusinessProfile = () => {
+    if (isLoading) {
+      return <LoadingBusinessProfile />;
+    }
+    
+    if (!businessData) {
+      return (
+        <div className="flex flex-col items-center justify-center space-y-6 p-12 border border-dashed rounded-lg bg-background/50">
+          <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <AlertCircle className="h-10 w-10 text-primary" />
+          </div>
+          <div className="text-center max-w-md">
+            <h3 className="text-xl font-medium mb-2">No Business Profile Yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Generate your business profile by entering your website URL and clicking "Generate Profile"
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-8 overflow-hidden rounded-lg border shadow">
+        <div className="business-mini-homepage">
+          <CompanyHeader elevatorPitch={businessData.elevatorPitch} />
+          <CompanyIntroduction elevatorPitch={businessData.elevatorPitch} />
+          
+          {businessData.elevatorPitch?.services && businessData.elevatorPitch.services.length > 0 && (
+            <>
+              <Separator />
+              <ServicesSection services={businessData.elevatorPitch?.services} />
+            </>
+          )}
+          
+          {businessData.elevatorPitch?.value_proposition && (
+            <>
+              <Separator />
+              <ValueProposition valueProposition={businessData.elevatorPitch?.value_proposition} />
+            </>
+          )}
+          
+          {businessData.elevatorPitch?.testimonials && businessData.elevatorPitch.testimonials.length > 0 && (
+            <>
+              <Separator />
+              <TestimonialsSection testimonials={businessData.elevatorPitch?.testimonials} />
+            </>
+          )}
+          
+          {businessData.elevatorPitch?.clients && businessData.elevatorPitch.clients.length > 0 && (
+            <>
+              <Separator />
+              <ClientsSection clients={businessData.elevatorPitch?.clients} />
+            </>
+          )}
+          
+          {businessData.contactInfo && (
+            <>
+              <Separator />
+              <ContactSection contactInfo={businessData.contactInfo} />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -393,7 +485,7 @@ const MyBusiness = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoadingSettings ? (
+          {isLoadingSettings || isLoadingProfile ? (
             <div className="flex justify-center items-center py-4">
               <div className="animate-pulse text-muted-foreground">Loading business tools...</div>
             </div>
@@ -413,7 +505,12 @@ const MyBusiness = () => {
                     onClick={handleAnalyzeWebsite} 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Analyzing..." : "Generate Profile"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : "Generate Profile"}
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -421,60 +518,23 @@ const MyBusiness = () => {
                 </p>
               </div>
 
-              {businessData && (
-                <div className="mt-8 overflow-hidden rounded-lg border shadow">
-                  <div className="business-mini-homepage">
-                    <CompanyHeader elevatorPitch={businessData.elevatorPitch} />
-                    <CompanyIntroduction elevatorPitch={businessData.elevatorPitch} />
-                    
-                    {businessData.elevatorPitch?.services && businessData.elevatorPitch.services.length > 0 && (
-                      <>
-                        <Separator />
-                        <ServicesSection services={businessData.elevatorPitch?.services} />
-                      </>
-                    )}
-                    
-                    {businessData.elevatorPitch?.value_proposition && (
-                      <>
-                        <Separator />
-                        <ValueProposition valueProposition={businessData.elevatorPitch?.value_proposition} />
-                      </>
-                    )}
-                    
-                    {businessData.elevatorPitch?.testimonials && businessData.elevatorPitch.testimonials.length > 0 && (
-                      <>
-                        <Separator />
-                        <TestimonialsSection testimonials={businessData.elevatorPitch?.testimonials} />
-                      </>
-                    )}
-                    
-                    {businessData.elevatorPitch?.clients && businessData.elevatorPitch.clients.length > 0 && (
-                      <>
-                        <Separator />
-                        <ClientsSection clients={businessData.elevatorPitch?.clients} />
-                      </>
-                    )}
-                    
-                    {businessData.contactInfo && (
-                      <>
-                        <Separator />
-                        <ContactSection contactInfo={businessData.contactInfo} />
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
+              {renderBusinessProfile()}
             </div>
           )}
         </CardContent>
-        {businessData && !isLoadingSettings && (
+        {businessData && !isLoadingSettings && !isLoadingProfile && (
           <CardFooter>
             <Button 
               onClick={handleSaveBusinessData} 
-              disabled={isSaving}
+              disabled={isSaving || isLoading}
               className="ml-auto"
             >
-              {isSaving ? "Saving..." : "Save Business Profile"}
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : "Save Business Profile"}
             </Button>
           </CardFooter>
         )}
@@ -484,4 +544,3 @@ const MyBusiness = () => {
 };
 
 export default MyBusiness;
-
