@@ -37,6 +37,8 @@ const ValuePropositionTab = () => {
       for (const search of searches) {
         if (!search.score) { // Only generate for companies without a score
           try {
+            console.log(`Processing company: ${search.company_name}`);
+            
             // Call the webhook
             const response = await callValuePropositionWebhook(webhookUrl, search, businessData);
             
@@ -46,6 +48,7 @@ const ValuePropositionTab = () => {
             }
             
             const data = await response.json();
+            console.log(`Webhook response for ${search.company_name}:`, data);
             
             // Update the company search record
             const { error: updateError } = await supabase
@@ -134,6 +137,21 @@ const ValuePropositionTab = () => {
               </Button>
             }
           />
+        </CardContent>
+      </Card>
+      
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Developer Information</CardTitle>
+          <CardDescription>
+            Check the browser console (F12) to see the exact webhook request and response data when you click the Magic Value Proposition button.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            The webhook request payload is logged as "WEBHOOK REQUEST PAYLOAD" in the console when you click the button.
+            The response from the webhook is logged as "Raw webhook response".
+          </p>
         </CardContent>
       </Card>
     </div>

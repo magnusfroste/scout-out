@@ -37,6 +37,15 @@ export const callValuePropositionWebhook = async (
   console.log('Using webhook URL:', webhookUrl);
   console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
   
+  // Create the actual request body as it will be sent to the API
+  const requestBody = { 
+    company: companyData,
+    business: businessData
+  };
+  
+  // Log the exact JSON payload that will be sent to the API
+  console.log('WEBHOOK REQUEST PAYLOAD:', JSON.stringify(requestBody, null, 2));
+  
   // Use mock data if in development mode and mock flag is enabled
   if (USE_MOCK_DATA) {
     console.log('MOCK MODE ACTIVE: Using mock data for value proposition');
@@ -52,10 +61,7 @@ export const callValuePropositionWebhook = async (
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ 
-        company: companyData,
-        business: businessData
-      })
+      body: JSON.stringify(requestBody)
     });
     
     console.log('Webhook response status:', response.status);
