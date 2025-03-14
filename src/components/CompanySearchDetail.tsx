@@ -119,9 +119,31 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             question: "What are your company's main products?",
             answer: "Our company specializes in developing enterprise software solutions."
           },
-        ]
+        ],
+        user_business_data: {
+          company_name: "Your Business Name",
+          about_us: "Brief description of what your business does",
+          services: {
+            "Service 1": "Description of service 1",
+            "Service 2": "Description of service 2"
+          },
+          value_proposition: "What makes your business unique",
+          clients: ["Client 1", "Client 2"],
+          website: "https://yourbusiness.com"
+        }
       };
     }
+
+    const businessData = userProfile?.business_data || {
+      company_name: "Your Business",
+      about_us: "Information about your company would appear here",
+      services: {
+        "Service Category": "Service description would appear here"
+      },
+      value_proposition: "Your unique value proposition would appear here",
+      clients: ["Example Client"],
+      website: userProfile?.website_url || "https://example.com"
+    };
 
     const searchData = {
       company_name: companySearch.company_name,
@@ -132,9 +154,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       employees: "Employee count would appear here",
       headquarters: "Headquarters location would appear here",
       revenue: "Revenue information would appear here",
+      contact: companySearch.contact || null,
+      email: companySearch.email || null,
+      phone: companySearch.phone || null,
+      role: companySearch.role || null
     };
 
-    const questions = questionAnswers.map((qa, index) => ({
+    const questions = questionAnswers.map((qa) => ({
       id: qa.question_id,
       question: qa.agent_questions.question,
       answer: qa.answer || "No answer available"
@@ -144,7 +170,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       company_id: searchId,
       company_name: companySearch.company_name,
       search_data: searchData,
-      questions: questions
+      questions: questions,
+      user_business_data: businessData,
+      expected_response: {
+        score: "A number from 1-5 representing the fit/potential",
+        advice: "Strategic advice for approaching this company",
+        introduction: "A draft introduction message to send"
+      }
     };
   };
 
