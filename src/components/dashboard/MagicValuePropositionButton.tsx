@@ -86,31 +86,12 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
         throw new Error('Could not extract valid data from webhook response');
       }
       
-      // Update the company search record with the generated data
-      console.log('Updating database with data:', { score, advice, introduction });
-      const { error: updateError } = await supabase
-        .from('company_searches')
-        .update({
-          score: score,
-          advice: advice,
-          introduction: introduction
-        })
-        .eq('id', companyId)
-        .eq('user_id', user.id); // Ensure user owns this record
-
-      if (updateError) {
-        console.error('Error updating company search record:', updateError);
-        throw updateError;
-      }
-      
-      console.log('Successfully updated company search record with score, advice, and introduction');
-
-      // Call the success callback with valid data
+      // Call the success callback with the extracted data WITHOUT saving to database
       onSuccess(score, advice, introduction);
 
       toast({
         title: 'Success',
-        description: 'AI has generated value proposition content for you',
+        description: 'AI has generated value proposition content',
       });
     } catch (error: any) {
       console.error('Error generating value proposition:', error);

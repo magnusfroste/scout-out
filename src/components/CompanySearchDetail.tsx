@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -22,9 +23,20 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const [questionAnswers, setQuestionAnswers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [score, setScore] = useState<string>('');
-  const [advice, setAdvice] = useState<string>('');
-  const [introduction, setIntroduction] = useState<string>('');
+  
+  // Local state for displaying the value proposition data
+  const [displayScore, setDisplayScore] = useState<string>('');
+  const [displayAdvice, setDisplayAdvice] = useState<string>('');
+  const [displayIntroduction, setDisplayIntroduction] = useState<string>('');
+  
+  // Database values
+  const [dbScore, setDbScore] = useState<string>('');
+  const [dbAdvice, setDbAdvice] = useState<string>('');
+  const [dbIntroduction, setDbIntroduction] = useState<string>('');
+  
+  // Unsaved changes tracking
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -49,10 +61,15 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.log('Fetched company search data:', searchData);
       setCompanySearch(searchData);
 
-      // Update state with the latest values from database
-      setScore(searchData.score?.toString() || '');
-      setAdvice(searchData.advice || '');
-      setIntroduction(searchData.introduction || '');
+      // Update all states with the latest values from database
+      setDbScore(searchData.score?.toString() || '');
+      setDbAdvice(searchData.advice || '');
+      setDbIntroduction(searchData.introduction || '');
+      
+      // Set display values initially from database
+      setDisplayScore(searchData.score?.toString() || '');
+      setDisplayAdvice(searchData.advice || '');
+      setDisplayIntroduction(searchData.introduction || '');
 
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
@@ -89,35 +106,47 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
     setIsSaving(true);
     try {
-      // Only update the introduction field
-      const { data, error } = await supabase
+      // Update all fields in database
+      const { error } = await supabase
         .from('company_searches')
         .update({
-          introduction: introduction
+          score: displayScore ? parseInt(displayScore) : null,
+          advice: displayAdvice,
+          introduction: displayIntroduction
         })
         .eq('id', searchId)
         .eq('user_id', user.id);  // Ensure user owns this record
 
       if (error) throw error;
       
-      console.log('Updated introduction in database:', data);
+      console.log('Updated value proposition data in database');
+
+      // Update the db state values to match what was just saved
+      setDbScore(displayScore);
+      setDbAdvice(displayAdvice);
+      setDbIntroduction(displayIntroduction);
+      
+      // Reset the unsaved changes flag
+      setHasUnsavedChanges(false);
 
       toast({
         title: 'Success',
-        description: 'Introduction updated successfully',
+        description: 'Value proposition updated successfully',
       });
 
       if (onUpdate) {
         onUpdate(searchId, {
           ...companySearch,
-          introduction
+          score: displayScore ? parseInt(displayScore) : null,
+          advice: displayAdvice,
+          introduction: displayIntroduction
         });
       }
     } catch (error: any) {
       console.error('Error updating company details:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update introduction',
+        description: 'Failed to update value proposition',
         variant: 'destructive',
       });
     } finally {
@@ -128,24 +157,33 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string) => {
     console.log('Magic value proposition generated:', { newScore, newAdvice, newIntroduction });
     
-    // Update the local state with the new values
-    setScore(newScore.toString());
-    setAdvice(newAdvice);
-    setIntroduction(newIntroduction);
+    // Update the display values without saving to database yet
+    setDisplayScore(newScore.toString());
+    setDisplayAdvice(newAdvice);
+    setDisplayIntroduction(newIntroduction);
     
-    // Update the company search state
-    if (companySearch) {
-      setCompanySearch({
-        ...companySearch,
-        score: newScore,
-        advice: newAdvice,
-        introduction: newIntroduction
-      });
-    }
-    
-    // Refresh the company details from the database to ensure we have the latest data
-    fetchCompanyDetails();
+    // Set the unsaved changes flag
+    setHasUnsavedChanges(true);
   };
+
+  // Update textarea heights when content changes
+  useEffect(() => {
+    const introTextarea = document.getElementById('introduction') as HTMLTextAreaElement;
+    if (introTextarea) {
+      introTextarea.style.height = 'auto';
+      introTextarea.style.height = `${introTextarea.scrollHeight}px`;
+    }
+  }, [displayIntroduction]);
+
+  // Check for unsaved changes
+  useEffect(() => {
+    const hasChanges = 
+      displayScore !== dbScore || 
+      displayAdvice !== dbAdvice || 
+      displayIntroduction !== dbIntroduction;
+    
+    setHasUnsavedChanges(hasChanges);
+  }, [displayScore, displayAdvice, displayIntroduction, dbScore, dbAdvice, dbIntroduction]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -157,17 +195,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
   };
-
-  useEffect(() => {
-    if (advice || introduction) {
-      const introTextarea = document.getElementById('introduction') as HTMLTextAreaElement;
-      
-      if (introTextarea) {
-        introTextarea.style.height = 'auto';
-        introTextarea.style.height = `${introTextarea.scrollHeight}px`;
-      }
-    }
-  }, [advice, introduction]);
 
   if (isLoading) {
     return (
@@ -267,22 +294,23 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                 <div className="space-y-2">
                   <Label htmlFor="score">Score (1-5)</Label>
                   <div className="bg-muted p-3 rounded-md text-lg font-medium">
-                    {score ? score : 'Not rated yet'}
+                    {displayScore ? displayScore : 'Not rated yet'}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="advice">AI Advice</Label>
                   <div className="bg-muted p-4 rounded-md whitespace-pre-wrap min-h-[120px]">
-                    {advice || 'No advice generated yet. Use the "Magic Write Value Proposition" button to generate advice.'}
+                    {displayAdvice || 'No advice generated yet. Use the "Magic Write Value Proposition" button to generate advice.'}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="introduction">Introduction Draft</Label>
                   <Textarea
                     id="introduction"
-                    value={introduction}
+                    value={displayIntroduction}
                     onChange={(e) => {
-                      setIntroduction(e.target.value);
+                      setDisplayIntroduction(e.target.value);
+                      setHasUnsavedChanges(true);
                       adjustTextareaHeight(e);
                     }}
                     placeholder="Draft an introduction email or message..."
@@ -310,8 +338,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         <CardFooter>
           <Button 
             onClick={handleSave} 
-            disabled={isSaving}
-            className="ml-auto"
+            disabled={isSaving || !hasUnsavedChanges}
+            className={`ml-auto ${hasUnsavedChanges ? 'bg-green-600 hover:bg-green-700' : ''}`}
           >
             {isSaving ? (
               <>
@@ -321,7 +349,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Introduction
+                {hasUnsavedChanges ? 'Save Changes' : 'No Changes to Save'}
               </>
             )}
           </Button>
