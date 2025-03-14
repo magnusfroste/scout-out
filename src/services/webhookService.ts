@@ -6,6 +6,7 @@ export interface WebhookSettings {
   url: string;
   mybusiness_url: string;
   questions_url: string;
+  value_proposition_url: string;
   default_signup_credits: number;
   created_at: string;
   updated_at: string;
@@ -61,6 +62,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
         const webhookSettings: WebhookSettings = {
           ...data,
           questions_url: (data as any).questions_url || '',
+          value_proposition_url: (data as any).value_proposition_url || '',
           default_signup_credits: data.default_signup_credits || 50
         };
         return webhookSettings;
@@ -100,6 +102,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
       const webhookSettings: WebhookSettings = {
         ...data,
         questions_url: (data as any).questions_url || '',
+        value_proposition_url: (data as any).value_proposition_url || '',
         default_signup_credits: data.default_signup_credits || 50
       };
       return webhookSettings;
@@ -488,4 +491,92 @@ export const updateDefaultSignupCredits = async (default_signup_credits: number)
   }
 };
 
+export const updateValuePropositionWebhookSettings = async (value_proposition_url: string): Promise<boolean> => {
+  try {
+    // Get the current settings first
+    const current = await fetchWebhookSettings();
+    
+    // If settings do not exist yet, create a new record
+    if (!current?.id) {
+      console.log('Creating new webhook settings record with value_proposition_url');
+      const { error } = await supabase
+        .from('webhook_settings')
+        .insert([{ 
+          url: current?.url || '',
+          mybusiness_url: current?.mybusiness_url || '',
+          questions_url: current?.questions_url || '',
+          value_proposition_url,
+          updated_at: new Date().toISOString() 
+        }]);
+        
+      if (error) {
+        console.error('Error creating value proposition webhook settings:', error);
+        
+        if (error.code === 'PGRST301') {
+          toast({
+            title: "Access Error",
+            description: "You don't have permission to create value proposition webhook settings. Admin privileges required.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        toast({
+          title: "Error",
+          description: "Failed to create value proposition webhook settings: " + error.message,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Value proposition webhook settings created successfully",
+      });
+      return true;
+    }
 
+    // Update existing settings
+    const { error } = await supabase
+      .from('webhook_settings')
+      .update({ 
+        value_proposition_url, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', current.id);
+
+    if (error) {
+      console.error('Error updating value proposition webhook settings:', error);
+      
+      if (error.code === 'PGRST301') {
+        toast({
+          title: "Access Error",
+          description: "You don't have permission to update value proposition webhook settings. Admin privileges required.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to update value proposition webhook settings: " + error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Success",
+      description: "Value proposition webhook settings updated successfully",
+    });
+    return true;
+  } catch (error) {
+    console.error('Error in updateValuePropositionWebhookSettings:', error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred while updating value proposition webhook settings",
+      variant: "destructive",
+    });
+    return false;
+  }
+};

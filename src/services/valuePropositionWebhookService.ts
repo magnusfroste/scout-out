@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 // Check if we're in mock mode from environment variable
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
@@ -64,15 +64,15 @@ export const getValuePropositionWebhookUrl = async (): Promise<string | null> =>
   try {
     const { data, error } = await supabase
       .from('webhook_settings')
-      .select('url')
+      .select('value_proposition_url')
       .single();
       
     if (error) {
-      console.error('Error fetching webhook URL:', error);
+      console.error('Error fetching value proposition webhook URL:', error);
       return null;
     }
     
-    return data?.url || null;
+    return data?.value_proposition_url || null;
   } catch (error) {
     console.error('Error in getValuePropositionWebhookUrl:', error);
     return null;

@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import CompanySearchesList from '@/components/CompanySearchesList';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,10 +20,10 @@ const ValuePropositionTab = () => {
     
     setIsGeneratingAll(true);
     try {
-      // Get the webhook URL
+      // Get the webhook URL for value proposition
       const webhookUrl = await getValuePropositionWebhookUrl();
       if (!webhookUrl) {
-        throw new Error('Webhook URL not configured');
+        throw new Error('Value Proposition Webhook URL not configured');
       }
       
       // Get business data from user profile

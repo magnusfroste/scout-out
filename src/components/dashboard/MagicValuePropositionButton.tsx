@@ -22,10 +22,10 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
 
     setIsLoading(true);
     try {
-      // Get the webhook URL
+      // Get the webhook URL for value proposition
       const webhookUrl = await getValuePropositionWebhookUrl();
       if (!webhookUrl) {
-        throw new Error('Webhook URL not configured');
+        throw new Error('Value Proposition Webhook URL not configured');
       }
 
       // Get the company data

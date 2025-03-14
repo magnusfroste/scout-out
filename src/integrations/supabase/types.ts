@@ -198,6 +198,7 @@ export type Database = {
           questions_url: string | null
           updated_at: string | null
           url: string
+          value_proposition_url: string | null
         }
         Insert: {
           created_at?: string | null
@@ -207,6 +208,7 @@ export type Database = {
           questions_url?: string | null
           updated_at?: string | null
           url?: string
+          value_proposition_url?: string | null
         }
         Update: {
           created_at?: string | null
@@ -216,6 +218,7 @@ export type Database = {
           questions_url?: string | null
           updated_at?: string | null
           url?: string
+          value_proposition_url?: string | null
         }
         Relationships: []
       }

@@ -6,14 +6,21 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import WebhookForm from '@/components/dashboard/WebhookForm';
 import MyBusinessWebhookForm from '@/components/dashboard/MyBusinessWebhookForm';
+import ValuePropositionWebhookForm from '@/components/dashboard/ValuePropositionWebhookForm';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { fetchWebhookSettings, updateWebhookSettings, updateMyBusinessWebhookSettings } from '@/services/webhookService';
+import { 
+  fetchWebhookSettings, 
+  updateWebhookSettings, 
+  updateMyBusinessWebhookSettings,
+  updateValuePropositionWebhookSettings
+} from '@/services/webhookService';
 import { toast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { user, loading, userProfile } = useAuth();
   const [webhookUrl, setWebhookUrl] = useState('');
   const [myBusinessWebhookUrl, setMyBusinessWebhookUrl] = useState('');
+  const [valuePropositionWebhookUrl, setValuePropositionWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [adminChecked, setAdminChecked] = useState(false);
 
@@ -41,8 +48,10 @@ const Settings = () => {
       if (settings) {
         setWebhookUrl(settings.url || '');
         setMyBusinessWebhookUrl(settings.mybusiness_url || '');
+        setValuePropositionWebhookUrl(settings.value_proposition_url || '');
         console.log(`Set webhook URL: ${settings.url}`);
         console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
+        console.log(`Set value proposition URL: ${settings.value_proposition_url}`);
       } else {
         console.warn('No webhook settings found');
         toast({
@@ -116,6 +125,22 @@ const Settings = () => {
     }
   };
 
+  const handleValuePropositionWebhookUpdate = async (newUrl: string) => {
+    try {
+      const success = await updateValuePropositionWebhookSettings(newUrl);
+      if (success) {
+        setValuePropositionWebhookUrl(newUrl);
+      }
+    } catch (error) {
+      console.error('Error updating Value Proposition webhook URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update Value Proposition webhook URL",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
@@ -147,6 +172,20 @@ const Settings = () => {
                 <MyBusinessWebhookForm 
                   webhookUrl={myBusinessWebhookUrl}
                   setWebhookUrl={handleMyBusinessWebhookUpdate}
+                  isDisabled={isLoading}
+                  showDescription={true}
+                />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Value Proposition Webhook Configuration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ValuePropositionWebhookForm 
+                  webhookUrl={valuePropositionWebhookUrl}
+                  setWebhookUrl={handleValuePropositionWebhookUpdate}
                   isDisabled={isLoading}
                   showDescription={true}
                 />
