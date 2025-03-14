@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +40,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
     setIsLoading(true);
     try {
-      // Fetch the company search
       const { data: searchData, error: searchError } = await supabase
         .from('company_searches')
         .select('*')
@@ -51,12 +49,10 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       if (searchError) throw searchError;
       setCompanySearch(searchData);
 
-      // Set the form values
       setScore(searchData.score?.toString() || '');
       setAdvice(searchData.advice || '');
       setIntroduction(searchData.introduction || '');
 
-      // Fetch the questions and answers for this company
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
         .select(`
@@ -94,12 +90,9 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     try {
       const scoreValue = score ? parseInt(score, 10) : null;
       
-      // Update the company search record
       const { error } = await supabase
         .from('company_searches')
         .update({
-          score: scoreValue,
-          advice,
           introduction
         })
         .eq('id', searchId);
@@ -111,12 +104,9 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         description: 'Company details updated successfully',
       });
 
-      // Call the onUpdate callback if provided
       if (onUpdate) {
         onUpdate(searchId, {
           ...companySearch,
-          score: scoreValue,
-          advice,
           introduction
         });
       }
@@ -137,7 +127,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     setAdvice(newAdvice);
     setIntroduction(newIntroduction);
     
-    // Update the local state
     if (companySearch) {
       setCompanySearch({
         ...companySearch,
@@ -153,23 +142,15 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
-  // Automatic textarea height adjustment for better UX
   const adjustTextareaHeight = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
   };
 
-  // Set initial heights when content is loaded
   useEffect(() => {
     if (advice || introduction) {
-      const adviceTextarea = document.getElementById('advice') as HTMLTextAreaElement;
       const introTextarea = document.getElementById('introduction') as HTMLTextAreaElement;
-      
-      if (adviceTextarea) {
-        adviceTextarea.style.height = 'auto';
-        adviceTextarea.style.height = `${adviceTextarea.scrollHeight}px`;
-      }
       
       if (introTextarea) {
         introTextarea.style.height = 'auto';
@@ -212,7 +193,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Contact Information */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Contact Information</h3>
@@ -265,7 +245,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               </div>
             </div>
             
-            {/* Value Proposition */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Value Proposition</h3>
@@ -277,29 +256,15 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="score">Score (1-5)</Label>
-                  <Input
-                    id="score"
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    placeholder="Rate potential (1-5)"
-                  />
+                  <div className="bg-muted p-3 rounded-md text-lg font-medium">
+                    {score ? score : 'Not rated yet'}
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="advice">Your Advice</Label>
-                  <Textarea
-                    id="advice"
-                    value={advice}
-                    onChange={(e) => {
-                      setAdvice(e.target.value);
-                      adjustTextareaHeight(e);
-                    }}
-                    placeholder="Write your advice about approaching this company..."
-                    className="min-h-[120px] resize-none overflow-hidden"
-                    onFocus={(e) => adjustTextareaHeight(e as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
-                  />
+                  <Label htmlFor="advice">AI Advice</Label>
+                  <div className="bg-muted p-4 rounded-md whitespace-pre-wrap min-h-[120px]">
+                    {advice || 'No advice generated yet. Use the "Magic Write Value Proposition" button to generate advice.'}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="introduction">Introduction Draft</Label>
@@ -321,7 +286,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
           <Separator />
 
-          {/* Raw JSON Data */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Company Data</h3>
             <ScrollArea className="h-[200px] rounded-md border">
