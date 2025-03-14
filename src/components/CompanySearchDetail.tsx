@@ -47,6 +47,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         .single();
 
       if (searchError) throw searchError;
+      console.log('Fetched company search data:', searchData);
       setCompanySearch(searchData);
 
       setScore(searchData.score?.toString() || '');
@@ -89,15 +90,18 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     setIsSaving(true);
     try {
       // Only update the introduction field
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('company_searches')
         .update({
           introduction: introduction
         })
         .eq('id', searchId)
-        .eq('user_id', user.id);  // Ensure user owns this record
+        .eq('user_id', user.id)  // Ensure user owns this record
+        .select();
 
       if (error) throw error;
+      
+      console.log('Updated introduction in database:', data);
 
       toast({
         title: 'Success',
@@ -123,10 +127,14 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   };
 
   const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string) => {
+    console.log('Magic value proposition generated:', { newScore, newAdvice, newIntroduction });
+    
+    // Update the local state with the new values
     setScore(newScore.toString());
     setAdvice(newAdvice);
     setIntroduction(newIntroduction);
     
+    // Update the company search state
     if (companySearch) {
       setCompanySearch({
         ...companySearch,
@@ -135,6 +143,9 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         introduction: newIntroduction
       });
     }
+    
+    // Refresh the company details from the database to ensure we have the latest data
+    fetchCompanyDetails();
   };
 
   const formatDate = (dateString: string) => {

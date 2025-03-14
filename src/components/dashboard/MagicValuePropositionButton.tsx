@@ -62,19 +62,23 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
       const advice = typeof responseData.advice === 'string' ? responseData.advice : '';
       const introduction = typeof responseData.introduction === 'string' ? responseData.introduction : '';
       
-      console.log('Value proposition data:', { score, advice, introduction });
+      console.log('Value proposition data received from webhook:', { score, advice, introduction });
       
       // Update the company search record with the generated data
-      const { error: updateError } = await supabase
+      const { data: updatedData, error: updateError } = await supabase
         .from('company_searches')
         .update({
           score: score,
           advice: advice,
           introduction: introduction
         })
-        .eq('id', companyId);
+        .eq('id', companyId)
+        .eq('user_id', user.id) // Ensure user owns this record
+        .select();
 
       if (updateError) throw updateError;
+      
+      console.log('Updated company search record:', updatedData);
 
       // Call the success callback with valid data
       onSuccess(score, advice, introduction);
