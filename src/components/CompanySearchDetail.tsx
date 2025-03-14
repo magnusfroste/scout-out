@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Loader2, Save, Code } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Code, Eye, EyeOff } from 'lucide-react';
 import Button from '@/components/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -37,10 +36,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isDevLogOpen, setIsDevLogOpen] = useState(false);
   
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
+  
+  const isAdmin = userProfile?.is_admin || false;
 
-  // Example webhook request body for Royal Smilde
   const exampleWebhookRequestBody = {
     company_id: searchId || "example-id-12345",
     company_name: "Royal Smilde",
@@ -401,36 +401,46 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             </div>
           )}
 
-          <Collapsible
-            open={isDevLogOpen}
-            onOpenChange={setIsDevLogOpen}
-            className="border rounded-md"
-          >
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full flex justify-between">
-                <span className="flex items-center">
-                  <Code className="h-4 w-4 mr-2" />
-                  Developer Log: Value Proposition Webhook Example
-                </span>
-                <span>{isDevLogOpen ? '▲' : '▼'}</span>
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="p-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  This is an example of the webhook request body for value proposition generation, using Royal Smilde as an example:
-                </p>
-                <ScrollArea className="h-[300px] rounded-md border p-4">
-                  <pre className="text-xs whitespace-pre-wrap">
-                    {JSON.stringify(exampleWebhookRequestBody, null, 2)}
-                  </pre>
-                </ScrollArea>
-                <p className="text-xs text-muted-foreground">
-                  Your webhook should respond with a JSON object containing: <code>score</code> (number 1-5), <code>advice</code> (string), and <code>introduction</code> (string).
-                </p>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+          {isAdmin && (
+            <Collapsible
+              open={isDevLogOpen}
+              onOpenChange={setIsDevLogOpen}
+              className="border rounded-md"
+            >
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full flex justify-between">
+                  <span className="flex items-center">
+                    <Code className="h-4 w-4 mr-2" />
+                    Developer Log: Value Proposition Webhook Example
+                    {isAdmin && (
+                      <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                        Admin Only
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex items-center">
+                    {isDevLogOpen ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+                    <span>{isDevLogOpen ? 'Hide' : 'View'}</span>
+                  </span>
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    This is an example of the webhook request body for value proposition generation, using Royal Smilde as an example:
+                  </p>
+                  <ScrollArea className="h-[300px] rounded-md border p-4">
+                    <pre className="text-xs whitespace-pre-wrap">
+                      {JSON.stringify(exampleWebhookRequestBody, null, 2)}
+                    </pre>
+                  </ScrollArea>
+                  <p className="text-xs text-muted-foreground">
+                    Your webhook should respond with a JSON object containing: <code>score</code> (number 1-5), <code>advice</code> (string), and <code>introduction</code> (string).
+                  </p>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
         </CardContent>
       </Card>
