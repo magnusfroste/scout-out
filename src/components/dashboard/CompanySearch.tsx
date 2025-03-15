@@ -21,7 +21,6 @@ import QuestionsList from './QuestionsList';
 import { supabase } from '@/integrations/supabase/client';
 import SearchHistory from './SearchHistory';
 
-// Define types for our component
 interface CompanySearchProps {
   questions: { id: string; question: string }[];
   onSearch: () => void;
@@ -29,10 +28,9 @@ interface CompanySearchProps {
   isLoadingSearches: boolean;
   onSearchDeleted: () => void;
   isDeletingSearch: string | null;
-  onNavigateToHistory?: () => void; // Optional callback to navigate to search history
+  onNavigateToHistory?: () => void;
 }
 
-// Result type for our component
 interface SearchResult {
   companyName: string;
   contactInfo: {
@@ -59,10 +57,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
   const [rawResponseData, setRawResponseData] = useState<any>(null);
   const [parsedResults, setParsedResults] = useState<any>(null);
 
-  // Credit cost for a search
   const CREDIT_COST = 1;
 
-  // Process credits separately to avoid timing issues
   const processCredits = async (reason: string) => {
     if (!user || !userProfile) return false;
     
@@ -122,7 +118,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
       return;
     }
 
-    // Reset states
     setIsSearching(true);
     setSearchResult(null);
     setIsSaved(false);
@@ -130,13 +125,11 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
     setParsedResults(null);
 
     try {
-      // Notify user that search has started
       toast({
         title: "Search Started",
         description: "Searching for company data...",
       });
 
-      // Get webhook settings from database
       const { data: webhookSettings } = await supabase
         .from('webhook_settings')
         .select('*')
@@ -146,10 +139,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         throw new Error("Webhook URL not configured. Please contact an administrator.");
       }
       
-      // Import the webhook service
       const { callCompanyWebhook } = await import('@/services/companyWebhookService');
       
-      // Make the actual API call using the webhook service
       console.log(`Making webhook call to ${webhookSettings.url} for company ${companyName}`);
       const response = await callCompanyWebhook(
         webhookSettings.url,
@@ -161,21 +152,17 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         throw new Error(`Webhook request failed with status: ${response.status}`);
       }
       
-      // Parse the response
       const responseData = await response.json();
       console.log('Webhook response:', responseData);
       setRawResponseData(responseData);
       
-      // Process the response data using the existing parser
       const { processedResults, contactInfo } = parseWebhookResponse(responseData);
       
-      // Sort the processed results to match the order of questions
       const sortedResults = sortAnswersByQuestionOrder(processedResults);
       
       setParsedResults({ processedResults: sortedResults, contactInfo });
       
       if (sortedResults && sortedResults.length > 0) {
-        // Format the result for our simple component
         const formattedResult: SearchResult = {
           companyName: companyName,
           contactInfo: contactInfo || {},
@@ -185,10 +172,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
           }))
         };
         
-        // Set the search result to display it immediately
         setSearchResult(formattedResult);
         
-        // Notify user that search is complete
         toast({
           title: "Search Complete",
           description: "Your search results are ready. Click 'Save' to save results and deduct credits.",
@@ -204,36 +189,30 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         variant: "destructive",
       });
     } finally {
-      // Add a small delay before resetting the searching state
       setTimeout(() => {
         setIsSearching(false);
       }, 500);
     }
   };
 
-  // Helper function to get question text from question ID
   const getQuestionText = (questionId: string): string => {
     const question = questions.find(q => q.id === questionId);
     return question ? question.question : `Question (ID: ${questionId})`;
   };
 
-  // Helper function to sort answers according to the order of questions in the list
   const sortAnswersByQuestionOrder = (answers: { question_id: string, answer: string }[]): { question_id: string, answer: string }[] => {
-    // Create a map of question IDs to their positions in the questions array
     const questionOrderMap = new Map<string, number>();
     questions.forEach((q, index) => {
       questionOrderMap.set(q.id, index);
     });
 
-    // Sort the answers based on the order of questions
     return [...answers].sort((a, b) => {
-      const orderA = questionOrderMap.get(a.question_id) ?? 999; // Default to high number if not found
+      const orderA = questionOrderMap.get(a.question_id) ?? 999;
       const orderB = questionOrderMap.get(b.question_id) ?? 999;
       return orderA - orderB;
     });
   };
 
-  // Handle saving the search results and deducting credits
   const handleSaveResults = async () => {
     if (!user || !userProfile || !searchResult || !rawResponseData || !parsedResults) {
       toast({
@@ -247,7 +226,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
     setIsSaving(true);
 
     try {
-      // Store the search result in the database
       await storeSearchResults(
         user.id,
         companyName,
@@ -256,11 +234,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         parsedResults.contactInfo
       );
       
-      // Deduct credits after storing results
       const creditDeducted = await processCredits(`Simple company search: ${companyName}`);
       
       if (creditDeducted) {
-        // Refresh search history
         onSearch();
         
         setIsSaved(true);
@@ -270,7 +246,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
           description: "Your search results have been saved and credits deducted.",
         });
         
-        // Navigate to search history after a short delay if the callback is provided
         if (onNavigateToHistory) {
           toast({
             title: "Redirecting",
@@ -305,12 +280,11 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
 
   return (
     <div className="space-y-6">
-      {/* Search Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Ask Questions About a Company</CardTitle>
+          <CardTitle>Research a Company</CardTitle>
           <CardDescription>
-            Search for a company to get contact information and key insights.
+            Gather valuable insights about potential clients to understand their needs and discover opportunities.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -339,12 +313,12 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
                 {isSearching ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                    Searching...
+                    Researching...
                   </>
                 ) : (
                   <>
                     <Search className="mr-2 h-4 w-4" />
-                    Search
+                    Research
                   </>
                 )}
               </Button>
@@ -358,10 +332,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         </CardContent>
       </Card>
 
-      {/* Questions List */}
       <QuestionsList questions={questions} />
 
-      {/* Search Results */}
       {searchResult && (
         <Card>
           <CardHeader>
@@ -376,7 +348,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Contact Information */}
             {searchResult.contactInfo && Object.values(searchResult.contactInfo).some(Boolean) && (
               <div className="mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border relative">
                 <h3 className="font-medium text-lg mb-3">Contact Information</h3>
@@ -447,7 +418,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
               </div>
             )}
 
-            {/* Answers */}
             {searchResult.answers.length > 0 ? (
               <div className="space-y-4">
                 {searchResult.answers.map((item, index) => (
@@ -514,14 +484,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
                 className="w-full"
               >
                 <HistoryIcon className="mr-2 h-4 w-4" />
-                View in Search History
+                View in Research History
               </Button>
             )}
           </CardFooter>
         </Card>
       )}
       
-      {/* Not enough credits warning */}
       {userProfile && userProfile.credits < CREDIT_COST && (
         <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
@@ -535,9 +504,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         </div>
       )}
       
-      {/* Search History Section */}
       <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Recent Searches</h2>
+        <h2 className="text-2xl font-bold mb-4">Research History</h2>
         <SearchHistory 
           searches={searches} 
           isLoadingSearches={isLoadingSearches}
