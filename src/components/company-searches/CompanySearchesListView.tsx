@@ -147,27 +147,34 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                     <div className="space-y-3">
                       <h4 className="font-medium text-sm">Company Details</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {search.industry && (
+                        {search.role && (
                           <div>
-                            <span className="font-medium">Industry:</span> {search.industry}
+                            <span className="font-medium">Role:</span> {search.role}
                           </div>
                         )}
-                        {search.employees && (
+                        {search.email && (
                           <div>
-                            <span className="font-medium">Employees:</span> {search.employees}
+                            <span className="font-medium">Email:</span> {search.email}
                           </div>
                         )}
-                        {search.annual_revenue && (
+                        {search.phone && (
                           <div>
-                            <span className="font-medium">Annual Revenue:</span> {search.annual_revenue}
+                            <span className="font-medium">Phone:</span> {search.phone}
                           </div>
                         )}
-                        {search.location && (
+                        {search.answer_count > 0 && (
                           <div>
-                            <span className="font-medium">Location:</span> {search.location}
+                            <span className="font-medium">Answers:</span> {search.answer_count}
                           </div>
                         )}
                       </div>
+                      
+                      {search.introduction && (
+                        <div className="mt-2">
+                          <span className="font-medium">Introduction:</span>
+                          <p className="text-sm mt-1">{search.introduction}</p>
+                        </div>
+                      )}
                       
                       <div className="flex justify-end mt-4">
                         <Button 
