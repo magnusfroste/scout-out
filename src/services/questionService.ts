@@ -26,11 +26,14 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
       return null;
     }
     
-    console.log(`Fetching questions from webhook URL: ${webhookSettings.questions_url}`);
+    // Create dev console groups for better visibility in browser dev tools
+    console.group('🔍 Magic Questions API Request');
+    console.log('%c Questions Webhook URL: ', 'background: #f0f0f0; color: #0066cc; font-weight: bold', webhookSettings.questions_url);
     
     // Create and log the request payload
     const requestPayload = { website_url: websiteUrl };
-    console.log(`Request payload:`, requestPayload);
+    console.log('%c Request Payload: ', 'background: #f0f0f0; color: #009933; font-weight: bold', requestPayload);
+    console.groupEnd();
     
     // Make the API call to the questions webhook
     const response = await fetch(webhookSettings.questions_url, {
@@ -44,7 +47,11 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
     
     // Log the raw response for debugging
     const responseText = await response.text();
-    console.log('Raw webhook response:', responseText);
+    
+    console.group('🔍 Magic Questions API Response');
+    console.log('%c Response Status: ', 'background: #f0f0f0; color: #990000; font-weight: bold', response.status, response.statusText);
+    console.log('%c Raw Response: ', 'background: #f0f0f0; color: #990000; font-weight: bold', responseText);
+    console.groupEnd();
     
     if (!response.ok) {
       throw new Error(`Questions webhook request failed with status: ${response.status}, response: ${responseText}`);
@@ -54,19 +61,24 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
     let responseData;
     try {
       responseData = JSON.parse(responseText);
-      console.log('Parsed questions webhook response:', responseData);
+      console.group('🔍 Parsed Response Data');
+      console.log('%c Parsed Data: ', 'background: #f0f0f0; color: #6600cc; font-weight: bold', responseData);
+      console.groupEnd();
     } catch (parseError) {
       console.error('Error parsing webhook response:', parseError);
       throw new Error(`Invalid JSON response from webhook: ${responseText.substring(0, 100)}...`);
     }
     
     // Extract questions from the response - log each step for debugging
+    console.group('🔍 Questions Extraction Process');
     console.log('Response is array?', Array.isArray(responseData));
     if (Array.isArray(responseData) && responseData.length > 0) {
       console.log('First item has output?', !!responseData[0].output);
       if (responseData[0].output) {
         console.log('Output has questions array?', Array.isArray(responseData[0].output.questions));
         if (Array.isArray(responseData[0].output.questions)) {
+          console.log('Extracted Questions:', responseData[0].output.questions);
+          console.groupEnd();
           return responseData[0].output.questions;
         }
       }
@@ -78,16 +90,24 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
       if (responseData.length > 0 && 
           typeof responseData[0] === 'object' && 
           responseData[0].question) {
+        console.log('Extracted Questions:', responseData);
+        console.groupEnd();
         return responseData;
       }
     } else if (responseData && typeof responseData === 'object') {
       console.log('Trying alternative format - object with questions array');
       if (Array.isArray(responseData.questions)) {
+        console.log('Extracted Questions:', responseData.questions);
+        console.groupEnd();
         return responseData.questions;
       } else if (responseData.output && Array.isArray(responseData.output.questions)) {
+        console.log('Extracted Questions:', responseData.output.questions);
+        console.groupEnd();
         return responseData.output.questions;
       }
     }
+    
+    console.groupEnd();
     
     // If we get here, we couldn't parse the response in any expected format
     console.error('Could not extract questions from response. Response structure:', JSON.stringify(responseData, null, 2));
