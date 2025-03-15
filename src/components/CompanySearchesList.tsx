@@ -28,6 +28,17 @@ const CompanySearchesList = ({
   batchActionButton 
 }: CompanySearchesListProps) => {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const handleToggleRow = (id: string) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(id)) {
+      newExpandedRows.delete(id);
+    } else {
+      newExpandedRows.add(id);
+    }
+    setExpandedRows(newExpandedRows);
+  };
 
   // Show company search detail if a search is selected
   if (selectedSearchId) {
@@ -74,6 +85,8 @@ const CompanySearchesList = ({
           isDeleting={isDeleting}
           onViewDetail={setSelectedSearchId}
           onDeleteSearch={onDelete}
+          expandedRows={expandedRows}
+          onToggleRow={handleToggleRow}
         />
       </div>
     </div>
