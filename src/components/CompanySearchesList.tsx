@@ -29,7 +29,7 @@ const CompanySearchesList = ({
   onRefresh, 
   onBatchAction, 
   batchActionButton,
-  showDeleteButton = false, // Changed default to false to remove delete button
+  showDeleteButton = false,
   showBackButton = false,
   onBack
 }: CompanySearchesListProps) => {

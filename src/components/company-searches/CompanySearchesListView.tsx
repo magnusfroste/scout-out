@@ -117,17 +117,6 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-                    {showBackButton && onBack && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onBack}
-                        className="h-8 w-8 p-0"
-                        aria-label="Go back"
-                      >
-                        <ChevronLeft className="h-4 w-4 text-primary" />
-                      </Button>
-                    )}
                     <Button
                       variant="ghost"
                       size="sm"

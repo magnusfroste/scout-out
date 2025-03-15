@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import CompanySearchesList from '@/components/CompanySearchesList';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, Search, ChevronLeft } from 'lucide-react';
+import { Loader2, Sparkles, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,16 +20,13 @@ const ValuePropositionTab = () => {
   const { toast } = useToast();
   const { searches, isLoading, isDeleting, handleDeleteSearch, fetchSearches } = useCompanySearches();
 
-  // Filter and sort the searches
   const filteredAndSortedSearches = React.useMemo(() => {
-    // First filter by search term
     const filtered = searches.filter(search => 
       search.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (search.contact && search.contact.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (search.email && search.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     
-    // Then sort according to selected option
     return [...filtered].sort((a, b) => {
       switch (sortOption) {
         case 'oldest':
@@ -40,13 +36,11 @@ const ValuePropositionTab = () => {
         case 'za':
           return b.company_name.localeCompare(a.company_name);
         case 'score_high':
-          // Put null scores at the end
           if (a.score === null && b.score === null) return 0;
           if (a.score === null) return 1;
           if (b.score === null) return -1;
           return b.score - a.score;
         case 'score_low':
-          // Put null scores at the end
           if (a.score === null && b.score === null) return 0;
           if (a.score === null) return 1;
           if (b.score === null) return -1;
@@ -63,24 +57,20 @@ const ValuePropositionTab = () => {
     
     setIsGeneratingAll(true);
     try {
-      // Get the webhook URL for value proposition
       const webhookUrl = await getValuePropositionWebhookUrl();
       if (!webhookUrl) {
         throw new Error('Value Proposition Webhook URL not configured');
       }
       
-      // Get business data from user profile
       const businessData = userProfile?.business_data || {};
       
       const updatedCompanies = [];
       
-      // Process each company search
       for (const search of searches) {
-        if (!search.score) { // Only generate for companies without a score
+        if (!search.score) {
           try {
             console.log(`Processing company: ${search.company_name}`);
             
-            // Call the webhook
             const response = await callValuePropositionWebhook(webhookUrl, search, businessData);
             
             if (!response.ok) {
@@ -91,7 +81,6 @@ const ValuePropositionTab = () => {
             const data = await response.json();
             console.log(`Webhook response for ${search.company_name}:`, data);
             
-            // Update the company search record
             const { error: updateError } = await supabase
               .from('company_searches')
               .update({
@@ -125,7 +114,6 @@ const ValuePropositionTab = () => {
         });
       }
       
-      // Refresh the searches to show updated data
       await fetchSearches();
       
     } catch (error: any) {
@@ -141,7 +129,6 @@ const ValuePropositionTab = () => {
   };
 
   const handleBack = () => {
-    // Handle back navigation if needed
     console.log("Back button clicked");
   };
 
@@ -188,8 +175,7 @@ const ValuePropositionTab = () => {
             onRefresh={fetchSearches}
             onBatchAction={(searches) => handleGenerateAllPropositions(searches)}
             showDeleteButton={false}
-            showBackButton={true}
-            onBack={handleBack}
+            showBackButton={false}
             batchActionButton={
               <Button 
                 variant="outline" 
