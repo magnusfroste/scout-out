@@ -139,23 +139,9 @@ const ValuePropositionTab = () => {
           />
         </CardContent>
       </Card>
-      
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Developer Information</CardTitle>
-          <CardDescription>
-            Check the browser console (F12) to see the exact webhook request and response data when you click the Magic Value Proposition button.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            The webhook request payload is logged as "WEBHOOK REQUEST PAYLOAD" in the console when you click the button.
-            The response from the webhook is logged as "Raw webhook response".
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 };
 
 export default ValuePropositionTab;
+
