@@ -70,81 +70,10 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
     }
   };
   
-  // Local delete handler that manages state directly
+  // Local delete handler that manages state directly - keeping for compatibility
   const handleDeleteSearch = async (id: string) => {
-    if (!id) {
-      console.error("Invalid search ID provided");
-      toast({
-        title: "Error",
-        description: "Invalid search ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log(`Starting deletion process for search ID: ${id}`);
-    setLocalDeletingSearch(id);
-
-    try {
-      // If external delete handler is provided, use it
-      if (onDeleteSearch) {
-        await onDeleteSearch(id);
-      } else {
-        // Otherwise handle deletion locally
-        // First, delete related answers
-        console.log(`Deleting answers for search ID: ${id}`);
-        const { error: answersError } = await supabase
-          .from('company_question_answers')
-          .delete()
-          .eq('company_search_id', id);
-        
-        if (answersError) {
-          console.error('Error deleting answers:', answersError);
-          console.log('Error details:', JSON.stringify(answersError));
-        } else {
-          console.log('Successfully deleted answers');
-        }
-
-        // Then delete the search record
-        console.log(`Deleting search record with ID: ${id}`);
-        const { error: deleteError } = await supabase
-          .from('company_searches')
-          .delete()
-          .eq('id', id);
-
-        if (deleteError) {
-          console.error('Error deleting search:', deleteError);
-          console.log('Error details:', JSON.stringify(deleteError));
-          throw new Error(`Failed to delete search: ${deleteError.message}`);
-        }
-      }
-
-      console.log(`Successfully deleted search with ID: ${id}`);
-      
-      // Update local state immediately
-      setLocalSearches(prev => prev.filter(search => search.id !== id));
-      
-      // Notify parent component to refresh the list
-      onSearchDeleted();
-      
-      toast({
-        title: "Success",
-        description: "Search deleted successfully",
-      });
-    } catch (error: any) {
-      console.error('Error during delete operation:', error);
-      
-      toast({
-        title: "Error",
-        description: "Failed to delete search. Please try again.",
-        variant: "destructive",
-      });
-      
-      // Try to refresh the list anyway
-      onSearchDeleted();
-    } finally {
-      setLocalDeletingSearch(null);
-    }
+    // Now a stub function as delete button is removed
+    console.log("Delete function called but delete button is removed");
   };
 
   return (

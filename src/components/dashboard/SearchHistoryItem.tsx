@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -35,17 +36,6 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
   const [localIsDeleting, setLocalIsDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const { toast } = useToast();
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    toast({
-      title: "Not Implemented",
-      description: "Delete functionality is not implemented yet.",
-      variant: "default",
-    });
-  };
   
   if (isDeleted) {
     return null;
@@ -72,16 +62,13 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
             </p>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDelete}
-            aria-label="Delete search"
-            className="z-10 hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="ml-2">Delete</span>
-          </Button>
+          <div className="flex items-center">
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
         </div>
       </div>
       
@@ -95,8 +82,13 @@ const SearchHistoryItem: React.FC<SearchHistoryItemProps> = ({
             <div className="space-y-4">
               {searchAnswers.map((answer) => (
                 <div key={answer.id} className="space-y-1">
-                  <h4 className="font-medium text-sm">{answer.question}</h4>
-                  <p className="text-sm">{answer.answer}</p>
+                  <div className="flex items-start gap-2">
+                    <ChevronLeft className="h-4 w-4 mt-1 text-muted-foreground" />
+                    <div>
+                      <h4 className="font-medium text-sm">{answer.question}</h4>
+                      <p className="text-sm">{answer.answer}</p>
+                    </div>
+                  </div>
                   <Separator className="my-2" />
                 </div>
               ))}
