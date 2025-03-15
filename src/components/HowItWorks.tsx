@@ -50,7 +50,7 @@ const HowItWorks: React.FC = () => {
         </div>
         
         {/* Enhanced step visualization with connecting lines */}
-        <div className="relative mb-24">
+        <div className="relative mb-16">
           {/* Connecting line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-primary/10 -translate-x-1/2 hidden md:block"></div>
           
@@ -90,21 +90,27 @@ const HowItWorks: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto mt-20">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <h3 className="text-2xl font-bold mb-3">Intelligence at Your Fingertips</h3>
-            <p className="text-muted-foreground">
-              Our AI agent answers critical questions that help you understand prospects better and approach them with confidence. Here's what you can discover:
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {questions.map((question, index) => (
-              <div key={index} className="flex items-start space-x-3 p-4 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-colors">
-                <ArrowRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <p className="text-foreground font-medium">{question}</p>
+        {/* Intelligence at Your Fingertips section - now better integrated with the workflow */}
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl shadow-xl p-8 transform -translate-y-6 border border-gray-100">
+            <div className="text-center max-w-3xl mx-auto mb-8">
+              <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                <ZapIcon className="h-8 w-8" />
               </div>
-            ))}
+              <h3 className="text-2xl font-bold mb-3">Intelligence at Your Fingertips</h3>
+              <p className="text-muted-foreground">
+                Our AI agent answers critical questions that help you understand prospects better and approach them with confidence. Here's what you can discover:
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {questions.map((question, index) => (
+                <div key={index} className="flex items-start space-x-3 p-4 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-colors">
+                  <ArrowRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <p className="text-foreground font-medium">{question}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
