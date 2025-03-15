@@ -29,15 +29,12 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
     console.group('🔍 Magic Questions API Request');
     console.log('%c Questions Webhook URL: ', 'background: #f0f0f0; color: #0066cc; font-weight: bold', webhookSettings.questions_url);
     
-    // Create and log the request payload
-    const requestPayload = { website_url: websiteUrl };
+    // Create and log the request payload with url instead of website_url
+    const requestPayload = { url: websiteUrl };
     console.log('%c Request Payload: ', 'background: #f0f0f0; color: #009933; font-weight: bold', requestPayload);
     
     // Log the exact JSON payload that will be sent to the API
     console.log('%c WEBHOOK REQUEST PAYLOAD JSON:', 'background: #f0f0f0; color: #009933; font-weight: bold', JSON.stringify(requestPayload, null, 2));
-    
-    // Also log an alternative payload format in case that's what the API expects
-    console.log('%c ALTERNATIVE PAYLOAD FORMAT:', 'background: #f0f0f0; color: #ff6600; font-weight: bold', JSON.stringify({ url: websiteUrl }, null, 2));
     console.groupEnd();
     
     // Make the API call to the questions webhook

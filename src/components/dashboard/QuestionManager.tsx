@@ -48,14 +48,12 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
   const { toast } = useToast();
   const { userProfile, loading: loadingProfile } = useProfile(userId);
 
-  // Set the website URL from the user's profile when it loads
   useEffect(() => {
     if (userProfile?.website_url) {
       setWebsiteUrl(userProfile.website_url);
     }
   }, [userProfile]);
 
-  // Fetch the questions webhook URL
   useEffect(() => {
     const getWebhookUrl = async () => {
       try {
@@ -119,7 +117,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
         
       if (error) throw error;
       
-      // Update the questions state with the edited question
       setQuestions(questions.map(q => 
         q.id === editingQuestion.id ? editingQuestion : q
       ));
@@ -183,8 +180,7 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     setMagicQuestions([]);
     setSelectedMagicQuestions([]);
     
-    // Set the request body for the developer log
-    const newRequestBody = { website_url: websiteUrl };
+    const newRequestBody = { url: websiteUrl };
     setRequestBody(newRequestBody);
 
     try {
@@ -192,7 +188,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
       
       if (questions && questions.length > 0) {
         setMagicQuestions(questions);
-        // By default, select all questions
         setSelectedMagicQuestions(questions.map(q => q.question));
         
         toast({
@@ -222,7 +217,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     if (!selectedMagicQuestions.length || !userId) return;
     
     try {
-      // Create a map of selected questions to their rationales
       const selectedQuestionsWithRationales = magicQuestions
         .filter(item => selectedMagicQuestions.includes(item.question))
         .map(item => ({
@@ -231,7 +225,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
           user_id: userId
         }));
       
-      // Insert all selected questions with their rationales
       const { data, error } = await supabase
         .from('agent_questions')
         .insert(selectedQuestionsWithRationales)
@@ -239,12 +232,10 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
         
       if (error) throw error;
       
-      // Update the questions state with the newly added questions
       if (data && data.length > 0) {
         setQuestions([...questions, ...data]);
       }
       
-      // Close the dialog and reset states
       setIsMagicDialogOpen(false);
       setWebsiteUrl('');
       setMagicQuestions([]);
@@ -384,7 +375,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
                     </div>
                   </div>
                   
-                  {/* Expandable rationale section */}
                   {question.rationale && expandedQuestions.includes(question.id) && (
                     <div className="px-3 pb-3 pt-0 bg-muted/20 border-t">
                       <div className="text-xs text-muted-foreground font-medium uppercase mt-1 mb-1">Rationale</div>
@@ -396,7 +386,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
             )}
           </div>
           
-          {/* Developer Log */}
           <QuestionsDeveloperLog 
             webhookUrl={questionsWebhookUrl}
             websiteUrl={websiteUrl}
@@ -465,7 +454,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
         </DialogContent>
       </Dialog>
 
-      {/* Magic Questions Dialog */}
       <Dialog open={isMagicDialogOpen} onOpenChange={setIsMagicDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
