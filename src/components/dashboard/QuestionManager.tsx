@@ -6,16 +6,18 @@ import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Wand2, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Wand2, ChevronDown, ChevronRight, Info, Code } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchQuestionsFromWebhook, QuestionResponse } from '@/services/questionService';
 import { useProfile } from '@/hooks/useProfile';
+import { fetchWebhookSettings } from '@/services/webhookService';
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import QuestionsDeveloperLog from './QuestionsDeveloperLog';
 
 type Question = {
   id: string;
@@ -40,6 +42,9 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
   const [magicQuestions, setMagicQuestions] = useState<QuestionResponse[]>([]);
   const [selectedMagicQuestions, setSelectedMagicQuestions] = useState<string[]>([]);
   const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
+  const [questionsWebhookUrl, setQuestionsWebhookUrl] = useState<string | null>(null);
+  const [requestBody, setRequestBody] = useState<any>(null);
+  const [showDeveloperLog, setShowDeveloperLog] = useState(false);
   const { toast } = useToast();
   const { userProfile, loading: loadingProfile } = useProfile(userId);
 
@@ -49,6 +54,22 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
       setWebsiteUrl(userProfile.website_url);
     }
   }, [userProfile]);
+
+  // Fetch the questions webhook URL
+  useEffect(() => {
+    const getWebhookUrl = async () => {
+      try {
+        const settings = await fetchWebhookSettings();
+        if (settings && settings.questions_url) {
+          setQuestionsWebhookUrl(settings.questions_url);
+        }
+      } catch (error) {
+        console.error('Error fetching webhook URL:', error);
+      }
+    };
+    
+    getWebhookUrl();
+  }, []);
 
   const handleAddQuestion = async () => {
     if (!newQuestion.trim() || !userId) return;
@@ -161,6 +182,10 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     setIsLoadingMagicQuestions(true);
     setMagicQuestions([]);
     setSelectedMagicQuestions([]);
+    
+    // Set the request body for the developer log
+    const newRequestBody = { website_url: websiteUrl };
+    setRequestBody(newRequestBody);
 
     try {
       const questions = await fetchQuestionsFromWebhook(websiteUrl);
@@ -267,6 +292,14 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
           <CardTitle>Manage Questions</CardTitle>
           <div className="flex space-x-2">
             <Button 
+              onClick={() => setShowDeveloperLog(!showDeveloperLog)}
+              size="sm"
+              variant="outline"
+            >
+              <Code className="h-4 w-4 mr-2" />
+              {showDeveloperLog ? 'Hide' : 'Show'} Dev Log
+            </Button>
+            <Button 
               onClick={() => setIsMagicDialogOpen(true)}
               size="sm"
               variant="outline"
@@ -362,6 +395,14 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
               ))
             )}
           </div>
+          
+          {/* Developer Log */}
+          <QuestionsDeveloperLog 
+            webhookUrl={questionsWebhookUrl}
+            websiteUrl={websiteUrl}
+            requestBody={requestBody}
+            isVisible={showDeveloperLog}
+          />
         </CardContent>
       </Card>
 
