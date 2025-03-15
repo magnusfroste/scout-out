@@ -76,67 +76,116 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
         </TableHeader>
         <TableBody>
           {searches.map((search) => (
-            <TableRow 
-              key={search.id} 
-              className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${onToggleRow ? 'cursor-pointer' : ''}`}
-              onClick={onToggleRow ? () => onToggleRow(search.id) : undefined}
-            >
-              {onToggleRow && (
-                <TableCell className="pr-0 w-10">
-                  {expandedRows.has(search.id) ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </TableCell>
-              )}
-              <TableCell className="font-medium">{search.company_name}</TableCell>
-              <TableCell className="text-muted-foreground text-sm">
-                {formatDate(search.created_at)}
-              </TableCell>
-              <TableCell>{renderScore(search.score)}</TableCell>
-              <TableCell>
-                {search.www ? (
-                  <a 
-                    href={search.www.startsWith('http') ? search.www : `https://${search.www}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {search.www}
-                  </a>
-                ) : '-'}
-              </TableCell>
-              <TableCell>
-                {search.contact ? search.contact : '-'}
-              </TableCell>
-              <TableCell>
-                <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onViewDetail(search.id)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Eye className="h-4 w-4 text-primary" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteSearch(search.id)}
-                    disabled={isDeleting === search.id}
-                    className="h-8 w-8 p-0"
-                  >
-                    {isDeleting === search.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+            <React.Fragment key={search.id}>
+              <TableRow 
+                className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${onToggleRow ? 'cursor-pointer' : ''}`}
+                onClick={onToggleRow ? () => onToggleRow(search.id) : undefined}
+              >
+                {onToggleRow && (
+                  <TableCell className="pr-0 w-10">
+                    {expandedRows.has(search.id) ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     )}
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
+                  </TableCell>
+                )}
+                <TableCell className="font-medium">{search.company_name}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {formatDate(search.created_at)}
+                </TableCell>
+                <TableCell>{renderScore(search.score)}</TableCell>
+                <TableCell>
+                  {search.www ? (
+                    <a 
+                      href={search.www.startsWith('http') ? search.www : `https://${search.www}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {search.www}
+                    </a>
+                  ) : '-'}
+                </TableCell>
+                <TableCell>
+                  {search.contact ? search.contact : '-'}
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewDetail(search.id)}
+                      className="h-8 w-8 p-0"
+                      aria-label="View detail"
+                    >
+                      <Eye className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDeleteSearch(search.id)}
+                      disabled={isDeleting === search.id}
+                      className="h-8 w-8 p-0"
+                      aria-label="Delete search"
+                    >
+                      {isDeleting === search.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      )}
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+              
+              {/* Expanded content row */}
+              {expandedRows.has(search.id) && onToggleRow && (
+                <TableRow className="bg-muted/30">
+                  <TableCell colSpan={7} className="p-4">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm">Company Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {search.industry && (
+                          <div>
+                            <span className="font-medium">Industry:</span> {search.industry}
+                          </div>
+                        )}
+                        {search.employees && (
+                          <div>
+                            <span className="font-medium">Employees:</span> {search.employees}
+                          </div>
+                        )}
+                        {search.annual_revenue && (
+                          <div>
+                            <span className="font-medium">Annual Revenue:</span> {search.annual_revenue}
+                          </div>
+                        )}
+                        {search.location && (
+                          <div>
+                            <span className="font-medium">Location:</span> {search.location}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-end mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetail(search.id);
+                          }}
+                        >
+                          View Full Details
+                        </Button>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>
