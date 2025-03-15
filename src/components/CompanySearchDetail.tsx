@@ -34,6 +34,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const [dbIntroduction, setDbIntroduction] = useState<string>('');
   
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
@@ -249,6 +250,19 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     setHasUnsavedChanges(true);
   };
 
+  const handleCopySuccess = () => {
+    setCopySuccess(true);
+    toast({
+      title: "Copied!",
+      description: "Introduction text copied to clipboard",
+      duration: 2000,
+    });
+    
+    setTimeout(() => {
+      setCopySuccess(false);
+    }, 2000);
+  };
+
   useEffect(() => {
     const introTextarea = document.getElementById('introduction') as HTMLTextAreaElement;
     if (introTextarea) {
@@ -431,6 +445,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                     placeholder="Draft an introduction email or message..."
                     className="min-h-[250px] p-4 text-base resize-none overflow-hidden font-sans border-gray-200 dark:border-gray-800 shadow-inner focus:border-primary focus:ring-1 focus:ring-primary"
                     onFocus={(e) => adjustTextareaHeight(e as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
+                    copyable={true}
+                    onCopy={handleCopySuccess}
                   />
                 </div>
               </div>
