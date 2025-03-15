@@ -140,6 +140,11 @@ const ValuePropositionTab = () => {
     }
   };
 
+  const handleBack = () => {
+    // Handle back navigation if needed
+    console.log("Back button clicked");
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-sm border-opacity-50">
@@ -184,9 +189,7 @@ const ValuePropositionTab = () => {
             onBatchAction={(searches) => handleGenerateAllPropositions(searches)}
             showDeleteButton={false}
             showBackButton={true}
-            onBack={() => {
-              // Handle back navigation if needed
-            }}
+            onBack={handleBack}
             batchActionButton={
               <Button 
                 variant="outline" 

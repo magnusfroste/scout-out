@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
@@ -136,22 +137,6 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                     >
                       <Eye className="h-4 w-4 text-primary" />
                     </Button>
-                    {onDeleteSearch && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDeleteSearch(search.id)}
-                        disabled={isDeleting === search.id}
-                        className="h-8 w-8 p-0"
-                        aria-label="Delete search"
-                      >
-                        {isDeleting === search.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        )}
-                      </Button>
-                    )}
                   </div>
                 </TableCell>
               </TableRow>
