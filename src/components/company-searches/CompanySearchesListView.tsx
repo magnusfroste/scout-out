@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { Loader2, Trash2, Eye, Star, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Trash2, Eye, Star, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -16,9 +15,11 @@ interface CompanySearchesListViewProps {
   searches: CompanySearch[];
   isDeleting: string | null;
   onViewDetail: (id: string) => void;
-  onDeleteSearch: (id: string) => void;
+  onDeleteSearch?: (id: string) => void;
   expandedRows?: Set<string>;
   onToggleRow?: (id: string) => void;
+  showBackButton?: boolean;
+  onBack?: () => void;
 }
 
 const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
@@ -27,7 +28,9 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
   onViewDetail,
   onDeleteSearch,
   expandedRows = new Set(),
-  onToggleRow
+  onToggleRow,
+  showBackButton = false,
+  onBack
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -113,6 +116,17 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
+                    {showBackButton && onBack && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onBack}
+                        className="h-8 w-8 p-0"
+                        aria-label="Go back"
+                      >
+                        <ChevronLeft className="h-4 w-4 text-primary" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -122,20 +136,22 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                     >
                       <Eye className="h-4 w-4 text-primary" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteSearch(search.id)}
-                      disabled={isDeleting === search.id}
-                      className="h-8 w-8 p-0"
-                      aria-label="Delete search"
-                    >
-                      {isDeleting === search.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      )}
-                    </Button>
+                    {onDeleteSearch && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteSearch(search.id)}
+                        disabled={isDeleting === search.id}
+                        className="h-8 w-8 p-0"
+                        aria-label="Delete search"
+                      >
+                        {isDeleting === search.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

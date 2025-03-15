@@ -16,6 +16,9 @@ interface CompanySearchesListProps {
   onRefresh: () => void;
   onBatchAction?: (searches: any[]) => void;
   batchActionButton?: React.ReactNode;
+  showDeleteButton?: boolean;
+  showBackButton?: boolean;
+  onBack?: () => void;
 }
 
 const CompanySearchesList = ({ 
@@ -25,7 +28,10 @@ const CompanySearchesList = ({
   onDelete, 
   onRefresh, 
   onBatchAction, 
-  batchActionButton 
+  batchActionButton,
+  showDeleteButton = true,
+  showBackButton = false,
+  onBack
 }: CompanySearchesListProps) => {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -84,9 +90,11 @@ const CompanySearchesList = ({
           searches={searches}
           isDeleting={isDeleting}
           onViewDetail={setSelectedSearchId}
-          onDeleteSearch={onDelete}
+          onDeleteSearch={showDeleteButton ? onDelete : undefined}
           expandedRows={expandedRows}
           onToggleRow={handleToggleRow}
+          showBackButton={showBackButton}
+          onBack={onBack}
         />
       </div>
     </div>

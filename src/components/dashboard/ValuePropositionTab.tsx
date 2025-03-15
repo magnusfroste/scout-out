@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import CompanySearchesList from '@/components/CompanySearchesList';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, Search } from 'lucide-react';
+import { Loader2, Sparkles, Search, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 import { supabase } from '@/integrations/supabase/client';
@@ -182,6 +182,11 @@ const ValuePropositionTab = () => {
             onDelete={handleDeleteSearch}
             onRefresh={fetchSearches}
             onBatchAction={(searches) => handleGenerateAllPropositions(searches)}
+            showDeleteButton={false}
+            showBackButton={true}
+            onBack={() => {
+              // Handle back navigation if needed
+            }}
             batchActionButton={
               <Button 
                 variant="outline" 
