@@ -2,7 +2,7 @@
 import React from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { Loader2, Trash2, Eye, Star } from 'lucide-react';
+import { Loader2, Trash2, Eye, Star, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -17,13 +17,17 @@ interface CompanySearchesListViewProps {
   isDeleting: string | null;
   onViewDetail: (id: string) => void;
   onDeleteSearch: (id: string) => void;
+  expandedRows?: Set<string>;
+  onToggleRow?: (id: string) => void;
 }
 
 const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
   searches,
   isDeleting,
   onViewDetail,
-  onDeleteSearch
+  onDeleteSearch,
+  expandedRows = new Set(),
+  onToggleRow
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -61,6 +65,7 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50 dark:bg-gray-800">
+            {onToggleRow && <TableHead className="w-10"></TableHead>}
             <TableHead>Company Name</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Score</TableHead>
@@ -71,7 +76,20 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
         </TableHeader>
         <TableBody>
           {searches.map((search) => (
-            <TableRow key={search.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <TableRow 
+              key={search.id} 
+              className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${onToggleRow ? 'cursor-pointer' : ''}`}
+              onClick={onToggleRow ? () => onToggleRow(search.id) : undefined}
+            >
+              {onToggleRow && (
+                <TableCell className="pr-0 w-10">
+                  {expandedRows.has(search.id) ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </TableCell>
+              )}
               <TableCell className="font-medium">{search.company_name}</TableCell>
               <TableCell className="text-muted-foreground text-sm">
                 {formatDate(search.created_at)}
@@ -84,6 +102,7 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {search.www}
                   </a>
@@ -93,7 +112,7 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                 {search.contact ? search.contact : '-'}
               </TableCell>
               <TableCell>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
                     size="sm"
