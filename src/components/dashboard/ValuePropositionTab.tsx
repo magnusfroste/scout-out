@@ -101,14 +101,14 @@ const ValuePropositionTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Value Proposition</CardTitle>
-          <CardDescription>
+      <Card className="shadow-sm border-opacity-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-2xl font-semibold tracking-tight">Value Proposition</CardTitle>
+          <CardDescription className="text-base">
             Review your researched companies, rate their potential, and prepare your approach.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-2">
           <CompanySearchesList 
             searches={searches}
             isLoading={isLoading}
@@ -122,6 +122,7 @@ const ValuePropositionTab = () => {
                 size="sm" 
                 onClick={() => {}} 
                 disabled={isGeneratingAll}
+                className="bg-gradient-to-b from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 shadow-sm"
               >
                 {isGeneratingAll ? (
                   <>
@@ -144,4 +145,3 @@ const ValuePropositionTab = () => {
 };
 
 export default ValuePropositionTab;
-

@@ -12,6 +12,7 @@ import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropos
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -302,24 +303,24 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2">
-        <Button variant="ghost" onClick={onBack} size="sm">
+        <Button variant="ghost" onClick={onBack} size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to List
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="shadow-md border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
           <div>
-            <CardTitle className="text-2xl">{companySearch.company_name}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-semibold tracking-tight">{companySearch.company_name}</CardTitle>
+            <CardDescription className="text-sm mt-1">
               Searched on {formatDate(companySearch.created_at)}
             </CardDescription>
           </div>
           <Button 
             onClick={handleSave} 
             disabled={isSaving || !hasUnsavedChanges}
-            className={`${hasUnsavedChanges ? 'bg-green-600 hover:bg-green-700' : ''}`}
+            className={`${hasUnsavedChanges ? 'bg-green-600 hover:bg-green-700' : ''} transition-all duration-200`}
           >
             {isSaving ? (
               <>
@@ -334,11 +335,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             )}
           </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+        <CardContent className="space-y-6 pt-6">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-5">
               <h3 className="text-lg font-medium">Contact Information</h3>
-              <div className="space-y-2">
+              <div className="space-y-3 text-sm">
                 {companySearch.www && (
                   <div>
                     <strong>Website:</strong>{' '}
@@ -387,7 +388,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Value Proposition</h3>
                 <MagicValuePropositionButton 
@@ -395,21 +396,34 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                   onSuccess={handleMagicSuccess} 
                 />
               </div>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="score">Score (1-5)</Label>
-                  <div className="bg-muted p-3 rounded-md text-lg font-medium">
-                    {displayScore ? displayScore : 'Not rated yet'}
-                  </div>
+                  <Label htmlFor="score" className="text-sm font-medium">Score (1-5)</Label>
+                  <Input
+                    id="score"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={displayScore}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || (parseInt(value) >= 1 && parseInt(value) <= 5)) {
+                        setDisplayScore(value);
+                        setHasUnsavedChanges(true);
+                      }
+                    }}
+                    className="text-lg font-medium w-24 h-12"
+                    placeholder="1-5"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="advice">AI Advice</Label>
-                  <div className="bg-muted p-4 rounded-md whitespace-pre-wrap min-h-[120px]">
+                  <Label htmlFor="advice" className="text-sm font-medium">AI Advice</Label>
+                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg whitespace-pre-wrap min-h-[120px] text-sm border border-gray-200 dark:border-gray-800 shadow-inner">
                     {displayAdvice || 'No advice generated yet. Use the "Magic Write Value Proposition" button to generate advice.'}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="introduction">Introduction Draft</Label>
+                  <Label htmlFor="introduction" className="text-sm font-medium">Introduction Draft</Label>
                   <Textarea
                     id="introduction"
                     value={displayIntroduction}
@@ -419,7 +433,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                       adjustTextareaHeight(e);
                     }}
                     placeholder="Draft an introduction email or message..."
-                    className="min-h-[180px] resize-none overflow-hidden"
+                    className="min-h-[250px] p-4 text-base resize-none overflow-hidden font-sans border-gray-200 dark:border-gray-800 shadow-inner focus:border-primary focus:ring-1 focus:ring-primary"
                     onFocus={(e) => adjustTextareaHeight(e as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
                   />
                 </div>
@@ -427,16 +441,16 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             </div>
           </div>
 
-          <Separator />
+          <Separator className="my-2" />
 
           {questionAnswers.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <h3 className="text-lg font-medium">Questions & Answers</h3>
-              <div className="space-y-6">
+              <div className="space-y-6 bg-gray-50 dark:bg-gray-900 rounded-lg p-5 border border-gray-200 dark:border-gray-800">
                 {questionAnswers.map((qa) => (
                   <div key={qa.id} className="pb-4">
                     <h4 className="font-medium text-md mb-2">{qa.agent_questions.question}</h4>
-                    <div className="bg-muted p-4 rounded-md">
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
                       <p className="whitespace-pre-wrap text-sm">{qa.answer || 'No answer available'}</p>
                     </div>
                     <Separator className="mt-4" />
@@ -499,3 +513,4 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 };
 
 export default CompanySearchDetail;
+
