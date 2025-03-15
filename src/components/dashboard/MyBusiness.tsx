@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -142,7 +143,7 @@ const MyBusiness = () => {
 
       toast({
         title: "Success",
-        description: "Your business website has been analyzed and profile saved",
+        description: "Your business website has been analyzed and profile generated",
       });
     } catch (error) {
       console.error('Error analyzing website:', error);
