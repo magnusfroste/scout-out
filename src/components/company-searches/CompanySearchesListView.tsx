@@ -169,10 +169,10 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                         )}
                       </div>
                       
-                      {search.introduction && (
+                      {search.advice && (
                         <div className="mt-2">
-                          <span className="font-medium">Introduction:</span>
-                          <p className="text-sm mt-1">{search.introduction}</p>
+                          <span className="font-medium">AI Advice:</span>
+                          <p className="text-sm mt-1 line-clamp-3">{search.advice}</p>
                         </div>
                       )}
                       
