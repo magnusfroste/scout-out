@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -363,7 +364,7 @@ const Dashboard = () => {
                     <Building className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                     <div>
                       <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business Profile</h3>
-                      <p className="text-muted-foreground">Configure your business profile and settings to personalize your experience.</p>
+                      <p className="text-muted-foreground">Your profile will be used by our AI agent when creating research questions.</p>
                     </div>
                   </div>
                 )}
