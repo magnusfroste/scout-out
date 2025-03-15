@@ -47,70 +47,81 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
     );
   };
 
+  // If no searches are available, show a message
+  if (searches.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No companies match your search criteria</p>
+      </div>
+    );
+  }
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Company Name</TableHead>
-          <TableHead>Created</TableHead>
-          <TableHead>Score</TableHead>
-          <TableHead>Website</TableHead>
-          <TableHead>Contact</TableHead>
-          <TableHead className="w-[150px]">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {searches.map((search) => (
-          <TableRow key={search.id}>
-            <TableCell className="font-medium">{search.company_name}</TableCell>
-            <TableCell className="text-muted-foreground text-sm">
-              {formatDate(search.created_at)}
-            </TableCell>
-            <TableCell>{renderScore(search.score)}</TableCell>
-            <TableCell>
-              {search.www ? (
-                <a 
-                  href={search.www.startsWith('http') ? search.www : `https://${search.www}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {search.www}
-                </a>
-              ) : '-'}
-            </TableCell>
-            <TableCell>
-              {search.contact ? search.contact : '-'}
-            </TableCell>
-            <TableCell>
-              <div className="flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewDetail(search.id)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Eye className="h-4 w-4 text-primary" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteSearch(search.id)}
-                  disabled={isDeleting === search.id}
-                  className="h-8 w-8 p-0"
-                >
-                  {isDeleting === search.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  )}
-                </Button>
-              </div>
-            </TableCell>
+    <div className="overflow-x-auto rounded-md border shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-gray-50 dark:bg-gray-800">
+            <TableHead>Company Name</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Score</TableHead>
+            <TableHead>Website</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead className="w-[150px]">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {searches.map((search) => (
+            <TableRow key={search.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <TableCell className="font-medium">{search.company_name}</TableCell>
+              <TableCell className="text-muted-foreground text-sm">
+                {formatDate(search.created_at)}
+              </TableCell>
+              <TableCell>{renderScore(search.score)}</TableCell>
+              <TableCell>
+                {search.www ? (
+                  <a 
+                    href={search.www.startsWith('http') ? search.www : `https://${search.www}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {search.www}
+                  </a>
+                ) : '-'}
+              </TableCell>
+              <TableCell>
+                {search.contact ? search.contact : '-'}
+              </TableCell>
+              <TableCell>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewDetail(search.id)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Eye className="h-4 w-4 text-primary" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteSearch(search.id)}
+                    disabled={isDeleting === search.id}
+                    className="h-8 w-8 p-0"
+                  >
+                    {isDeleting === search.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    )}
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
