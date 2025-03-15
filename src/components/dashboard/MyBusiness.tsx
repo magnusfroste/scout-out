@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -125,17 +124,25 @@ const MyBusiness = () => {
         contactInfo: parsedData.contactInfo
       };
       
-      // Update state with the new data
+      // Update state with the new data immediately to display it
       setBusinessData(newBusinessData);
       
       // Save website URL to profile immediately
       if (user && websiteUrl !== userProfile?.website_url) {
         await updateProfile({ website_url: websiteUrl });
+        
+        // Also save the business data automatically after the first generation
+        await updateProfile({ 
+          business_data: {
+            elevator_pitch: newBusinessData?.elevatorPitch,
+            contact_info: newBusinessData?.contactInfo
+          }
+        });
       }
 
       toast({
         title: "Success",
-        description: "Your business website has been analyzed",
+        description: "Your business website has been analyzed and profile saved",
       });
     } catch (error) {
       console.error('Error analyzing website:', error);
