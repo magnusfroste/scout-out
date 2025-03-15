@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { fetchWebhookSettings } from './webhookService';
 import { toast } from '@/hooks/use-toast';
@@ -33,6 +32,9 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
     // Create and log the request payload
     const requestPayload = { website_url: websiteUrl };
     console.log('%c Request Payload: ', 'background: #f0f0f0; color: #009933; font-weight: bold', requestPayload);
+    
+    // Log the exact JSON payload that will be sent to the API
+    console.log('%c WEBHOOK REQUEST PAYLOAD JSON:', 'background: #f0f0f0; color: #009933; font-weight: bold', JSON.stringify(requestPayload, null, 2));
     console.groupEnd();
     
     // Make the API call to the questions webhook
