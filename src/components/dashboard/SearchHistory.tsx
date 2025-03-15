@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -79,7 +80,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Search History</CardTitle>
+        <CardTitle>Research History</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoadingSearches ? (
@@ -105,7 +106,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-8">
-            No search history found. Search for a company to get started.
+            No research history found. Research a company to get started.
           </p>
         )}
       </CardContent>

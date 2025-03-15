@@ -504,16 +504,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         </div>
       )}
       
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Research History</h2>
-        <SearchHistory 
-          searches={searches} 
-          isLoadingSearches={isLoadingSearches}
-          questions={questions}
-          onSearchDeleted={onSearchDeleted}
-          isDeletingSearch={isDeletingSearch}
-        />
-      </div>
+      <SearchHistory 
+        searches={searches} 
+        isLoadingSearches={isLoadingSearches}
+        questions={questions}
+        onSearchDeleted={onSearchDeleted}
+        isDeletingSearch={isDeletingSearch}
+      />
     </div>
   );
 };

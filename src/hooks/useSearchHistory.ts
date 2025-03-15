@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useSearchHistory = (onSearchDeleted: () => void) => {
+export const useResearchHistory = (onSearchDeleted: () => void) => {
   const [isDeletingSearch, setIsDeletingSearch] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -55,16 +55,16 @@ export const useSearchHistory = (onSearchDeleted: () => void) => {
       onSearchDeleted();
       
       toast({
-        title: "Success",
-        description: "Search deleted successfully",
+        title: 'Success',
+        description: 'Research record deleted successfully',
       });
     } catch (error: any) {
       console.error('Error during delete operation:', error);
       
       toast({
-        title: "Error",
-        description: "Failed to delete search. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete research record. Please try again.',
+        variant: 'destructive',
       });
       
       // Try to refresh the list anyway
@@ -80,3 +80,6 @@ export const useSearchHistory = (onSearchDeleted: () => void) => {
     handleDeleteSearch
   };
 };
+
+// Keep the old export name for backward compatibility
+export const useSearchHistory = useResearchHistory;

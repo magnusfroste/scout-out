@@ -129,8 +129,8 @@ const CompanySearch = () => {
 
     try {
       toast({
-        title: "Search Started",
-        description: "Searching for company information...",
+        title: "Research Started",
+        description: "Researching company information...",
       });
       
       const { callCompanyWebhook } = await import('@/services/companyWebhookService');
@@ -156,7 +156,7 @@ const CompanySearch = () => {
       
       if (data.success && data.data) {
         toast({
-          title: "Search Complete",
+          title: "Research Complete",
           description: "Results retrieved successfully!",
         });
         setResult(data.data);
