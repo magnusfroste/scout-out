@@ -18,7 +18,7 @@ const Benefits: React.FC = () => {
     {
       icon: <ArrowUpRight className="h-10 w-10" />,
       title: "Make a Lasting First Impression",
-      description: "Our tailored email drafts ensure you make a strong impression on potential clients, increasing your success rate."
+      description: "Our tailored introduction drafts ensure you make a strong impression on potential clients, increasing your success rate."
     }
   ];
 
@@ -26,11 +26,11 @@ const Benefits: React.FC = () => {
     "Detailed answers to your sales questions",
     "Strategic recommendations based on research findings",
     "Verified contact details for potential clients",
-    "100% personalized email drafts tailored to each client"
+    "100% personalized introduction drafts tailored to each client"
   ];
 
   return (
-    <section className="py-20 md:py-32 bg-background">
+    <section id="benefits" className="py-20 md:py-32 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <p className="text-sm font-medium text-primary mb-3">Benefits</p>
@@ -82,16 +82,16 @@ const Benefits: React.FC = () => {
                 <span className="text-lg font-semibold">A</span>
               </div>
               <div className="flex-1">
-                <h4 className="font-medium">Email Draft Example</h4>
+                <h4 className="font-medium">Introduction Example</h4>
                 <p className="text-sm text-muted-foreground">Personalized outreach</p>
               </div>
             </div>
             <div className="border border-border rounded-md p-4 bg-gray-50">
               <p className="text-sm text-muted-foreground mb-2">Subject: Enhancing [Company]'s Growth Strategy with Targeted Solutions</p>
               <p className="text-sm mb-2">Dear [Name],</p>
-              <p className="text-sm mb-2">After researching [Company]'s recent initiatives in [specific area], I noticed your focus on [specific goal or challenge mentioned on their website].</p>
-              <p className="text-sm mb-2">Our solution has helped similar companies in [industry] achieve [specific benefit] by [explanation of how]...</p>
-              <p className="text-sm text-muted-foreground">... and continues with more personalized content</p>
+              <p className="text-sm mb-2">I'm reaching out after researching [Company]'s recent initiatives in [specific area]. I noticed your focus on [specific goal] and thought our solution might be of interest.</p>
+              <p className="text-sm mb-2">We specialize in helping companies like yours achieve [specific benefit] through our innovative approach to [solution area].</p>
+              <p className="text-sm text-muted-foreground">... continued with more personalized insights</p>
             </div>
           </div>
         </div>
