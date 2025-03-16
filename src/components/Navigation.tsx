@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,9 +37,17 @@ const Navigation = () => {
     }
   };
   
-  const handleSignIn = () => {
-    console.log('Navigating to auth page...');
-    navigate('/auth');
+  const handleNavClick = (elementId: string) => {
+    // If we're already on the home page, smooth scroll to the section
+    if (location.pathname === '/') {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Navigate to home page with the hash
+      navigate('/#' + elementId);
+    }
   };
 
   const getInitials = () => {
@@ -64,16 +73,30 @@ const Navigation = () => {
         {/* Show main navigation on public pages or when logged out */}
         {(isPublicPage || !user) && (
           <div className="hidden md:flex items-center space-x-4">
-            {/* Fix: Using direct Link components instead of nested in Button */}
-            <Link to="/features" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+            <button 
+              onClick={() => handleNavClick('how-it-works')} 
+              className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent"
+            >
+              How It Works
+            </button>
+            <button 
+              onClick={() => handleNavClick('benefits')} 
+              className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent"
+            >
+              Benefits
+            </button>
+            <button 
+              onClick={() => handleNavClick('features')} 
+              className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent"
+            >
               Features
-            </Link>
-            <Link to="/pricing" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+            </button>
+            <button 
+              onClick={() => handleNavClick('pricing')} 
+              className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent"
+            >
               Pricing
-            </Link>
-            <Link to="/about" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
-              About
-            </Link>
+            </button>
           </div>
         )}
         
@@ -113,7 +136,6 @@ const Navigation = () => {
               </Button>
             </>
           ) : (
-            // Fix: Using direct Link component instead of Button with onClick
             <Link to="/auth" className="inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4">
               Sign In
             </Link>

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ const Header = () => {
   const { user, userProfile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   const handleSignOut = async () => {
     try {
@@ -52,6 +53,21 @@ const Header = () => {
   const isActive = (path: string) => {
     return location.pathname === path ? 'text-primary font-medium' : 'text-foreground hover:text-primary';
   };
+
+  const handleNavClick = (elementId: string) => {
+    closeMobileMenu();
+
+    // If we're already on the home page, smooth scroll to the section
+    if (location.pathname === '/') {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Navigate to home page with the hash
+      navigate('/#' + elementId);
+    }
+  };
   
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
@@ -67,19 +83,36 @@ const Header = () => {
           <nav className="hidden md:flex ml-10">
             <ul className="flex space-x-8">
               <li>
-                <Link to="/features" className={`text-sm ${isActive('/features')} transition-colors`}>
+                <button 
+                  onClick={() => handleNavClick('how-it-works')} 
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  How It Works
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavClick('benefits')} 
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Benefits
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavClick('features')} 
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
                   Features
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/pricing" className={`text-sm ${isActive('/pricing')} transition-colors`}>
+                <button 
+                  onClick={() => handleNavClick('pricing')} 
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
                   Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className={`text-sm ${isActive('/about')} transition-colors`}>
-                  About
-                </Link>
+                </button>
               </li>
             </ul>
           </nav>
@@ -146,31 +179,36 @@ const Header = () => {
           <nav className="container mx-auto px-4 py-4">
             <ul className="space-y-4">
               <li>
-                <Link 
-                  to="/features" 
-                  className={`block text-base ${isActive('/features')} transition-colors`}
-                  onClick={closeMobileMenu}
+                <button 
+                  onClick={() => handleNavClick('how-it-works')} 
+                  className="block text-base text-foreground hover:text-primary transition-colors"
+                >
+                  How It Works
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavClick('benefits')} 
+                  className="block text-base text-foreground hover:text-primary transition-colors"
+                >
+                  Benefits
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavClick('features')} 
+                  className="block text-base text-foreground hover:text-primary transition-colors"
                 >
                   Features
-                </Link>
+                </button>
               </li>
               <li>
-                <Link 
-                  to="/pricing" 
-                  className={`block text-base ${isActive('/pricing')} transition-colors`}
-                  onClick={closeMobileMenu}
+                <button 
+                  onClick={() => handleNavClick('pricing')} 
+                  className="block text-base text-foreground hover:text-primary transition-colors"
                 >
                   Pricing
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/about" 
-                  className={`block text-base ${isActive('/about')} transition-colors`}
-                  onClick={closeMobileMenu}
-                >
-                  About
-                </Link>
+                </button>
               </li>
               
               {/* Mobile Auth/User Menu */}
