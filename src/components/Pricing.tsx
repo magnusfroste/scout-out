@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 import Button from './Button';
@@ -137,7 +138,7 @@ const Pricing: React.FC = () => {
         
         <div className="mt-16 max-w-3xl mx-auto text-center">
           <p className="text-muted-foreground">
-            All plans include a 14-day free trial. No credit card required. <br />
+            All plans include 24 credits. <br />
             Need a custom plan? <a href="#" className="text-primary hover:underline">Contact our sales team</a>.
           </p>
         </div>

@@ -31,7 +31,7 @@ const PricingPage = () => {
     },
     {
       question: 'Do you offer a free trial?',
-      answer: 'Yes, all plans come with a 14-day free trial. No credit card required to start.'
+      answer: 'Yes, all plans include 24 credits to get you started.'
     },
     {
       question: 'What payment methods do you accept?',
