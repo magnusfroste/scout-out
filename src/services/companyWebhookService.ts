@@ -15,6 +15,7 @@ export interface WebhookRequestBody {
     first_name?: string;
     last_name?: string;
   };
+  business?: any;
   [key: string]: any;
 }
 
@@ -41,6 +42,21 @@ export const callCompanyWebhook = async (
   // Add userInfo from customRequestBody if it exists
   if (customRequestBody?.userInfo) {
     requestBody.userInfo = customRequestBody.userInfo;
+  }
+  
+  // Add any additional properties from customRequestBody, except for 'company' which should remain a string
+  if (customRequestBody) {
+    Object.entries(customRequestBody).forEach(([key, value]) => {
+      if (key !== 'company' && key !== 'questions' && key !== 'userInfo') {
+        requestBody[key] = value;
+      }
+    });
+  }
+  
+  // Final check to ensure company is always a string
+  if (typeof requestBody.company !== 'string') {
+    console.warn("Fixing company format: company should be a string, not an object");
+    requestBody.company = companyName;
   }
   
   // Log the request body
