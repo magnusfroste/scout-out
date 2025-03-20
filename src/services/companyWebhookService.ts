@@ -1,4 +1,3 @@
-
 /**
  * Service to handle calling the company research webhook
  */
@@ -41,6 +40,12 @@ export const callCompanyWebhook = async (
   // Make sure the company is a string at the top level
   if (typeof requestBody.company !== 'string') {
     requestBody.company = companyName;
+  }
+  
+  // Ensure userInfo is at the top level if present in customRequestBody
+  if (customRequestBody && customRequestBody.userInfo) {
+    // Keep userInfo at the top level
+    requestBody.userInfo = customRequestBody.userInfo;
   }
   
   // Log the request body
