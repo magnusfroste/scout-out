@@ -1,6 +1,6 @@
 
 import * as React from "react"
-import { ClipboardCopy } from "lucide-react"
+import { ClipboardCheck, ClipboardCopy } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface TextareaProps
@@ -11,10 +11,18 @@ export interface TextareaProps
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, copyable, onCopy, ...props }, ref) => {
+    const [isCopied, setIsCopied] = React.useState(false);
+
     const copyToClipboard = () => {
       if (props.value) {
         navigator.clipboard.writeText(props.value.toString());
+        setIsCopied(true);
         if (onCopy) onCopy();
+        
+        // Reset the copied state after 2 seconds
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
       }
     };
 
@@ -32,10 +40,25 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           <button
             type="button"
             onClick={copyToClipboard}
-            className="absolute top-3 right-3 p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"
-            aria-label="Copy to clipboard"
+            className={cn(
+              "absolute top-3 right-3 p-2 rounded-md flex items-center gap-1 transition-all",
+              isCopied 
+                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" 
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            )}
+            aria-label={isCopied ? "Copied to clipboard" : "Copy to clipboard"}
           >
-            <ClipboardCopy size={16} />
+            {isCopied ? (
+              <>
+                <ClipboardCheck size={16} />
+                <span className="text-xs font-medium">Copied!</span>
+              </>
+            ) : (
+              <>
+                <ClipboardCopy size={16} />
+                <span className="text-xs font-medium">Copy</span>
+              </>
+            )}
           </button>
         )}
       </div>
