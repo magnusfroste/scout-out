@@ -2,7 +2,7 @@
 import React from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { Loader2, Trash2, Eye, Star, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Loader2, Trash2, Star, ChevronDown, ChevronRight, ChevronLeft, ExternalLink } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -75,18 +75,24 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
             <TableHead>Score</TableHead>
             <TableHead>Website</TableHead>
             <TableHead>Contact</TableHead>
-            <TableHead className="w-[150px]">Actions</TableHead>
+            <TableHead className="w-[100px] text-right">Details</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {searches.map((search) => (
             <React.Fragment key={search.id}>
               <TableRow 
-                className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${onToggleRow ? 'cursor-pointer' : ''}`}
-                onClick={onToggleRow ? () => onToggleRow(search.id) : undefined}
+                className="hover:bg-muted/50 transition-colors cursor-pointer group"
+                onClick={() => onViewDetail(search.id)}
               >
                 {onToggleRow && (
-                  <TableCell className="pr-0 w-10">
+                  <TableCell 
+                    className="pr-0 w-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onToggleRow) onToggleRow(search.id);
+                    }}
+                  >
                     {expandedRows.has(search.id) ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -105,34 +111,31 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                       href={search.www.startsWith('http') ? search.www : `https://${search.www}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:underline flex items-center"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {search.www}
+                      <ExternalLink className="h-3 w-3 ml-1" />
                     </a>
                   ) : '-'}
                 </TableCell>
                 <TableCell>
                   {search.contact ? search.contact : '-'}
                 </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onViewDetail(search.id)}
-                      className="h-8 w-8 p-0"
-                      aria-label="View detail"
-                    >
-                      <Eye className="h-4 w-4 text-primary" />
-                    </Button>
-                  </div>
+                <TableCell className="text-right">
+                  <span className="text-sm text-primary font-medium group-hover:underline inline-flex items-center">
+                    View Details
+                    <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
                 </TableCell>
               </TableRow>
               
               {/* Expanded content row */}
               {expandedRows.has(search.id) && onToggleRow && (
-                <TableRow className="bg-muted/30">
+                <TableRow 
+                  className="bg-muted/30"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <TableCell colSpan={7} className="p-4">
                     <div className="space-y-3">
                       <h4 className="font-medium text-sm">Company Details</h4>
