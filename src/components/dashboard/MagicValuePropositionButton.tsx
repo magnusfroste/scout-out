@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,12 +46,19 @@ const MagicValuePropositionButton = ({
       // Get business data from user profile
       const businessData = userProfile?.business_data || {};
 
+      // Create user info object with first and last name
+      const userInfo = {
+        first_name: userProfile?.first_name || '',
+        last_name: userProfile?.last_name || ''
+      };
+
       console.log('Calling webhook with company data:', companyData);
       console.log('Calling webhook with business data:', businessData);
       console.log('Calling webhook with additional data:', additionalData);
+      console.log('Calling webhook with user info:', userInfo);
       
-      // Call the webhook with the additional data
-      const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData, additionalData);
+      // Call the webhook with the additional data and user info
+      const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData, additionalData, userInfo);
       
       if (!response.ok) {
         const errorText = await response.text();

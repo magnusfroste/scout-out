@@ -8,7 +8,8 @@ interface DeveloperLogProps {
   companyName: string;
   requestBody: any;
   agentQuestions: any[];
-  additionalData?: any; // Add optional prop for additional data
+  additionalData?: any;
+  userInfo?: any;
 }
 
 const DeveloperLog: React.FC<DeveloperLogProps> = ({
@@ -16,14 +17,23 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
   companyName,
   requestBody,
   agentQuestions,
-  additionalData
+  additionalData,
+  userInfo
 }) => {
   if (!webhookUrl || !companyName) return null;
   
-  // Add additional data to request body if provided
-  const displayRequestBody = additionalData 
-    ? { ...requestBody, additionalData }
-    : requestBody;
+  // Add additional data and user info to request body if provided
+  const displayRequestBody = {
+    ...requestBody
+  };
+  
+  if (additionalData) {
+    displayRequestBody.additionalData = additionalData;
+  }
+  
+  if (userInfo) {
+    displayRequestBody.userInfo = userInfo;
+  }
   
   return (
     <Card>
@@ -36,7 +46,7 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
             <Label className="text-sm font-medium">Request Body</Label>
             <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
               <code className="text-xs break-all text-slate-700 dark:text-slate-300">
-                {displayRequestBody ? JSON.stringify(displayRequestBody, null, 2) : 'No request body yet'}
+                {JSON.stringify(displayRequestBody, null, 2)}
               </code>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -57,6 +67,17 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
               <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
                 <code className="text-xs break-all text-slate-700 dark:text-slate-300">
                   {JSON.stringify(additionalData, null, 2)}
+                </code>
+              </div>
+            </div>
+          )}
+          
+          {userInfo && (
+            <div>
+              <Label className="text-sm font-medium">User Info</Label>
+              <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
+                <code className="text-xs break-all text-slate-700 dark:text-slate-300">
+                  {JSON.stringify(userInfo, null, 2)}
                 </code>
               </div>
             </div>

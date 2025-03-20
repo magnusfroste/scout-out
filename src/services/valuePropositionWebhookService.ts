@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -6,9 +5,10 @@ import { toast } from '@/hooks/use-toast';
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
 
 // Mock response for testing in development
-const getMockValuePropositionResponse = (companyData: any, businessData: any, additionalData: any) => {
+const getMockValuePropositionResponse = (companyData: any, businessData: any, additionalData: any, userInfo: any) => {
   console.log('MOCK MODE: Generating mock value proposition data');
   console.log('Additional data:', additionalData);
+  console.log('User info:', userInfo);
   
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -17,7 +17,7 @@ const getMockValuePropositionResponse = (companyData: any, businessData: any, ad
         json: () => Promise.resolve({
           score: Math.floor(Math.random() * 5) + 1, // Random score between 1-5
           advice: `Based on our analysis, ${companyData.company_name} would be a great fit for your business. Their ${companyData.result?.industry || 'business'} aligns well with your products and services. We recommend highlighting your experience in this sector.`,
-          introduction: `Hello ${companyData.contact || 'there'},\n\nI'm reaching out from ${businessData?.name || 'our company'} where we specialize in ${businessData?.description || 'our services'}. I recently came across ${companyData.company_name} and was impressed by your work in ${companyData.result?.industry || 'your industry'}.\n\nI believe we could help you with ${businessData?.value_proposition || 'improving your business'}.\n\nWould you be open to a brief conversation next week to explore potential synergies?\n\nBest regards,\n${businessData?.contact_name || 'Your Name'}`
+          introduction: `Hello ${companyData.contact || 'there'},\n\nI'm reaching out from ${businessData?.name || 'our company'} where we specialize in ${businessData?.description || 'our services'}. I recently came across ${companyData.company_name} and was impressed by your work in ${companyData.result?.industry || 'your industry'}.\n\nI believe we could help you with ${businessData?.value_proposition || 'improving your business'}.\n\nWould you be open to a brief conversation next week to explore potential synergies?\n\nBest regards,\n${userInfo?.first_name || 'Your Name'} ${userInfo?.last_name || ''}`
         })
       });
     }, 1500);
@@ -31,17 +31,19 @@ export const callValuePropositionWebhook = async (
   webhookUrl: string,
   companyData: any,
   businessData: any,
-  additionalData: any = null
+  additionalData: any = null,
+  userInfo: any = null
 ): Promise<Response> => {
   console.log('Calling value proposition webhook');
   console.log('Company data:', companyData);
   console.log('Business data:', businessData);
   console.log('Additional data:', additionalData);
+  console.log('User info:', userInfo);
   console.log('Using webhook URL:', webhookUrl);
   console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
   
   // Create the actual request body as it will be sent to the API
-  const requestBody = { 
+  const requestBody: any = { 
     company: companyData,
     business: businessData
   };
@@ -51,13 +53,18 @@ export const callValuePropositionWebhook = async (
     requestBody.additionalData = additionalData;
   }
   
+  // Add user info if provided
+  if (userInfo) {
+    requestBody.userInfo = userInfo;
+  }
+  
   // Log the exact JSON payload that will be sent to the API
   console.log('WEBHOOK REQUEST PAYLOAD:', JSON.stringify(requestBody, null, 2));
   
   // Use mock data if in development mode and mock flag is enabled
   if (USE_MOCK_DATA) {
     console.log('MOCK MODE ACTIVE: Using mock data for value proposition');
-    return getMockValuePropositionResponse(companyData, businessData, additionalData) as Promise<Response>;
+    return getMockValuePropositionResponse(companyData, businessData, additionalData, userInfo) as Promise<Response>;
   }
   
   // Otherwise make the actual API call
