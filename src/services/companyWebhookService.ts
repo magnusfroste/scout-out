@@ -38,9 +38,9 @@ export const callCompanyWebhook = async (
     }))
   };
   
-  // If customRequestBody is provided, ensure userInfo data is at the top level if present
-  if (customRequestBody && customRequestBody.userInfo) {
-    requestBody.userInfo = customRequestBody.userInfo;
+  // Make sure the company is a string at the top level
+  if (typeof requestBody.company !== 'string') {
+    requestBody.company = companyName;
   }
   
   // Log the request body
