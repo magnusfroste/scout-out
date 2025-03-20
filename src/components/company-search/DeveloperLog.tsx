@@ -67,6 +67,16 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
           </pre>
         </div>
         
+        {requestBody && requestBody.user && (
+          <div>
+            <h3 className="font-medium mb-1">User Information:</h3>
+            <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-md overflow-auto">
+              <div className="text-xs"><strong>First Name:</strong> {requestBody.user.first_name || "Not provided"}</div>
+              <div className="text-xs"><strong>Last Name:</strong> {requestBody.user.last_name || "Not provided"}</div>
+            </div>
+          </div>
+        )}
+        
         <div>
           <h3 className="font-medium mb-1">Questions ({agentQuestions.length}):</h3>
           <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-md overflow-auto max-h-[300px]">

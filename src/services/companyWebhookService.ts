@@ -38,6 +38,11 @@ export const callCompanyWebhook = async (
     }))
   };
   
+  // If customRequestBody is provided, ensure user data is at the top level if present
+  if (customRequestBody && customRequestBody.user) {
+    requestBody.user = customRequestBody.user;
+  }
+  
   // Log the request body
   console.log("Webhook request body:", JSON.stringify(requestBody, null, 2));
   
@@ -52,4 +57,3 @@ export const callCompanyWebhook = async (
   
   return response;
 };
-

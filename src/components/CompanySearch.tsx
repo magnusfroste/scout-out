@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -142,24 +141,26 @@ const CompanySearch = () => {
       
       console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
       
-      // Create the request body with user profile information
       const body = {
         company: companyName,
         questions: agentQuestions.map(q => ({
           id: q.id,
           text: q.question
-        })),
-        user: userProfile ? {
+        }))
+      };
+      
+      if (userProfile) {
+        body.user = {
           first_name: userProfile.first_name || '',
           last_name: userProfile.last_name || ''
-        } : undefined
-      };
+        };
+      }
       
       const response = await callCompanyWebhook(
         webhookUrl,
         companyName,
         requestBody.questions,
-        body // Pass the complete body
+        body
       );
       
       console.log("Webhook response status:", response.status);
