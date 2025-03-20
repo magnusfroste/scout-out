@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ElevatorPitch } from '@/utils/webhookResponseParser';
@@ -62,7 +61,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
           avatar_url: null,
           is_admin: false,
           website_url: null,
-          // sales_info field removed from insert
           business_data: null
         })
         .select('*')
@@ -81,13 +79,12 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       console.log('New profile created:', newProfile);
       return {
         id: newProfile.id,
-        credits: newProfile.credits || defaultCredits,
+        credits: newProfile.credits,
         first_name: newProfile.first_name,
         last_name: newProfile.last_name,
         avatar_url: newProfile.avatar_url,
         is_admin: newProfile.is_admin,
         website_url: newProfile.website_url,
-        // sales_info field removed from return object
         business_data: newProfile.business_data
       } as UserProfile;
     }
@@ -96,13 +93,12 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     console.log('Profile found:', data);
     return {
       id: data.id,
-      credits: data.credits || defaultCredits,
+      credits: data.credits,
       first_name: data.first_name,
       last_name: data.last_name,
       avatar_url: data.avatar_url,
       is_admin: data.is_admin,
       website_url: data.website_url,
-      // sales_info field removed from return object
       business_data: data.business_data
     } as UserProfile;
   } catch (error) {

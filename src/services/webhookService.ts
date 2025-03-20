@@ -57,13 +57,15 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
         return null;
       }
       
-      // Ensure the returned data has all required fields
+      // Ensure the returned data has all required fields and log the default_signup_credits
       if (data) {
+        console.log('Webhook settings found for non-admin, default_signup_credits:', data.default_signup_credits);
+        
         const webhookSettings: WebhookSettings = {
           ...data,
           questions_url: (data as any).questions_url || '',
           value_proposition_url: (data as any).value_proposition_url || '',
-          default_signup_credits: data.default_signup_credits || 50
+          default_signup_credits: data.default_signup_credits !== null ? data.default_signup_credits : 50
         };
         return webhookSettings;
       }
@@ -96,6 +98,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
     }
     
     console.log('Webhook settings fetched successfully:', data);
+    console.log('Default signup credits from settings:', data.default_signup_credits);
     
     // Ensure the returned data has all required fields
     if (data) {
@@ -103,7 +106,7 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
         ...data,
         questions_url: (data as any).questions_url || '',
         value_proposition_url: (data as any).value_proposition_url || '',
-        default_signup_credits: data.default_signup_credits || 50
+        default_signup_credits: data.default_signup_credits !== null ? data.default_signup_credits : 50
       };
       return webhookSettings;
     }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
+import { fetchWebhookSettings } from '@/services/webhookService';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -92,6 +94,11 @@ const Auth = () => {
     
     try {
       setLoading(true);
+      
+      // Get the default credits from webhook settings
+      const webhookSettings = await fetchWebhookSettings();
+      console.log('Webhook settings for new user signup:', webhookSettings);
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -99,6 +106,7 @@ const Auth = () => {
           data: {
             first_name: firstName,
             last_name: lastName,
+            default_credits: webhookSettings?.default_signup_credits || 25 // Use webhook settings, fallback to 25
           },
         },
       });
