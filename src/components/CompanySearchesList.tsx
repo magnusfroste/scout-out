@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
 import { RefreshCw } from 'lucide-react';
@@ -51,10 +51,14 @@ const CompanySearchesList = ({
     return (
       <CompanySearchDetail 
         searchId={selectedSearchId}
-        onBack={() => setSelectedSearchId(null)}
+        onBack={() => {
+          setSelectedSearchId(null);
+          // Refresh the searches data when returning from detail view
+          onRefresh();
+        }}
         onUpdate={(id, data) => {
-          // Here we would normally call updateSearchDetails, but since we're not using the hook directly,
-          // we'll just close the detail view for now.
+          // When data is updated in detail view, refresh the searches data and return to list
+          onRefresh();
           setSelectedSearchId(null);
         }}
       />
