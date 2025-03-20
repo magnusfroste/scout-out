@@ -5,7 +5,7 @@
 
 import { Question } from '@/types/company';
 
-interface WebhookRequestBody {
+export interface WebhookRequestBody {
   company: string;
   questions?: {
     id: string;
@@ -25,7 +25,7 @@ export const callCompanyWebhook = async (
   webhookUrl: string,
   companyName: string,
   questions: Question[],
-  customRequestBody?: any
+  customRequestBody?: WebhookRequestBody
 ): Promise<Response> => {
   console.log("Calling company webhook with URL:", webhookUrl);
   

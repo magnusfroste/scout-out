@@ -141,7 +141,16 @@ const CompanySearch = () => {
       
       console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
       
-      const body = {
+      interface WebhookRequestBody {
+        company: string;
+        questions: { id: string; text: string }[];
+        user?: {
+          first_name: string;
+          last_name: string;
+        };
+      }
+      
+      const body: WebhookRequestBody = {
         company: companyName,
         questions: agentQuestions.map(q => ({
           id: q.id,
