@@ -6,8 +6,9 @@ import { toast } from '@/hooks/use-toast';
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
 
 // Mock response for testing in development
-const getMockValuePropositionResponse = (companyData: any, businessData: any) => {
+const getMockValuePropositionResponse = (companyData: any, businessData: any, additionalData: any) => {
   console.log('MOCK MODE: Generating mock value proposition data');
+  console.log('Additional data:', additionalData);
   
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -29,11 +30,13 @@ const getMockValuePropositionResponse = (companyData: any, businessData: any) =>
 export const callValuePropositionWebhook = async (
   webhookUrl: string,
   companyData: any,
-  businessData: any
+  businessData: any,
+  additionalData: any = null
 ): Promise<Response> => {
   console.log('Calling value proposition webhook');
   console.log('Company data:', companyData);
   console.log('Business data:', businessData);
+  console.log('Additional data:', additionalData);
   console.log('Using webhook URL:', webhookUrl);
   console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
   
@@ -43,13 +46,18 @@ export const callValuePropositionWebhook = async (
     business: businessData
   };
   
+  // Add the additional data if provided
+  if (additionalData) {
+    requestBody.additionalData = additionalData;
+  }
+  
   // Log the exact JSON payload that will be sent to the API
   console.log('WEBHOOK REQUEST PAYLOAD:', JSON.stringify(requestBody, null, 2));
   
   // Use mock data if in development mode and mock flag is enabled
   if (USE_MOCK_DATA) {
     console.log('MOCK MODE ACTIVE: Using mock data for value proposition');
-    return getMockValuePropositionResponse(companyData, businessData) as Promise<Response>;
+    return getMockValuePropositionResponse(companyData, businessData, additionalData) as Promise<Response>;
   }
   
   // Otherwise make the actual API call

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,9 +9,14 @@ import { supabase } from '@/integrations/supabase/client';
 interface MagicValuePropositionButtonProps {
   companyId: string;
   onSuccess: (score: number, advice: string, introduction: string) => void;
+  additionalData?: any;
 }
 
-const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValuePropositionButtonProps) => {
+const MagicValuePropositionButton = ({ 
+  companyId, 
+  onSuccess, 
+  additionalData 
+}: MagicValuePropositionButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
@@ -43,9 +47,10 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
 
       console.log('Calling webhook with company data:', companyData);
       console.log('Calling webhook with business data:', businessData);
+      console.log('Calling webhook with additional data:', additionalData);
       
-      // Call the webhook
-      const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData);
+      // Call the webhook with the additional data
+      const response = await callValuePropositionWebhook(webhookUrl, companyData, businessData, additionalData);
       
       if (!response.ok) {
         const errorText = await response.text();

@@ -8,15 +8,22 @@ interface DeveloperLogProps {
   companyName: string;
   requestBody: any;
   agentQuestions: any[];
+  additionalData?: any; // Add optional prop for additional data
 }
 
 const DeveloperLog: React.FC<DeveloperLogProps> = ({
   webhookUrl,
   companyName,
   requestBody,
-  agentQuestions
+  agentQuestions,
+  additionalData
 }) => {
   if (!webhookUrl || !companyName) return null;
+  
+  // Add additional data to request body if provided
+  const displayRequestBody = additionalData 
+    ? { ...requestBody, additionalData }
+    : requestBody;
   
   return (
     <Card>
@@ -29,7 +36,7 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
             <Label className="text-sm font-medium">Request Body</Label>
             <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
               <code className="text-xs break-all text-slate-700 dark:text-slate-300">
-                {requestBody ? JSON.stringify(requestBody, null, 2) : 'No request body yet'}
+                {displayRequestBody ? JSON.stringify(displayRequestBody, null, 2) : 'No request body yet'}
               </code>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -43,6 +50,17 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
               <span className="text-sm">{agentQuestions.length}</span>
             </div>
           </div>
+          
+          {additionalData && (
+            <div>
+              <Label className="text-sm font-medium">Additional Data</Label>
+              <div className="mt-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md overflow-x-auto">
+                <code className="text-xs break-all text-slate-700 dark:text-slate-300">
+                  {JSON.stringify(additionalData, null, 2)}
+                </code>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
