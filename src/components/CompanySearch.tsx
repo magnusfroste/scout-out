@@ -160,7 +160,7 @@ const CompanySearch = () => {
       const response = await callCompanyWebhook(
         webhookUrl,
         companyName,
-        requestBody.questions,
+        agentQuestions,
         body
       );
       
