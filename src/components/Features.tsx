@@ -26,14 +26,14 @@ const Features: React.FC = () => {
       description: 'Identify the right decision-makers and get verified contact information to reach out directly.'
     },
     {
-      icon: <Mail className="h-6 w-6" />,
-      title: 'Email Drafting',
-      description: 'Receive personalized email templates that highlight relevant pain points and solutions for each prospect.'
-    },
-    {
       icon: <BarChart className="h-6 w-6" />,
       title: 'Strategic Insights',
       description: 'Get recommendations on how to approach each prospect based on their specific business challenges and goals.'
+    },
+    {
+      icon: <Mail className="h-6 w-6" />,
+      title: 'Email Drafting',
+      description: 'Receive personalized email templates that highlight relevant pain points and solutions for each prospect.'
     }
   ];
   
