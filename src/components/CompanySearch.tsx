@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { WebhookRequestBody } from '@/services/companyWebhookService';
 
 import SearchForm from './company-search/SearchForm';
 import LoadingIndicator from './company-search/LoadingIndicator';
@@ -18,7 +16,7 @@ const CompanySearch = () => {
   const [result, setResult] = useState<any>(null);
   const [agentQuestions, setAgentQuestions] = useState<any[]>([]);
   const [requestBody, setRequestBody] = useState<any>(null);
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,26 +31,22 @@ const CompanySearch = () => {
 
   useEffect(() => {
     if (companyName) {
-      const body: WebhookRequestBody = {
-        company: companyName,
-        questions: agentQuestions.map(q => ({
-          id: q.id,
-          text: q.question
-        }))
+      const body: any = {
+        company: companyName
       };
       
-      if (userProfile) {
-        body.userInfo = {
-          first_name: userProfile.first_name || '',
-          last_name: userProfile.last_name || ''
-        };
+      if (agentQuestions.length > 0) {
+        body.questions = agentQuestions.map(q => ({
+          id: q.id,
+          text: q.question
+        }));
       }
       
       setRequestBody(body);
     } else {
       setRequestBody(null);
     }
-  }, [companyName, agentQuestions, userProfile]);
+  }, [companyName, agentQuestions]);
 
   const fetchAgentQuestions = async () => {
     if (!user) return;
@@ -142,30 +136,10 @@ const CompanySearch = () => {
       const { callCompanyWebhook } = await import('@/services/companyWebhookService');
       
       console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
-      
-      // Create a simple webhook request body with userInfo at the top level
-      const body: WebhookRequestBody = {
-        company: companyName,
-        questions: agentQuestions.map(q => ({
-          id: q.id,
-          text: q.question
-        }))
-      };
-      
-      // Add user profile information if available
-      if (userProfile) {
-        body.userInfo = {
-          first_name: userProfile.first_name || '',
-          last_name: userProfile.last_name || ''
-        };
-      }
-      
-      // Call the webhook with the properly structured body
       const response = await callCompanyWebhook(
         webhookUrl,
         companyName,
-        agentQuestions,
-        body
+        requestBody.questions
       );
       
       console.log("Webhook response status:", response.status);

@@ -1,75 +1,64 @@
-
-/**
- * Service to handle calling the company research webhook
- */
-
+import { Answer } from '@/utils/webhookResponseParser';
 import { Question } from '@/types/company';
+import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
 
-export interface WebhookRequestBody {
-  company: string;
-  questions?: {
-    id: string;
-    text: string;
-  }[];
-  userInfo?: {
-    first_name?: string;
-    last_name?: string;
-  };
-  business?: any;
-  [key: string]: any;
-}
+// Check if we're in mock mode from environment variable
+// In production, we should NEVER use mock data regardless of the environment variable
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
+
+// Log the environment configuration
+console.log('Webhook Service Configuration:', { 
+  isDev: import.meta.env.DEV,
+  useMockData: USE_MOCK_DATA,
+  mockDataEnv: import.meta.env.VITE_USE_MOCK_DATA,
+  mockDataType: typeof import.meta.env.VITE_USE_MOCK_DATA,
+  mode: import.meta.env.MODE
+});
 
 /**
- * Call the company webhook with the company name and questions
+ * Calls the webhook endpoint with company search data
+ * Uses mock data if VITE_USE_MOCK_DATA is set to 'true' AND we're in development mode
  */
 export const callCompanyWebhook = async (
   webhookUrl: string,
   companyName: string,
-  questions: Question[],
-  customRequestBody?: WebhookRequestBody
+  questions: Question[]
 ): Promise<Response> => {
-  console.log("Calling company webhook with URL:", webhookUrl);
+  console.log('Calling webhook with company:', companyName);
+  console.log('Calling webhook with questions:', JSON.stringify(questions));
+  console.log('Using webhook URL:', webhookUrl);
+  console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
+  console.log('Environment mode:', import.meta.env.MODE);
   
-  // Build request body
-  const requestBody: WebhookRequestBody = {
-    company: companyName,
-    questions: questions.map(q => ({
-      id: q.id,
-      text: q.question
-    }))
-  };
-  
-  // Add userInfo from customRequestBody if it exists
-  if (customRequestBody?.userInfo) {
-    requestBody.userInfo = customRequestBody.userInfo;
+  // Use mock data ONLY if in development mode AND mock flag is enabled
+  if (USE_MOCK_DATA) {
+    console.log('MOCK MODE ACTIVE: Using mock data for company search');
+    
+    // Simulate error response if company name contains "error" for testing error handling
+    if (companyName.toLowerCase().includes('error')) {
+      console.log('MOCK MODE: Simulating error response for company containing "error"');
+      return getMockErrorResponse();
+    }
+    
+    // Return mock response for normal operation
+    console.log('MOCK MODE: Returning mock data for company:', companyName);
+    return getMockResponse(companyName);
   }
   
-  // Add any additional properties from customRequestBody, except for 'company' which should remain a string
-  if (customRequestBody) {
-    Object.entries(customRequestBody).forEach(([key, value]) => {
-      if (key !== 'company' && key !== 'questions' && key !== 'userInfo') {
-        requestBody[key] = value;
-      }
-    });
-  }
-  
-  // Final check to ensure company is always a string
-  if (typeof requestBody.company !== 'string') {
-    console.warn("Fixing company format: company should be a string, not an object");
-    requestBody.company = companyName;
-  }
-  
-  // Log the request body
-  console.log("Webhook request body:", JSON.stringify(requestBody, null, 2));
-  
-  // Make the API call
-  const response = await fetch(webhookUrl, {
+  // Otherwise make the actual API call
+  console.log('LIVE MODE: Making actual API call to webhook');
+  return fetch(webhookUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({ 
+      company: companyName, 
+      questions: questions.map(q => ({
+        id: q.id,
+        question: q.question
+      }))
+    })
   });
-  
-  return response;
 };
