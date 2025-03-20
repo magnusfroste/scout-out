@@ -16,7 +16,7 @@ const CompanySearch = () => {
   const [result, setResult] = useState<any>(null);
   const [agentQuestions, setAgentQuestions] = useState<any[]>([]);
   const [requestBody, setRequestBody] = useState<any>(null);
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,11 +42,18 @@ const CompanySearch = () => {
         }));
       }
       
+      if (userProfile) {
+        body.user = {
+          first_name: userProfile.first_name || '',
+          last_name: userProfile.last_name || ''
+        };
+      }
+      
       setRequestBody(body);
     } else {
       setRequestBody(null);
     }
-  }, [companyName, agentQuestions]);
+  }, [companyName, agentQuestions, userProfile]);
 
   const fetchAgentQuestions = async () => {
     if (!user) return;

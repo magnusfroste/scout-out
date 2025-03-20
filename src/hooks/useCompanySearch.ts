@@ -180,9 +180,29 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
         console.log("Making webhook call to:", currentWebhookUrl);
         console.log("Searching for company:", companyName);
         
+        // Prepare the request body with user profile information
+        const requestBody = {
+          company: companyName,
+          questions: questions.map(q => ({
+            id: q.id,
+            text: q.question
+          })),
+          user: {
+            first_name: userProfile.first_name || '',
+            last_name: userProfile.last_name || ''
+          }
+        };
+        
+        console.log("Request body with user profile:", requestBody);
+        
         // Make the webhook call - this is where we need to ensure the button stays in searching state
         console.log("Starting webhook call - button should remain in searching state");
-        const directResponse = await callCompanyWebhook(currentWebhookUrl, companyName, questions);
+        const directResponse = await callCompanyWebhook(
+          currentWebhookUrl, 
+          companyName, 
+          questions,
+          requestBody
+        );
         
         // Check if the search was cancelled or another search started
         if (!isSearchingRef.current) {

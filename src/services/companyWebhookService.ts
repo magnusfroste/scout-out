@@ -1,64 +1,54 @@
-import { Answer } from '@/utils/webhookResponseParser';
-import { Question } from '@/types/company';
-import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
-
-// Check if we're in mock mode from environment variable
-// In production, we should NEVER use mock data regardless of the environment variable
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
-
-// Log the environment configuration
-console.log('Webhook Service Configuration:', { 
-  isDev: import.meta.env.DEV,
-  useMockData: USE_MOCK_DATA,
-  mockDataEnv: import.meta.env.VITE_USE_MOCK_DATA,
-  mockDataType: typeof import.meta.env.VITE_USE_MOCK_DATA,
-  mode: import.meta.env.MODE
-});
 
 /**
- * Calls the webhook endpoint with company search data
- * Uses mock data if VITE_USE_MOCK_DATA is set to 'true' AND we're in development mode
+ * Service to handle calling the company research webhook
+ */
+
+import { Question } from '@/types/company';
+
+interface WebhookRequestBody {
+  company: string;
+  questions?: {
+    id: string;
+    text: string;
+  }[];
+  user?: {
+    first_name?: string;
+    last_name?: string;
+  };
+  [key: string]: any;
+}
+
+/**
+ * Call the company webhook with the company name and questions
  */
 export const callCompanyWebhook = async (
   webhookUrl: string,
   companyName: string,
-  questions: Question[]
+  questions: Question[],
+  customRequestBody?: any
 ): Promise<Response> => {
-  console.log('Calling webhook with company:', companyName);
-  console.log('Calling webhook with questions:', JSON.stringify(questions));
-  console.log('Using webhook URL:', webhookUrl);
-  console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
-  console.log('Environment mode:', import.meta.env.MODE);
+  console.log("Calling company webhook with URL:", webhookUrl);
   
-  // Use mock data ONLY if in development mode AND mock flag is enabled
-  if (USE_MOCK_DATA) {
-    console.log('MOCK MODE ACTIVE: Using mock data for company search');
-    
-    // Simulate error response if company name contains "error" for testing error handling
-    if (companyName.toLowerCase().includes('error')) {
-      console.log('MOCK MODE: Simulating error response for company containing "error"');
-      return getMockErrorResponse();
-    }
-    
-    // Return mock response for normal operation
-    console.log('MOCK MODE: Returning mock data for company:', companyName);
-    return getMockResponse(companyName);
-  }
+  // Build request body
+  const requestBody: WebhookRequestBody = customRequestBody || {
+    company: companyName,
+    questions: questions.map(q => ({
+      id: q.id,
+      text: q.question
+    }))
+  };
   
-  // Otherwise make the actual API call
-  console.log('LIVE MODE: Making actual API call to webhook');
-  return fetch(webhookUrl, {
+  // Log the request body
+  console.log("Webhook request body:", JSON.stringify(requestBody, null, 2));
+  
+  // Make the API call
+  const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json'
     },
-    body: JSON.stringify({ 
-      company: companyName, 
-      questions: questions.map(q => ({
-        id: q.id,
-        question: q.question
-      }))
-    })
+    body: JSON.stringify(requestBody),
   });
+  
+  return response;
 };
