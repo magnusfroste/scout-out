@@ -1,3 +1,4 @@
+
 /**
  * Service to handle calling the company research webhook
  */
@@ -29,7 +30,7 @@ export const callCompanyWebhook = async (
   console.log("Calling company webhook with URL:", webhookUrl);
   
   // Build request body
-  const requestBody: WebhookRequestBody = customRequestBody || {
+  const requestBody: WebhookRequestBody = {
     company: companyName,
     questions: questions.map(q => ({
       id: q.id,
@@ -37,14 +38,8 @@ export const callCompanyWebhook = async (
     }))
   };
   
-  // Make sure the company is a string at the top level
-  if (typeof requestBody.company !== 'string') {
-    requestBody.company = companyName;
-  }
-  
-  // Ensure userInfo is at the top level if present in customRequestBody
-  if (customRequestBody && customRequestBody.userInfo) {
-    // Keep userInfo at the top level
+  // Add userInfo from customRequestBody if it exists
+  if (customRequestBody?.userInfo) {
     requestBody.userInfo = customRequestBody.userInfo;
   }
   

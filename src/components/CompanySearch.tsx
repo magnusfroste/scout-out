@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -142,6 +143,7 @@ const CompanySearch = () => {
       
       console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
       
+      // Create a simple webhook request body with userInfo at the top level
       const body: WebhookRequestBody = {
         company: companyName,
         questions: agentQuestions.map(q => ({
@@ -150,6 +152,7 @@ const CompanySearch = () => {
         }))
       };
       
+      // Add user profile information if available
       if (userProfile) {
         body.userInfo = {
           first_name: userProfile.first_name || '',
@@ -157,6 +160,7 @@ const CompanySearch = () => {
         };
       }
       
+      // Call the webhook with the properly structured body
       const response = await callCompanyWebhook(
         webhookUrl,
         companyName,
