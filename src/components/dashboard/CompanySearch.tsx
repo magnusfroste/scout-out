@@ -13,6 +13,7 @@ import {
   Save,
   History as HistoryIcon,
   AlertTriangle,
+  Eye,
 } from 'lucide-react';
 import { deductCredits } from '@/utils/creditUtils';
 import { storeSearchResults } from '@/services/companySearchService';
@@ -56,6 +57,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
   const [isSaved, setIsSaved] = useState(false);
   const [rawResponseData, setRawResponseData] = useState<any>(null);
   const [parsedResults, setParsedResults] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(true);
 
   const CREDIT_COST = 1;
 
@@ -420,33 +422,59 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
 
             {searchResult.answers.length > 0 ? (
               <div className="space-y-4">
-                {searchResult.answers.map((item, index) => (
-                  <div key={index} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800 relative">
-                    <h3 className="font-medium text-lg mb-2">{item.question}</h3>
-                    <div className="relative">
-                      {!isSaved && (
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-50 dark:to-slate-800 z-10 flex flex-col justify-end items-center">
-                          <p className="text-center p-2 text-sm text-muted-foreground">
-                            Save results to view full content
-                          </p>
-                        </div>
-                      )}
-                      <p className={`text-sm whitespace-pre-wrap ${!isSaved ? "select-none blur-[2px]" : ""}`}>
-                        {isSaved 
-                          ? (item.answer || "No answer provided") 
-                          : item.answer 
-                            ? item.answer.substring(0, Math.min(150, item.answer.length)) + (item.answer.length > 150 ? "..." : "")
-                            : "No answer provided"
-                        }
-                      </p>
-                    </div>
+                {/* First question is always shown completely */}
+                {searchResult.answers.length > 0 && (
+                  <div className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800 relative">
+                    <h3 className="font-medium text-lg mb-2">{searchResult.answers[0].question}</h3>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {searchResult.answers[0].answer || "No answer provided"}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Only show remaining questions if saved or preview toggle is on */}
+                {searchResult.answers.length > 1 && (
+                  <div className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800 relative">
                     {!isSaved && (
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-[-20deg] text-red-500/20 text-4xl font-bold pointer-events-none select-none">
-                        PREVIEW ONLY
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-50 dark:to-slate-800 z-10 flex flex-col justify-end items-center p-4">
+                        <p className="text-center text-sm text-muted-foreground mb-2">
+                          Save results to unlock {searchResult.answers.length - 1} more detailed answers
+                        </p>
+                        <Button variant="outline" size="sm" className="flex items-center gap-2 mt-2" onClick={() => setShowPreview(!showPreview)}>
+                          <Eye className="h-4 w-4" />
+                          {showPreview ? "Hide Preview" : "Show Preview"}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {(isSaved || showPreview) && (
+                      <div className={!isSaved ? "opacity-20 pointer-events-none select-none" : ""}>
+                        <h3 className="font-medium text-lg mb-3">Additional Insights ({searchResult.answers.length - 1})</h3>
+                        <div className="space-y-4">
+                          {searchResult.answers.slice(1).map((item, index) => (
+                            <div key={index} className="border-l-4 border-slate-300 pl-3 py-1">
+                              <h4 className="font-medium mb-1">{item.question}</h4>
+                              <p className={`text-sm whitespace-pre-wrap ${!isSaved ? "blur-[2px]" : ""}`}>
+                                {isSaved 
+                                  ? (item.answer || "No answer provided") 
+                                  : item.answer 
+                                    ? item.answer.substring(0, Math.min(150, item.answer.length)) + (item.answer.length > 150 ? "..." : "")
+                                    : "No answer provided"
+                                }
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {!isSaved && (
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-[-20deg] text-red-500/20 text-4xl font-bold pointer-events-none select-none">
+                            PREVIEW ONLY
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                ))}
+                )}
               </div>
             ) : (
               <div className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
