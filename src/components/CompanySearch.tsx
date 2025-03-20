@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { WebhookRequestBody } from '@/services/companyWebhookService';
 
 import SearchForm from './company-search/SearchForm';
 import LoadingIndicator from './company-search/LoadingIndicator';
@@ -31,7 +32,7 @@ const CompanySearch = () => {
 
   useEffect(() => {
     if (companyName) {
-      const body: any = {
+      const body: WebhookRequestBody = {
         company: companyName,
         questions: agentQuestions.map(q => ({
           id: q.id,
@@ -40,7 +41,7 @@ const CompanySearch = () => {
       };
       
       if (userProfile) {
-        body.user = {
+        body.userInfo = {
           first_name: userProfile.first_name || '',
           last_name: userProfile.last_name || ''
         };
@@ -141,15 +142,6 @@ const CompanySearch = () => {
       
       console.log(`Making webhook call to ${webhookUrl} for company ${companyName}`);
       
-      interface WebhookRequestBody {
-        company: string;
-        questions: { id: string; text: string }[];
-        user?: {
-          first_name: string;
-          last_name: string;
-        };
-      }
-      
       const body: WebhookRequestBody = {
         company: companyName,
         questions: agentQuestions.map(q => ({
@@ -159,7 +151,7 @@ const CompanySearch = () => {
       };
       
       if (userProfile) {
-        body.user = {
+        body.userInfo = {
           first_name: userProfile.first_name || '',
           last_name: userProfile.last_name || ''
         };

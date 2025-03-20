@@ -67,12 +67,12 @@ const DeveloperLog: React.FC<DeveloperLogProps> = ({
           </pre>
         </div>
         
-        {requestBody && requestBody.user && (
+        {requestBody && requestBody.userInfo && (
           <div>
             <h3 className="font-medium mb-1">User Information:</h3>
             <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-md overflow-auto">
-              <div className="text-xs"><strong>First Name:</strong> {requestBody.user.first_name || "Not provided"}</div>
-              <div className="text-xs"><strong>Last Name:</strong> {requestBody.user.last_name || "Not provided"}</div>
+              <div className="text-xs"><strong>First Name:</strong> {requestBody.userInfo.first_name || "Not provided"}</div>
+              <div className="text-xs"><strong>Last Name:</strong> {requestBody.userInfo.last_name || "Not provided"}</div>
             </div>
           </div>
         )}
