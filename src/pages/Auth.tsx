@@ -9,6 +9,12 @@ import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { fetchWebhookSettings } from '@/services/webhookService';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+
+// Maintenance mode can be toggled here
+const MAINTENANCE_MODE = true; // Set to false when maintenance is complete
+const MAINTENANCE_MESSAGE = "We're currently performing maintenance on our authentication system. Please try again later.";
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -50,6 +56,16 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // If in maintenance mode, show toast and return
+    if (MAINTENANCE_MODE) {
+      toast({
+        title: "Maintenance in Progress",
+        description: MAINTENANCE_MESSAGE,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!email || !password) {
       toast({
         title: "Error",
@@ -82,6 +98,16 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If in maintenance mode, show toast and return
+    if (MAINTENANCE_MODE) {
+      toast({
+        title: "Maintenance in Progress",
+        description: MAINTENANCE_MESSAGE,
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!email || !password) {
       toast({
@@ -137,6 +163,16 @@ const Auth = () => {
       
       <main className="flex-grow flex items-center justify-center py-16 px-4">
         <div className="max-w-md w-full bg-card rounded-xl shadow-lg p-8 border border-border">
+          {MAINTENANCE_MODE && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Maintenance in Progress</AlertTitle>
+              <AlertDescription>
+                {MAINTENANCE_MESSAGE}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold">
               {isSignUp ? 'Create an Account' : 'Welcome Back'}
@@ -203,6 +239,7 @@ const Auth = () => {
                 type="submit"
                 className="w-full"
                 isLoading={loading}
+                disabled={MAINTENANCE_MODE}
               >
                 {isSignUp ? 'Sign Up' : 'Sign In'}
               </Button>
@@ -214,6 +251,7 @@ const Auth = () => {
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
               className="text-primary text-sm hover:underline transition-all"
+              disabled={MAINTENANCE_MODE}
             >
               {isSignUp 
                 ? 'Already have an account? Sign In' 
