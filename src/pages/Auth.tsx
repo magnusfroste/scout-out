@@ -10,7 +10,7 @@ import AuthHeader from '@/components/auth/AuthHeader';
 import ToggleAuthMode from '@/components/auth/ToggleAuthMode';
 
 // Maintenance mode can be toggled here
-const MAINTENANCE_MODE = true; // Set to false when maintenance is complete
+const MAINTENANCE_MODE = false; // Set to false when maintenance is complete
 const MAINTENANCE_MESSAGE = "We're currently performing maintenance on our authentication system. Please try again later.";
 
 const Auth = () => {
