@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +6,9 @@ import Footer from '@/components/Footer';
 import WebhookForm from '@/components/dashboard/WebhookForm';
 import MyBusinessWebhookForm from '@/components/dashboard/MyBusinessWebhookForm';
 import ValuePropositionWebhookForm from '@/components/dashboard/ValuePropositionWebhookForm';
+import EmailSettings from '@/components/dashboard/EmailSettings';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   fetchWebhookSettings, 
   updateWebhookSettings, 
@@ -87,10 +88,10 @@ const Settings = () => {
     );
   }
 
-  // Only redirect after admin check is complete - without toast message
-  if (adminChecked && (!user || !userProfile?.is_admin)) {
-    console.log('Access check failed, redirecting to dashboard');
-    return <Navigate to="/dashboard" replace />;
+  // Redirect if not logged in
+  if (!user) {
+    console.log('User not logged in, redirecting to login');
+    return <Navigate to="/login" replace />;
   }
 
   const handleWebhookUpdate = async (newUrl: string) => {
@@ -147,51 +148,73 @@ const Settings = () => {
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Admin Settings</h1>
+          <h1 className="text-3xl font-bold mb-8">Settings</h1>
           
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Webhook Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <WebhookForm 
-                  webhookUrl={webhookUrl}
-                  setWebhookUrl={handleWebhookUpdate}
-                  isDisabled={isLoading}
-                  showDescription={true}
-                />
-              </CardContent>
-            </Card>
+          <Tabs defaultValue="user">
+            <TabsList className="mb-6">
+              <TabsTrigger value="user">User Settings</TabsTrigger>
+              {userProfile?.is_admin && (
+                <TabsTrigger value="admin">Admin Settings</TabsTrigger>
+              )}
+            </TabsList>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>My Business Webhook Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MyBusinessWebhookForm 
-                  webhookUrl={myBusinessWebhookUrl}
-                  setWebhookUrl={handleMyBusinessWebhookUpdate}
-                  isDisabled={isLoading}
-                  showDescription={true}
-                />
-              </CardContent>
-            </Card>
+            <TabsContent value="user" className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Email Integration</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EmailSettings />
+                </CardContent>
+              </Card>
+            </TabsContent>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Value Proposition Webhook Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ValuePropositionWebhookForm 
-                  webhookUrl={valuePropositionWebhookUrl}
-                  setWebhookUrl={handleValuePropositionWebhookUpdate}
-                  isDisabled={isLoading}
-                  showDescription={true}
-                />
-              </CardContent>
-            </Card>
-          </div>
+            {userProfile?.is_admin && (
+              <TabsContent value="admin" className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Webhook Configuration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <WebhookForm 
+                      webhookUrl={webhookUrl}
+                      setWebhookUrl={handleWebhookUpdate}
+                      isDisabled={isLoading}
+                      showDescription={true}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>My Business Webhook Configuration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MyBusinessWebhookForm 
+                      webhookUrl={myBusinessWebhookUrl}
+                      setWebhookUrl={handleMyBusinessWebhookUpdate}
+                      isDisabled={isLoading}
+                      showDescription={true}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Value Proposition Webhook Configuration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ValuePropositionWebhookForm 
+                      webhookUrl={valuePropositionWebhookUrl}
+                      setWebhookUrl={handleValuePropositionWebhookUpdate}
+                      isDisabled={isLoading}
+                      showDescription={true}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+          </Tabs>
         </div>
       </main>
       

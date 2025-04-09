@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface MagicValuePropositionButtonProps {
   companyId: string;
-  onSuccess: (score: number, advice: string, introduction: string) => void;
+  onSuccess: (score: number, advice: string, introduction: string, subject: string) => void;
   additionalData?: any;
 }
 
@@ -72,12 +71,14 @@ const MagicValuePropositionButton = ({
       let score = 0;
       let advice = '';
       let introduction = '';
+      let subject = '';
       
       // Direct format
       if (typeof data.score === 'number' || typeof data.score === 'string') {
         score = typeof data.score === 'number' ? data.score : parseInt(data.score, 10) || 0;
         advice = data.advice || '';
         introduction = data.introduction || '';
+        subject = data.subject || '';
       } 
       // Nested in output object
       else if (data.output) {
@@ -85,6 +86,7 @@ const MagicValuePropositionButton = ({
         score = typeof output.score === 'number' ? output.score : parseInt(output.score, 10) || 0;
         advice = output.advice || '';
         introduction = output.introduction || '';
+        subject = output.subject || '';
       } 
       // Array format with output object
       else if (Array.isArray(data) && data.length > 0) {
@@ -94,17 +96,19 @@ const MagicValuePropositionButton = ({
           score = typeof output.score === 'number' ? output.score : parseInt(output.score, 10) || 0;
           advice = output.advice || '';
           introduction = output.introduction || '';
+          subject = output.subject || '';
         } else if (typeof firstItem.score === 'number' || typeof firstItem.score === 'string') {
           score = typeof firstItem.score === 'number' ? firstItem.score : parseInt(firstItem.score, 10) || 0;
           advice = firstItem.advice || '';
           introduction = firstItem.introduction || '';
+          subject = firstItem.subject || '';
         }
       }
       
-      console.log('Extracted data for callback:', { score, advice, introduction });
+      console.log('Extracted data for callback:', { score, advice, introduction, subject });
       
       // Call the success callback with the extracted data
-      onSuccess(score, advice, introduction);
+      onSuccess(score, advice, introduction, subject);
 
       toast({
         title: 'Success',

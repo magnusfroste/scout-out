@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
+import SendEmailButton from '@/components/dashboard/SendEmailButton';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -27,10 +28,12 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const [displayScore, setDisplayScore] = useState<string>('');
   const [displayAdvice, setDisplayAdvice] = useState<string>('');
   const [displayIntroduction, setDisplayIntroduction] = useState<string>('');
+  const [displaySubject, setDisplaySubject] = useState<string>('');
   
   const [dbScore, setDbScore] = useState<string>('');
   const [dbAdvice, setDbAdvice] = useState<string>('');
   const [dbIntroduction, setDbIntroduction] = useState<string>('');
+  const [dbSubject, setDbSubject] = useState<string>('');
   
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -62,10 +65,12 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       setDbScore(searchData.score?.toString() || '');
       setDbAdvice(searchData.advice || '');
       setDbIntroduction(searchData.introduction || '');
+      setDbSubject(searchData.subject || '');
       
       setDisplayScore(searchData.score?.toString() || '');
       setDisplayAdvice(searchData.advice || '');
       setDisplayIntroduction(searchData.introduction || '');
+      setDisplaySubject(searchData.subject || '');
 
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
@@ -186,7 +191,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.log('Value proposition data to save:', {
         score: displayScore ? parseInt(displayScore) : null,
         advice: displayAdvice,
-        introduction: displayIntroduction
+        introduction: displayIntroduction,
+        subject: displaySubject
       });
 
       const scoreValue = displayScore ? parseInt(displayScore) : null;
@@ -195,13 +201,15 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         searchId,
         scoreValue,
         displayAdvice,
-        displayIntroduction
+        displayIntroduction,
+        displaySubject
       );
 
       if (success) {
         setDbScore(displayScore);
         setDbAdvice(displayAdvice);
         setDbIntroduction(displayIntroduction);
+        setDbSubject(displaySubject);
         
         setHasUnsavedChanges(false);
 
@@ -209,7 +217,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           ...companySearch,
           score: scoreValue,
           advice: displayAdvice,
-          introduction: displayIntroduction
+          introduction: displayIntroduction,
+          subject: displaySubject
         });
 
         toast({
@@ -222,7 +231,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             ...companySearch,
             score: scoreValue,
             advice: displayAdvice,
-            introduction: displayIntroduction
+            introduction: displayIntroduction,
+            subject: displaySubject
           });
         }
       }
@@ -239,12 +249,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     }
   };
 
-  const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string) => {
-    console.log('Magic value proposition generated:', { newScore, newAdvice, newIntroduction });
+  const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string, newSubject: string) => {
+    console.log('Magic value proposition generated:', { newScore, newAdvice, newIntroduction, newSubject });
     
     setDisplayScore(newScore.toString());
     setDisplayAdvice(newAdvice);
     setDisplayIntroduction(newIntroduction);
+    setDisplaySubject(newSubject);
     
     setHasUnsavedChanges(true);
   };
@@ -274,10 +285,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     const hasChanges = 
       displayScore !== dbScore || 
       displayAdvice !== dbAdvice || 
-      displayIntroduction !== dbIntroduction;
+      displayIntroduction !== dbIntroduction || 
+      displaySubject !== dbSubject;
     
     setHasUnsavedChanges(hasChanges);
-  }, [displayScore, displayAdvice, displayIntroduction, dbScore, dbAdvice, dbIntroduction]);
+  }, [displayScore, displayAdvice, displayIntroduction, displaySubject, dbScore, dbAdvice, dbIntroduction, dbSubject]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -378,6 +390,17 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                   copyable={true}
                   onCopy={handleCopySuccess}
                 />
+                <div className="flex justify-end mt-2 gap-2">
+                  {companySearch.email && (
+                    <SendEmailButton
+                      recipientEmail={companySearch.email}
+                      recipientName={companySearch.company_name}
+                      subject={displaySubject}
+                      content={displayIntroduction}
+                      disabled={!displayIntroduction}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>

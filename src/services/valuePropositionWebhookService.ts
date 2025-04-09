@@ -17,7 +17,8 @@ const getMockValuePropositionResponse = (companyData: any, businessData: any, ad
         json: () => Promise.resolve({
           score: Math.floor(Math.random() * 5) + 1, // Random score between 1-5
           advice: `Based on our analysis, ${companyData.company_name} would be a great fit for your business. Their ${companyData.result?.industry || 'business'} aligns well with your products and services. We recommend highlighting your experience in this sector.`,
-          introduction: `Hello ${companyData.contact || 'there'},\n\nI'm reaching out from ${businessData?.name || 'our company'} where we specialize in ${businessData?.description || 'our services'}. I recently came across ${companyData.company_name} and was impressed by your work in ${companyData.result?.industry || 'your industry'}.\n\nI believe we could help you with ${businessData?.value_proposition || 'improving your business'}.\n\nWould you be open to a brief conversation next week to explore potential synergies?\n\nBest regards,\n${userInfo?.first_name || 'Your Name'} ${userInfo?.last_name || ''}`
+          introduction: `Hello ${companyData.contact || 'there'},\n\nI'm reaching out from ${businessData?.name || 'our company'} where we specialize in ${businessData?.description || 'our services'}. I recently came across ${companyData.company_name} and was impressed by your work in ${companyData.result?.industry || 'your industry'}.\n\nI believe we could help you with ${businessData?.value_proposition || 'improving your business'}.\n\nWould you be open to a brief conversation next week to explore potential synergies?\n\nBest regards,\n${userInfo?.first_name || 'Your Name'} ${userInfo?.last_name || ''}`,
+          subject: `Introduction from ${businessData?.name || 'our company'}`
         })
       });
     }, 1500);
@@ -123,58 +124,37 @@ export const saveValuePropositionData = async (
   searchId: string,
   score: number | null,
   advice: string | null,
-  introduction: string | null
+  introduction: string | null,
+  subject: string | null
 ): Promise<boolean> => {
+  console.log('Saving value proposition data for search ID:', searchId);
+  console.log('Data to save:', { score, advice, introduction, subject });
+  
+  if (!searchId) {
+    console.error('No search ID provided');
+    return false;
+  }
+  
   try {
-    console.log('Saving value proposition data to database for search ID:', searchId);
-    console.log('Data to save:', { score, advice, introduction });
-    
-    // First verify the search exists and the current user has permission
-    const { data: checkData, error: checkError } = await supabase
-      .from('company_searches')
-      .select('id, user_id')
-      .eq('id', searchId)
-      .maybeSingle();
-      
-    if (checkError) {
-      console.error('Error verifying search existence:', checkError);
-      throw new Error(`Could not verify search exists: ${checkError.message}`);
-    }
-    
-    if (!checkData) {
-      console.error('Search not found or user does not have permission to update it');
-      throw new Error('Search not found or you do not have permission to update it');
-    }
-    
-    console.log('Search verified, proceeding with update');
-
-    // Update the company search record
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('company_searches')
       .update({
-        score: score,
-        advice: advice,
-        introduction: introduction
+        score,
+        advice,
+        introduction,
+        subject
       })
-      .eq('id', searchId)
-      .select();
-
+      .eq('id', searchId);
+    
     if (error) {
-      console.error('Error updating value proposition data:', error);
-      throw error;
+      console.error('Error saving value proposition data:', error);
+      return false;
     }
     
-    console.log('Database update response:', data);
-    
-    if (!data || data.length === 0) {
-      console.error('Update operation did not affect any rows');
-      throw new Error('Update operation did not affect any rows');
-    }
-    
-    console.log('Successfully saved value proposition data for search ID:', searchId);
+    console.log('Value proposition data saved successfully');
     return true;
   } catch (error) {
-    console.error('Error in saveValuePropositionData:', error);
-    throw error;
+    console.error('Exception saving value proposition data:', error);
+    return false;
   }
 };
