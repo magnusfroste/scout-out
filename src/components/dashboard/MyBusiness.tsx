@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ import {
 interface BusinessData {
   elevatorPitch?: ElevatorPitch;
   contactInfo?: ContactInfo;
+  autoSaved?: boolean;
 }
 
 const DEFAULT_WEBHOOK_URL = 'https://agent.froste.eu/webhook/mybusiness';
@@ -41,6 +41,7 @@ const MyBusiness = () => {
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const [isResetting, setIsResetting] = useState<boolean>(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
+  const [methodUsed, setMethodUsed] = useState<string>('');
 
   useEffect(() => {
     if (userProfile?.website_url) {
@@ -74,7 +75,8 @@ const MyBusiness = () => {
     if (userProfile?.business_data) {
       const savedData: BusinessData = {
         elevatorPitch: userProfile.business_data.elevator_pitch,
-        contactInfo: userProfile.business_data.contact_info
+        contactInfo: userProfile.business_data.contact_info,
+        autoSaved: true
       };
       
       setBusinessData(savedData);
@@ -117,34 +119,76 @@ const MyBusiness = () => {
       const responseData = await response.json();
       console.log('Raw webhook response:', responseData);
       
+      // Check if the response contains method information
+      if (responseData.method) {
+        setMethodUsed(responseData.method);
+        console.log('Method used:', responseData.method);
+        
+        // Show a success toast with the method used
+        toast({
+          title: "Success",
+          description: `Your business website has been analyzed using: ${responseData.method}`,
+        });
+      } else {
+        setMethodUsed('Direct Webhook');
+        console.log('Method used: Direct Webhook (inferred)');
+        
+        // Show a success toast with the method used
+        toast({
+          title: "Success",
+          description: "Your business website has been analyzed using: Direct Webhook",
+        });
+      }
+      
       const parsedData = parseWebhookResponse(responseData);
       console.log('Parsed data:', parsedData);
       
       const newBusinessData: BusinessData = {
         elevatorPitch: parsedData.elevatorPitch,
-        contactInfo: parsedData.contactInfo
+        contactInfo: parsedData.contactInfo,
+        autoSaved: false
       };
       
       // Update state with the new data immediately to display it
       setBusinessData(newBusinessData);
       
-      // Save website URL to profile immediately
-      if (user && websiteUrl !== userProfile?.website_url) {
-        await updateProfile({ website_url: websiteUrl });
-        
-        // Also save the business data automatically after the first generation
-        await updateProfile({ 
-          business_data: {
-            elevator_pitch: newBusinessData?.elevatorPitch,
-            contact_info: newBusinessData?.contactInfo
+      // Save data to profile automatically
+      if (user) {
+        try {
+          // First, save the website URL if it has changed
+          if (websiteUrl !== userProfile?.website_url) {
+            await updateProfile({ website_url: websiteUrl });
           }
+          
+          // Then save the business data regardless
+          await updateProfile({ 
+            business_data: {
+              elevator_pitch: newBusinessData?.elevatorPitch,
+              contact_info: newBusinessData?.contactInfo
+            }
+          });
+          
+          console.log('Business data saved automatically');
+          
+          // Add a note to the success toast
+          toast({
+            title: "Success",
+            description: "Your business website has been analyzed and profile saved automatically",
+          });
+        } catch (saveError) {
+          console.error('Error saving business data automatically:', saveError);
+          toast({
+            title: "Note",
+            description: "Profile generated but couldn't be saved automatically. Please use the Save button.",
+            variant: "default",
+          });
+        }
+      } else {
+        toast({
+          title: "Success",
+          description: "Your business website has been analyzed and profile generated",
         });
       }
-
-      toast({
-        title: "Success",
-        description: "Your business website has been analyzed and profile generated",
-      });
     } catch (error) {
       console.error('Error analyzing website:', error);
       toast({
@@ -167,6 +211,11 @@ const MyBusiness = () => {
           elevator_pitch: businessData?.elevatorPitch,
           contact_info: businessData?.contactInfo
         }
+      });
+      
+      setBusinessData({
+        ...businessData,
+        autoSaved: true
       });
       
       toast({
@@ -531,20 +580,50 @@ const MyBusiness = () => {
           )}
         </CardContent>
         {businessData && !isLoadingSettings && !isLoadingProfile && (
-          <CardFooter>
+          <CardFooter className="flex justify-between">
             <Button 
-              onClick={handleSaveBusinessData} 
-              disabled={isSaving || isLoading}
-              className="ml-auto"
+              variant="outline" 
+              onClick={handleResetBusinessData}
+              disabled={isResetting || !businessData || isLoading}
             >
-              {isSaving ? (
+              {isResetting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Resetting...
                 </>
-              ) : "Save Business Profile"}
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reset Data
+                </>
+              )}
             </Button>
+            
+            {/* Save button is only shown if there's unsaved data */}
+            {businessData && !businessData.autoSaved && (
+              <Button 
+                onClick={handleSaveBusinessData}
+                disabled={isSaving || !businessData || isLoading}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>Save Changes</>
+                )}
+              </Button>
+            )}
           </CardFooter>
+        )}
+        
+        {methodUsed && (
+          <div className="mt-4 mb-2 p-2 bg-muted rounded-md border border-border">
+            <p className="text-sm text-center font-medium">
+              Method used: <span className="font-mono bg-background px-2 py-1 rounded">{methodUsed}</span>
+            </p>
+          </div>
         )}
       </Card>
     </div>

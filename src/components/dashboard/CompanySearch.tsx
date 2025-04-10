@@ -156,9 +156,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
       
       const responseData = await response.json();
       console.log('Webhook response:', responseData);
-      setRawResponseData(responseData);
       
-      const { processedResults, contactInfo } = parseWebhookResponse(responseData);
+      // If the response is wrapped in a 'data' property (from Edge Function), extract it
+      const actualData = responseData.data ? responseData.data : responseData;
+      console.log('Actual data to process:', actualData);
+      
+      setRawResponseData(actualData);
+      
+      const { processedResults, contactInfo } = parseWebhookResponse(actualData);
       
       const sortedResults = sortAnswersByQuestionOrder(processedResults);
       

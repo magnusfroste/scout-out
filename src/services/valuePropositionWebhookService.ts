@@ -40,55 +40,113 @@ export const callValuePropositionWebhook = async (
   console.log('Business data:', businessData);
   console.log('Additional data:', additionalData);
   console.log('User info:', userInfo);
-  console.log('Using webhook URL:', webhookUrl);
+  console.log('Original webhook URL (for reference only):', webhookUrl);
   console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
   
-  // Create the actual request body as it will be sent to the API
-  const requestBody: any = { 
-    company: companyData,
-    business: businessData
-  };
-  
-  // Add the additional data if provided
-  if (additionalData) {
-    requestBody.additionalData = additionalData;
-  }
-  
-  // Add user info if provided
-  if (userInfo) {
-    requestBody.userInfo = userInfo;
-  }
-  
-  // Log the exact JSON payload that will be sent to the API
-  console.log('WEBHOOK REQUEST PAYLOAD:', JSON.stringify(requestBody, null, 2));
-  
-  // Use mock data if in development mode and mock flag is enabled
+  // Use mock data in development if enabled
   if (USE_MOCK_DATA) {
-    console.log('MOCK MODE ACTIVE: Using mock data for value proposition');
+    console.log('Using mock data for value proposition');
     return getMockValuePropositionResponse(companyData, businessData, additionalData, userInfo) as Promise<Response>;
   }
   
-  // Otherwise make the actual API call
-  console.log('LIVE MODE: Making actual API call to webhook');
   try {
-    const response = await fetch(webhookUrl, {
+    // Get the current user's session token for authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    
+    if (!accessToken) {
+      throw new Error('Authentication required. Please sign in again.');
+    }
+    
+    // Call the Edge Function instead of the webhook directly
+    const edgeFunctionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-value-proposition-webhook';
+    console.log(`Calling Edge Function URL: ${edgeFunctionUrl}`);
+    
+    // Create the request body
+    const requestBody = { 
+      company: companyData,
+      business: businessData,
+      additional: additionalData,
+      user: userInfo
+    };
+    
+    console.log(`Request body:`, requestBody);
+    
+    const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify(requestBody)
     });
     
-    console.log('Webhook response status:', response.status);
-    // Check if response status is OK before returning
+    console.log(`Edge Function response status: ${response.status}`);
+    
     if (!response.ok) {
-      console.error('Webhook response not OK:', response.status, response.statusText);
-      // We'll still return the response so the caller can handle it
+      let errorMessage = 'Service unavailable. Please try again later.';
+      let errorDetails = null;
+      
+      try {
+        const errorData = await response.json();
+        console.error('Value proposition webhook error response:', errorData);
+        
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        if (errorData.details) {
+          console.error('Error details:', errorData.details);
+          errorDetails = errorData.details;
+        }
+        
+        // If the Edge Function couldn't reach the webhook, try direct call as fallback
+        if (errorData.message && errorData.message.includes('error sending request for url')) {
+          console.log('⚠️ Edge Function could not reach webhook. Attempting direct call as fallback...');
+          
+          // Make a direct call to the webhook as a fallback
+          const directResponse = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (directResponse.ok) {
+            console.log('✅ METHOD USED: Direct webhook call (fallback)');
+            return directResponse;
+          } else {
+            console.error('Direct webhook call also failed:', await directResponse.text());
+          }
+        }
+      } catch (e) {
+        const errorText = await response.text();
+        console.error('Value proposition webhook error (text):', errorText);
+      }
+      
+      throw new Error(errorMessage);
     }
+    
+    // Check if the response has the expected format
+    const responseData = await response.json();
+    console.log('Edge Function response data:', responseData);
+    console.log('✅ METHOD USED: Edge Function');
+    
+    // If the Edge Function returns a nested response, extract the actual data
+    if (responseData.success && responseData.data) {
+      console.log('Extracting nested data from Edge Function response');
+      // Return the nested data directly instead of creating a new Response
+      return {
+        ok: true,
+        json: () => Promise.resolve(responseData.data)
+      } as Response;
+    }
+    
+    // If the response doesn't have the expected format, return it as is
     return response;
   } catch (error) {
-    console.error('Error in webhook call:', error);
+    console.error('Error in callValuePropositionWebhook:', error);
     throw error;
   }
 };
@@ -127,25 +185,20 @@ export const saveValuePropositionData = async (
   introduction: string | null,
   subject: string | null
 ): Promise<boolean> => {
-  console.log('Saving value proposition data for search ID:', searchId);
-  console.log('Data to save:', { score, advice, introduction, subject });
-  
-  if (!searchId) {
-    console.error('No search ID provided');
-    return false;
-  }
-  
   try {
+    console.log('Saving value proposition data for search:', searchId);
+    
     const { error } = await supabase
       .from('company_searches')
       .update({
         score,
         advice,
         introduction,
-        subject
+        subject,
+        updated_at: new Date().toISOString()
       })
       .eq('id', searchId);
-    
+      
     if (error) {
       console.error('Error saving value proposition data:', error);
       return false;
@@ -154,7 +207,7 @@ export const saveValuePropositionData = async (
     console.log('Value proposition data saved successfully');
     return true;
   } catch (error) {
-    console.error('Exception saving value proposition data:', error);
+    console.error('Error in saveValuePropositionData:', error);
     return false;
   }
 };
