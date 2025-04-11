@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -8,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       agent_questions: {
@@ -335,6 +309,21 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_user_email_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          app_password: string
+          created_at: string | null
+          email_address: string
+          email_provider: string
+          id: string
+          is_active: boolean | null
+          smtp_host: string
+          smtp_port: number
+          updated_at: string | null
+          user_id: string
+        }[]
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown
@@ -548,9 +537,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

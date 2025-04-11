@@ -73,7 +73,7 @@ const Footer: React.FC = () => {
         
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} SaaS Platform. All rights reserved.
+            © {currentYear} MBA Platform. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6">
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
