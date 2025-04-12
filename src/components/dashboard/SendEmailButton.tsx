@@ -220,7 +220,6 @@ const SendEmailButton = ({
               <Button 
                 onClick={() => {
                   setIsOpen(false);
-                  // Navigate to email settings
                   window.location.href = '/settings';
                 }}
               >

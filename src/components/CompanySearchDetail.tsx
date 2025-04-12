@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +13,7 @@ import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropos
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
 import SendEmailButton from '@/components/dashboard/SendEmailButton';
+import { CompanySearch } from '@/types/company';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -20,7 +22,7 @@ interface CompanySearchDetailProps {
 }
 
 const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetailProps) => {
-  const [companySearch, setCompanySearch] = useState<any>(null);
+  const [companySearch, setCompanySearch] = useState<CompanySearch | null>(null);
   const [questionAnswers, setQuestionAnswers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
