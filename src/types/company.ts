@@ -16,7 +16,7 @@ export type ContactInfo = {
   email?: string;
   phone?: string;
   address?: string;
-  company_name?: string; // Add company_name to ContactInfo
+  company_name?: string; // Added company_name property
 };
 
 export type CompanySearch = {
@@ -33,7 +33,7 @@ export type CompanySearch = {
   score?: number;
   advice?: string;
   introduction?: string;
-  subject?: string; // Add subject property
+  subject?: string; // Added subject property
   user_id: string;
 };
 
