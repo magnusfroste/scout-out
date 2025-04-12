@@ -7,6 +7,8 @@ export interface ContactInfo {
   email?: string;
   phone?: string;
   role?: string;
+  contact?: string;
+  www?: string;
 }
 
 export interface ElevatorPitch {
@@ -34,5 +36,5 @@ export interface CompanySearch {
   score: number;
   advice: string;
   introduction: string;
-  subject: string; // Added subject field
+  subject: string;
 }
