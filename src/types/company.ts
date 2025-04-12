@@ -9,6 +9,7 @@ export interface ContactInfo {
   role?: string;
   contact?: string;
   www?: string;
+  address?: string;
 }
 
 export interface ElevatorPitch {
@@ -37,4 +38,19 @@ export interface CompanySearch {
   advice: string;
   introduction: string;
   subject: string;
+}
+
+export interface Question {
+  id: string;
+  question: string;
+}
+
+export interface Answer {
+  question_id: string;
+  answer: string;
+}
+
+export interface SearchResultType {
+  results: Answer[];
+  contact_info?: ContactInfo;
 }

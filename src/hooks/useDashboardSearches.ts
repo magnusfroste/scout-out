@@ -39,7 +39,13 @@ export const useDashboardSearches = (userId: string | undefined) => {
         console.log('Search IDs:', data.map(s => s.id).join(', '));
       }
       
-      setSearches(data || []);
+      // Map returned data to CompanySearch type with all required properties
+      const processedSearches: CompanySearch[] = (data || []).map(item => ({
+        ...item,
+        subject: item.subject || '',  // Provide default value for subject if it's missing
+      }));
+      
+      setSearches(processedSearches);
     } catch (error: any) {
       console.error('Error fetching searches:', error);
       toast({

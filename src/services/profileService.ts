@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { ElevatorPitch } from '@/utils/webhookResponseParser';
+import { ElevatorPitch } from '@/types/company';
 import { ContactInfo } from '@/types/company';
 import { fetchWebhookSettings } from './webhookService';
 
@@ -12,7 +13,6 @@ export interface UserProfile {
   avatar_url: string | null;
   is_admin: boolean;
   website_url?: string | null;
-  // sales_info field removed
   business_data?: {
     elevator_pitch?: ElevatorPitch;
     contact_info?: ContactInfo;
@@ -77,30 +77,12 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       }
       
       console.log('New profile created:', newProfile);
-      return {
-        id: newProfile.id,
-        credits: newProfile.credits,
-        first_name: newProfile.first_name,
-        last_name: newProfile.last_name,
-        avatar_url: newProfile.avatar_url,
-        is_admin: newProfile.is_admin,
-        website_url: newProfile.website_url,
-        business_data: newProfile.business_data
-      } as UserProfile;
+      return newProfile as UserProfile;
     }
     
     // Profile exists, return it
     console.log('Profile found:', data);
-    return {
-      id: data.id,
-      credits: data.credits,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      avatar_url: data.avatar_url,
-      is_admin: data.is_admin,
-      website_url: data.website_url,
-      business_data: data.business_data
-    } as UserProfile;
+    return data as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
     toast({
@@ -114,9 +96,15 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
 
 export const updateUserProfile = async (userId: string, updates: Partial<Omit<UserProfile, 'id'>>) => {
   try {
+    // Convert the business_data object to a JSON-compatible format
+    const jsonUpdates = {
+      ...updates,
+      business_data: updates.business_data ? JSON.parse(JSON.stringify(updates.business_data)) : undefined
+    };
+    
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(jsonUpdates)
       .eq('id', userId);
       
     if (error) {
