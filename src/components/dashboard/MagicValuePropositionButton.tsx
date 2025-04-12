@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
+import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/value-proposition';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MagicValuePropositionButtonProps {

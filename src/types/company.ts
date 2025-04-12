@@ -1,61 +1,38 @@
 
-export type Question = {
-  id: string;
-  question: string;
-};
+import { Json } from '@/integrations/supabase/types';
 
-export type Answer = {
-  question_id: string;
-  answer: string;
-};
-
-export type ContactInfo = {
-  www?: string;
-  contact?: string;
-  role?: string;
+export interface ContactInfo {
+  company_name?: string;
+  name?: string;
   email?: string;
   phone?: string;
-  address?: string;
-  company_name?: string; // Added company_name property
-};
-
-export type CompanySearch = {
-  id: string;
-  company_name: string;
-  contact?: string;
-  contact_info?: any;
-  created_at: string;
-  email?: string;
-  phone?: string;
-  www?: string;
   role?: string;
-  result?: any;
-  score?: number;
-  advice?: string;
-  introduction?: string;
-  subject?: string; // Added subject property
+}
+
+export interface ElevatorPitch {
+  industry?: string;
+  products?: string[];
+  size?: string;
+  headquarters?: string;
+  website?: string;
+  founded?: string;
+  summary?: string;
+}
+
+export interface CompanySearch {
+  id: string;
   user_id: string;
-};
-
-export type SearchResultType = {
-  results?: Answer[];
-  contact_info?: ContactInfo;
-};
-
-export type ElevatorPitch = {
   company_name: string;
-  tagline: string;
-  about: string;
-  services: {
-    name: string;
-    description: string;
-  }[];
-  value_proposition: string;
-  clients: string[];
-  testimonials: {
-    name: string;
-    position: string;
-    company: string;
-    testimonial: string;
-  }[];
-};
+  created_at: string;
+  result: Json;
+  contact_info: Json;
+  contact: string;
+  email: string;
+  phone: string;
+  role: string;
+  www: string;
+  score: number;
+  advice: string;
+  introduction: string;
+  subject: string; // Added subject field
+}

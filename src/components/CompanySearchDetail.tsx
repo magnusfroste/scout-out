@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
+import { saveValuePropositionData } from '@/services/value-proposition';
 import SendEmailButton from '@/components/dashboard/SendEmailButton';
 import { CompanySearch } from '@/types/company';
 
