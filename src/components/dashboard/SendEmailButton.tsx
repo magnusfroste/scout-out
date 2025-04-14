@@ -141,7 +141,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   const formatEmailContent = (text: string): string => {
     if (!text) return "";
     
-    // Split content by newlines and wrap in paragraphs
+    // Split content by double newlines and wrap in paragraphs
     const paragraphs = text.split(/\n\n+/);
     const formattedContent = paragraphs.map(p => {
       // Replace single newlines with <br>

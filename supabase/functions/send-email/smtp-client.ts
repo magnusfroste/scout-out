@@ -31,7 +31,7 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
         password: config.password,
       },
     },
-    debug: false, // Disable verbose logging for production
+    debug: false, // Keep debug off for production use
   });
 }
 
@@ -42,20 +42,19 @@ export async function sendEmail(client: SMTPClient, params: EmailParams) {
   try {
     console.log("Starting email sending process");
     
-    // Create a clean email structure
+    // Create a simple, clean email configuration
     const email = {
       from: params.from,
       to: params.to,
       subject: params.subject,
       html: params.html,
+      // Only set Content-Type for HTML, let the client handle the rest
       headers: {
-        "Content-Type": "text/html; charset=UTF-8",
-        "MIME-Version": "1.0",
-        "Reply-To": params.from
+        "Content-Type": "text/html; charset=UTF-8"
       }
     };
     
-    console.log("Sending email with clean configuration");
+    console.log("Sending email with minimal configuration");
     
     const result = await client.send(email);
     console.log("Email sent successfully");

@@ -73,24 +73,23 @@ Deno.serve(async (req) => {
         password: emailRequest.sender_settings.password
       });
       
-      // Extract sender name if available (use email username as fallback)
-      const senderName = emailRequest.to_name || emailRequest.sender_settings.email.split('@')[0];
+      // Extract recipient name if available (use email username as fallback)
+      const recipientName = emailRequest.to_name || emailRequest.to.split('@')[0];
       
       // Create a nicely formatted HTML email
       const formattedHtmlContent = createEmailTemplate(
         emailRequest.html_content,
-        senderName,
+        recipientName,
         emailRequest.sender_settings.email
       );
       
-      // Send email with clean subject and content
+      // Send email with clean subject and content - no text part, just HTML
       console.log("Sending email to:", emailRequest.to);
       
       const emailParams = {
         from: emailRequest.sender_settings.email,
         to: emailRequest.to,
         subject: emailRequest.subject,
-        content: "Please view this email in an HTML-compatible email client.",
         html: formattedHtmlContent
       };
       
@@ -98,7 +97,6 @@ Deno.serve(async (req) => {
         to: emailParams.to,
         from: emailParams.from,
         subject: emailParams.subject,
-        contentLength: emailParams.content?.length,
         htmlLength: emailParams.html?.length
       });
       
