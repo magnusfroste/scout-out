@@ -7,7 +7,10 @@ export interface CompanySearch {
   created_at: string;
   user_id?: string;
   result?: any;
-  subject?: string;
+  subject?: string | null;
+  score?: number | null;
+  advice?: string | null;
+  introduction?: string | null;
 }
 
 export interface SearchResult {
