@@ -53,7 +53,7 @@ export interface CompanySearch {
   score: number;
   advice: string;
   introduction: string;
-  subject?: string;  // Make this optional since it might not exist in older database records
+  subject?: string;  // Making this optional since it might not exist in older database records
 }
 
 export interface Question {
