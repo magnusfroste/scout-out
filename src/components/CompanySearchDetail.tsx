@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +35,7 @@ interface CompanySearch {
   score?: number | null;
   advice?: string | null;
   introduction?: string | null;
-  subject?: string | null;
+  subject?: string | null;  // Added the subject property
   user_id: string;
   www?: string | null;
 }
