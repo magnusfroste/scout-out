@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from '@/types/company';
 
@@ -19,6 +18,9 @@ export type CompanySearchRecord = {
   phone?: string | null;
   role?: string | null;
   subject?: string | null;
+  score?: number | null;
+  advice?: string | null;
+  introduction?: string | null;
 };
 
 /**
