@@ -111,6 +111,7 @@ export type Database = {
           role: string | null
           score: number | null
           subject: string | null
+          updated_at: string | null
           user_id: string
           www: string | null
         }
@@ -128,6 +129,7 @@ export type Database = {
           role?: string | null
           score?: number | null
           subject?: string | null
+          updated_at?: string | null
           user_id: string
           www?: string | null
         }
@@ -145,6 +147,7 @@ export type Database = {
           role?: string | null
           score?: number | null
           subject?: string | null
+          updated_at?: string | null
           user_id?: string
           www?: string | null
         }
