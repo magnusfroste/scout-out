@@ -1,126 +1,118 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
+import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 import { supabase } from '@/integrations/supabase/client';
+import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 
 interface MagicValuePropositionButtonProps {
   companyId: string;
-  onSuccess: (score: number, advice: string, introduction: string, subject: string) => void;
+  onSuccess: (score: number | null, advice: string | null, introduction: string | null, subject: string | null) => void;
 }
 
-const MagicValuePropositionButton: React.FC<MagicValuePropositionButtonProps> = ({ 
-  companyId,
-  onSuccess
-}) => {
-  const [isGenerating, setIsGenerating] = useState(false);
+const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValuePropositionButtonProps) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
 
   const handleGenerateValueProposition = async () => {
-    if (!user || !userProfile) {
-      toast({
-        title: 'Error',
-        description: 'You must be logged in to generate a value proposition',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (!user || !companyId) return;
 
-    setIsGenerating(true);
+    setIsLoading(true);
     try {
-      console.log('Starting value proposition generation for company ID:', companyId);
-
-      // Get the company data first
+      // Fetch company data
       const { data: companyData, error: companyError } = await supabase
         .from('company_searches')
         .select('*')
         .eq('id', companyId)
         .single();
 
-      if (companyError) {
-        throw companyError;
-      }
+      if (companyError) throw companyError;
 
-      if (!companyData) {
-        throw new Error('Company data not found');
-      }
-
-      console.log('Retrieved company data:', companyData);
-
-      // Get webhook URL from settings
+      // Fetch webhook URL
       const webhookUrl = await getValuePropositionWebhookUrl();
       if (!webhookUrl) {
-        throw new Error('Value Proposition Webhook URL not configured');
+        throw new Error("Value proposition webhook URL not configured");
       }
 
-      console.log('Using webhook URL:', webhookUrl);
-      console.log('Using business data:', userProfile.business_data);
+      // Get business data from user profile
+      const businessData = userProfile?.business_data || null;
+      const userInfo = {
+        first_name: userProfile?.first_name || "",
+        last_name: userProfile?.last_name || ""
+      };
 
       // Call the webhook
       const response = await callValuePropositionWebhook(
         webhookUrl,
         companyData,
-        userProfile.business_data || {},
+        businessData,
         null,
-        {
-          first_name: userProfile.first_name,
-          last_name: userProfile.last_name
-        }
+        userInfo
       );
 
-      if (!response.ok) {
-        throw new Error(`Webhook request failed with status: ${response.status}`);
+      const responseData = await response.json();
+      console.log('Webhook response data:', responseData);
+
+      // Extract data from response
+      let extractedData = { score: null, advice: null, introduction: null, subject: null };
+      
+      if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+        const output = responseData[0].output;
+        extractedData = {
+          score: output.score || null,
+          advice: output.advice || null,
+          introduction: output.introduction || null,
+          subject: output.subject || null
+        };
+      } else if (responseData.score !== undefined || responseData.advice || responseData.introduction || responseData.subject) {
+        extractedData = {
+          score: responseData.score || null,
+          advice: responseData.advice || null,
+          introduction: responseData.introduction || null,
+          subject: responseData.subject || null
+        };
       }
-
-      const data = await response.json();
-      console.log('Webhook response data:', data);
-
-      if (!data) {
-        throw new Error('No data returned from webhook');
-      }
-
-      // Extract the relevant data
-      const score = typeof data.score === 'number' ? data.score : null;
-      const advice = data.advice || null;
-      const introduction = data.introduction || null;
-      const subject = data.subject || null;
-
-      console.log('Extracted data:', { score, advice, introduction, subject });
-
-      // Call the success callback with the data
-      onSuccess(score, advice, introduction, subject);
+      
+      console.log('Extracted data:', extractedData);
+      
+      // Call onSuccess with properly handled null values
+      onSuccess(
+        extractedData.score,
+        extractedData.advice,
+        extractedData.introduction,
+        extractedData.subject
+      );
 
       toast({
-        title: 'Success',
-        description: 'Value proposition generated successfully',
+        title: "Success",
+        description: "Value proposition generated successfully",
       });
+      
     } catch (error: any) {
       console.error('Error generating value proposition:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Error details:', error.details || {});
       
       toast({
-        title: 'Error',
-        description: `Failed to generate value proposition: ${error.message}`,
-        variant: 'destructive',
+        title: "Error",
+        description: `Failed to generate value proposition: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <Button 
-      variant="default" 
-      size="sm" 
       onClick={handleGenerateValueProposition}
-      disabled={isGenerating}
-      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md"
+      variant="outline"
+      disabled={isLoading}
+      className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 border-none"
     >
-      {isGenerating ? (
+      {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Generating...

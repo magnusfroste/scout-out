@@ -270,13 +270,14 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     }
   };
 
-  const handleMagicSuccess = (newScore: number, newAdvice: string, newIntroduction: string, newSubject: string) => {
+  const handleMagicSuccess = (newScore: number | null, newAdvice: string | null, newIntroduction: string | null, newSubject: string | null) => {
     console.log('Magic value proposition generated:', { newScore, newAdvice, newIntroduction, newSubject });
     
-    setDisplayScore(newScore.toString());
-    setDisplayAdvice(newAdvice);
-    setDisplayIntroduction(newIntroduction);
-    setDisplaySubject(newSubject);
+    // Safely handle null values
+    setDisplayScore(newScore !== null ? newScore.toString() : '');
+    setDisplayAdvice(newAdvice || '');
+    setDisplayIntroduction(newIntroduction || '');
+    setDisplaySubject(newSubject || '');
     
     setHasUnsavedChanges(true);
   };

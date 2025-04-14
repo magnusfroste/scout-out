@@ -35,9 +35,9 @@ export interface CompanySearchRecord {
   email?: string | null;
   phone?: string | null;
   role?: string | null;
-  score?: number;
-  advice?: string;
-  introduction?: string;
-  subject?: string;
+  score?: number | null;
+  advice?: string | null;
+  introduction?: string | null;
+  subject?: string | null;
   [key: string]: any; 
 }
