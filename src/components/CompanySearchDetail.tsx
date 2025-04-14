@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
 import SendEmailButton from '@/components/dashboard/SendEmailButton';
 import { Input } from '@/components/ui/input';
+import { CompanySearchRecord } from '@/types/company';
 
 interface CompanySearchDetailProps {
   searchId: string;
