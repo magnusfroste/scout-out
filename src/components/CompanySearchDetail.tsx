@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -63,7 +62,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       if (searchError) throw searchError;
       console.log('Fetched company search data:', searchData);
       
-      // Ensure the subject property exists even if it's not in the database
       const typedSearchData: CompanySearch = {
         ...searchData,
         subject: searchData.subject || ''

@@ -39,11 +39,11 @@ export const useDashboardSearches = (userId: string | undefined) => {
         console.log('Search IDs:', data.map(s => s.id).join(', '));
       }
       
-      // Map returned data to CompanySearch type with all required properties
-      const processedSearches: CompanySearch[] = (data || []).map(item => ({
+      // Process the data to ensure all required properties exist
+      const processedSearches = (data || []).map(item => ({
         ...item,
-        subject: item.subject || '',  // Provide default value for subject if it's missing
-      }));
+        subject: item.subject || ''  // Provide default value for subject if it's missing
+      })) as CompanySearch[];
       
       setSearches(processedSearches);
     } catch (error: any) {
