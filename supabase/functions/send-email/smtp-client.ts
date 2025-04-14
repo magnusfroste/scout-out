@@ -31,7 +31,7 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
         password: config.password,
       },
     },
-    // Disable all automatic MIME handling
+    // Disable automatic processing
     pool: false,
     debug: false,
   });
@@ -44,18 +44,17 @@ export async function sendEmail(client: SMTPClient, params: EmailParams) {
   try {
     console.log("Starting email sending process");
     
-    // Create an extremely simplified email structure with no MIME parts
+    // Create a bare minimum email structure with no MIME handling
     const email = {
       from: params.from,
       to: params.to,
       subject: params.subject,
       content: params.html,
-      html: "", // Set html to empty to avoid auto-generation of multipart
-      contentType: "text/html; charset=utf-8", // Force content type
-      // No headers to avoid any automatic MIME handling
+      // Force direct HTML sending without multipart
+      contentType: "text/html; charset=utf-8",
     };
     
-    console.log("Sending email with extremely simplified configuration");
+    console.log("Sending email with bare minimum configuration");
     
     const result = await client.send(email);
     console.log("Email sent successfully");
