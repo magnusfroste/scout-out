@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
+import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valueProposition';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import { useCompanySearches } from '@/hooks/useCompanySearches';

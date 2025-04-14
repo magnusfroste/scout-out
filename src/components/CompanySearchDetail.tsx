@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
+import { saveValuePropositionData } from '@/services/valueProposition';
 import SendEmailButton from '@/components/dashboard/SendEmailButton';
 import { Input } from '@/components/ui/input';
 import { CompanySearchRecord } from '@/types/company';

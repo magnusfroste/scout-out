@@ -5,7 +5,7 @@ import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
+import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valueProposition';
 
 interface MagicValuePropositionButtonProps {
   companyId: string;
