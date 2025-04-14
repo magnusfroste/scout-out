@@ -21,8 +21,7 @@ export const saveValuePropositionData = async (
         score,
         advice,
         introduction,
-        subject,
-        updated_at: new Date().toISOString()
+        subject
       })
       .eq('id', searchId);
       
