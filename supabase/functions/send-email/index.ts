@@ -39,16 +39,21 @@ Deno.serve(async (req) => {
   try {
     console.log("Received email send request");
     
-    // Get request data
+    // Log request headers for debugging
+    const headers = {};
+    req.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    console.log("Request headers:", headers);
+    
+    // Get request body as text first for logging
+    const bodyText = await req.text();
+    console.log("Raw request body:", bodyText);
+    
+    // Parse JSON
     let emailRequest: EmailRequest;
     try {
-      emailRequest = await req.json();
-      console.log("Request data received:", { 
-        to: emailRequest.to,
-        subject: emailRequest.subject,
-        senderEmail: emailRequest.sender_settings?.email,
-        senderHost: emailRequest.sender_settings?.host,
-      });
+      emailRequest = JSON.parse(bodyText);
     } catch (parseError) {
       console.error("Error parsing request JSON:", parseError);
       return new Response(
@@ -63,9 +68,22 @@ Deno.serve(async (req) => {
       );
     }
     
+    console.log("Request data parsed:", { 
+      to: emailRequest.to,
+      subject: emailRequest.subject,
+      senderEmail: emailRequest.sender_settings?.email,
+      senderHost: emailRequest.sender_settings?.host,
+    });
+    
     // Validate input
     if (!emailRequest || !emailRequest.to || !emailRequest.subject || !emailRequest.html_content || !emailRequest.sender_settings) {
-      console.error("Missing required email data:", emailRequest);
+      console.error("Missing required email data:", {
+        hasTo: Boolean(emailRequest?.to),
+        hasSubject: Boolean(emailRequest?.subject),
+        hasContent: Boolean(emailRequest?.html_content),
+        hasSenderSettings: Boolean(emailRequest?.sender_settings)
+      });
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -75,6 +93,39 @@ Deno.serve(async (req) => {
             hasSubject: Boolean(emailRequest?.subject),
             hasContent: Boolean(emailRequest?.html_content),
             hasSenderSettings: Boolean(emailRequest?.sender_settings)
+          }
+        }),
+        { 
+          status: 400,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          } 
+        }
+      );
+    }
+
+    // Validate sender settings
+    if (!emailRequest.sender_settings.email || 
+        !emailRequest.sender_settings.host || 
+        !emailRequest.sender_settings.port || 
+        !emailRequest.sender_settings.password) {
+      console.error("Missing required sender settings:", {
+        hasEmail: Boolean(emailRequest.sender_settings.email),
+        hasHost: Boolean(emailRequest.sender_settings.host),
+        hasPort: Boolean(emailRequest.sender_settings.port),
+        hasPassword: Boolean(emailRequest.sender_settings.password)
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Missing required sender settings',
+          details: {
+            hasEmail: Boolean(emailRequest.sender_settings.email),
+            hasHost: Boolean(emailRequest.sender_settings.host), 
+            hasPort: Boolean(emailRequest.sender_settings.port),
+            hasPassword: Boolean(emailRequest.sender_settings.password)
           }
         }),
         { 
@@ -109,12 +160,13 @@ Deno.serve(async (req) => {
             password: emailRequest.sender_settings.password,
           },
         },
+        debug: true, // Enable debug mode for more logs
       });
       
       // Send email
       console.log("Sending email to:", emailRequest.to);
       
-      await client.send({
+      const emailParams = {
         from: emailRequest.sender_settings.email,
         to: emailRequest.to,
         subject: emailRequest.subject,
@@ -129,7 +181,12 @@ Deno.serve(async (req) => {
           "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@${emailRequest.sender_settings.host}>`,
           "MIME-Version": "1.0"
         }
-      });
+      };
+      
+      console.log("Email parameters:", emailParams);
+      
+      const sendResult = await client.send(emailParams);
+      console.log("Email send result:", sendResult);
       
       console.log("Email sent successfully");
       await client.close();

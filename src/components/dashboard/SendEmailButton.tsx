@@ -72,23 +72,30 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         emailProvider: emailSettings.email_provider,
         senderEmail: emailSettings.email_address
       });
+      
+      // Prepare the request data
+      const emailData = {
+        to: recipientEmail,
+        to_name: recipientName,
+        subject: subject,
+        html_content: content.replace(/\n/g, '<br>'),
+        sender_settings: {
+          email: emailSettings.email_address,
+          host: emailSettings.smtp_host,
+          port: emailSettings.smtp_port,
+          password: emailSettings.app_password,
+          provider: emailSettings.email_provider
+        }
+      };
+      
+      console.log('Email request payload:', JSON.stringify(emailData));
 
       // Call the edge function to send the email using the Supabase Function API
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: JSON.stringify({
-          to: recipientEmail,
-          to_name: recipientName,
-          subject: subject,
-          html_content: content.replace(/\n/g, '<br>'),
-          sender_settings: {
-            email: emailSettings.email_address,
-            host: emailSettings.smtp_host,
-            port: emailSettings.smtp_port,
-            password: emailSettings.app_password,
-            provider: emailSettings.email_provider
-          }
-        })
+        body: JSON.stringify(emailData)
       });
+      
+      console.log('Edge function response:', data);
 
       if (error) {
         console.error('Error from Edge Function:', error);
