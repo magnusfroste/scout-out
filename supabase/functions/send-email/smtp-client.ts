@@ -1,4 +1,3 @@
-
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 export interface SMTPConfig {
@@ -33,7 +32,7 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
         password: config.password,
       },
     },
-    debug: true, // Enable debug mode for more logs
+    debug: { log: true }, // Enable debug mode for detailed logs
   });
 }
 
@@ -42,24 +41,31 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
  */
 export async function sendEmail(client: SMTPClient, params: EmailParams) {
   try {
-    // Ensure subject is properly encoded
-    const enhancedParams = {
-      ...params,
-      // Remove any potential malformed line breaks or special characters from subject
-      subject: params.subject.trim().replace(/[\r\n\t]+/g, ' '),
+    console.log("Starting email sending process with params:", {
+      to: params.to,
+      from: params.from,
+      subject: params.subject,
+      contentLength: params.content?.length,
+      htmlLength: params.html?.length,
+    });
+    
+    // Create a clean email with proper encoding and structure
+    const email = {
+      from: params.from,
+      to: params.to,
+      subject: params.subject,
+      content: params.content || "Please view this email in an HTML-compatible email client.",
+      html: params.html,
+      // Keep only essential headers to prevent encoding issues
       headers: {
-        ...params.headers,
-        // Ensure proper content type and encoding headers
         "Content-Type": "text/html; charset=UTF-8",
-        "Content-Transfer-Encoding": "base64",
-        "Content-Language": "en-US",
-        "MIME-Version": "1.0"
+        "Reply-To": params.from
       }
     };
     
-    console.log("Sending email with subject:", enhancedParams.subject);
+    console.log("Sending email with clean configuration");
     
-    const result = await client.send(enhancedParams);
+    const result = await client.send(email);
     console.log("Email sent successfully:", result);
     await client.close();
     return result;

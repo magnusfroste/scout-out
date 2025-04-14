@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
     console.log("Request data parsed:", { 
       to: emailRequest.to,
       subject: emailRequest.subject,
+      contentLength: emailRequest.html_content?.length,
       senderEmail: emailRequest.sender_settings?.email,
       senderHost: emailRequest.sender_settings?.host,
     });
@@ -82,32 +83,24 @@ Deno.serve(async (req) => {
         emailRequest.sender_settings.email
       );
       
-      // Sanitize subject to prevent encoding issues
-      const sanitizedSubject = emailRequest.subject.trim().replace(/[\r\n\t]+/g, ' ');
-      console.log("Sanitized subject:", sanitizedSubject);
-      
-      // Send email
+      // Send email with clean subject and content
       console.log("Sending email to:", emailRequest.to);
       
       const emailParams = {
         from: emailRequest.sender_settings.email,
         to: emailRequest.to,
-        subject: sanitizedSubject,
+        subject: emailRequest.subject,
         content: "Please view this email in an HTML-compatible email client.",
-        html: formattedHtmlContent,
-        headers: {
-          "Reply-To": emailRequest.sender_settings.email,
-          "X-Priority": "3",
-          "List-Unsubscribe": `<mailto:${emailRequest.sender_settings.email}?subject=Unsubscribe>`,
-          "X-Mailer": "Master Business Agent",
-          "Precedence": "bulk",
-          "Content-Type": "text/html; charset=UTF-8",
-          "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@${emailRequest.sender_settings.host}>`,
-          "MIME-Version": "1.0"
-        }
+        html: formattedHtmlContent
       };
       
-      console.log("Email parameters:", emailParams);
+      console.log("Email parameters:", {
+        to: emailParams.to,
+        from: emailParams.from,
+        subject: emailParams.subject,
+        contentLength: emailParams.content?.length,
+        htmlLength: emailParams.html?.length
+      });
       
       await sendEmail(client, emailParams);
       console.log("Email sent successfully");

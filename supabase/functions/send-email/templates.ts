@@ -6,48 +6,49 @@
 /**
  * Creates a professional HTML email template with the provided content
  */
-export function createEmailTemplate(content: string, senderName: string, senderEmail: string): string {
+export function createEmailTemplate(content: string, recipientName: string, senderEmail: string): string {
+  // Ensure we have some content
+  if (!content || content.trim() === '') {
+    content = '<p>This email was sent with no content.</p>';
+  }
+  
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email from ${senderName}</title>
+  <title>Email</title>
   <style>
     body {
-      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-family: Arial, sans-serif;
       line-height: 1.6;
-      color: #333333;
-      margin: 0;
-      padding: 0;
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    }
-    .email-wrapper {
-      width: 100%;
-      max-width: 620px;
+      color: #333;
+      max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
     }
     .email-container {
-      padding: 30px;
-      border: 1px solid #e8e8e8;
+      padding: 20px;
+      border: 1px solid #eee;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    .email-header {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
     }
     .email-content {
-      padding-bottom: 20px;
+      padding: 20px 0;
     }
     .email-footer {
-      margin-top: 30px;
+      margin-top: 20px;
       padding-top: 20px;
-      border-top: 1px solid #e8e8e8;
-      font-size: 13px;
-      color: #888888;
+      border-top: 1px solid #eee;
+      font-size: 14px;
+      color: #777;
     }
     .email-signature {
-      margin-top: 25px;
+      margin-top: 30px;
     }
     a {
       color: #2563eb;
@@ -57,27 +58,18 @@ export function createEmailTemplate(content: string, senderName: string, senderE
       text-decoration: underline;
     }
     p {
-      margin: 16px 0;
-    }
-    .header-image {
-      width: 100%;
-      max-height: 200px;
-      object-fit: cover;
-      border-radius: 4px 4px 0 0;
-      margin-bottom: 20px;
+      margin: 1em 0;
     }
   </style>
 </head>
 <body>
-  <div class="email-wrapper">
-    <div class="email-container">
-      <div class="email-content">
-        ${content}
-      </div>
-      <div class="email-footer">
-        <p>This email was sent by ${senderName} via Master Business Agent</p>
-        <p>For any questions, please reply directly to this email at <a href="mailto:${senderEmail}">${senderEmail}</a></p>
-      </div>
+  <div class="email-container">
+    <div class="email-content">
+      ${content}
+    </div>
+    <div class="email-footer">
+      <p>This email was sent via Master Business Agent</p>
+      <p>For any questions, please reply directly to this email at <a href="mailto:${senderEmail}">${senderEmail}</a></p>
     </div>
   </div>
 </body>

@@ -73,18 +73,15 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         senderEmail: emailSettings.email_address
       });
       
-      // Format the content with proper HTML
-      const formattedContent = convertToProperHtml(content, recipientName);
-      
-      // Sanitize subject to prevent encoding issues
-      const sanitizedSubject = subject.trim().replace(/[\r\n\t]+/g, ' ');
+      // Prepare clean HTML content with proper paragraphs
+      const htmlContent = formatEmailContent(content);
       
       // Prepare the request data
       const emailData = {
         to: recipientEmail,
         to_name: recipientName,
-        subject: sanitizedSubject,
-        html_content: formattedContent,
+        subject: subject,
+        html_content: htmlContent,
         sender_settings: {
           email: emailSettings.email_address,
           host: emailSettings.smtp_host,
@@ -94,15 +91,17 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       };
       
+      // Log the email request without sensitive data
       console.log('Email request payload:', JSON.stringify({
         ...emailData,
+        html_content: `${htmlContent.substring(0, 50)}... (truncated)`,
         sender_settings: {
           ...emailData.sender_settings,
           password: '******' // Hide password in logs
         }
       }));
 
-      // Call the edge function to send the email using the Supabase Function API
+      // Call the edge function to send the email
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: JSON.stringify(emailData)
       });
@@ -120,7 +119,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error(errorMessage);
       }
 
-      console.log('Email sent successfully:', data);
       toast({
         title: "Email sent",
         description: `Email successfully sent to ${recipientEmail}`,
@@ -138,25 +136,20 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   };
 
   /**
-   * Convert plain text with simple formatting to proper HTML with professional styling
+   * Format email content with proper HTML structure
    */
-  const convertToProperHtml = (text: string, recipientName?: string): string => {
+  const formatEmailContent = (text: string): string => {
     if (!text) return "";
     
-    // Replace line breaks with paragraph tags
-    let html = text
-      .replace(/\n{2,}/g, '</p><p>') // Convert double line breaks to paragraphs
-      .replace(/\n/g, '<br>');       // Convert single line breaks to <br>
+    // Split content by newlines and wrap in paragraphs
+    const paragraphs = text.split(/\n\n+/);
+    const formattedContent = paragraphs.map(p => {
+      // Replace single newlines with <br>
+      const withLineBreaks = p.replace(/\n/g, '<br>');
+      return `<p>${withLineBreaks}</p>`;
+    }).join('');
     
-    // Make sure content is wrapped in paragraphs
-    if (!html.startsWith('<p>')) {
-      html = '<p>' + html;
-    }
-    if (!html.endsWith('</p>')) {
-      html = html + '</p>';
-    }
-
-    return html;
+    return formattedContent;
   };
 
   return (
