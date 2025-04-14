@@ -12,10 +12,12 @@ export function createEmailTemplate(content: string, recipientName: string, send
     content = '<p>This email was sent with no content.</p>';
   }
   
-  // Create an extremely simple HTML structure with inline styles
-  return `<html>
+  // Create a simple HTML structure with inline styles
+  return `<!DOCTYPE html>
+<html>
 <head>
 <meta charset="utf-8">
+<title>Email</title>
 </head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0; padding: 20px; color: #333;">
 <div style="padding: 20px 0;">

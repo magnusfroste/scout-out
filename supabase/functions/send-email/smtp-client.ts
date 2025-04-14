@@ -31,9 +31,7 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
         password: config.password,
       },
     },
-    // Disable automatic processing
     pool: false,
-    debug: false,
   });
 }
 
@@ -44,22 +42,16 @@ export async function sendEmail(client: SMTPClient, params: EmailParams) {
   try {
     console.log("Starting email sending process");
     
-    // Create a bare minimum email structure with no MIME handling
-    const email = {
+    await client.send({
       from: params.from,
       to: params.to,
       subject: params.subject,
-      content: params.html,
-      // Force direct HTML sending without multipart
-      contentType: "text/html; charset=utf-8",
-    };
+      html: params.html,
+    });
     
-    console.log("Sending email with bare minimum configuration");
-    
-    const result = await client.send(email);
     console.log("Email sent successfully");
     await client.close();
-    return result;
+    return { success: true };
   } catch (error) {
     console.error("Error sending email:", error);
     try {

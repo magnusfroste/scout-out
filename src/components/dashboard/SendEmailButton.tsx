@@ -73,7 +73,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         senderEmail: emailSettings.email_address
       });
       
-      // Format the content with proper HTML paragraphs
+      // Format content as HTML paragraphs
       const htmlContent = formatEmailContent(content);
       
       // Prepare the request data
@@ -90,16 +90,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           provider: emailSettings.email_provider
         }
       };
-      
-      // Log the email request without sensitive data
-      console.log('Email request payload:', JSON.stringify({
-        ...emailData,
-        html_content: `${htmlContent.substring(0, 50)}... (truncated)`,
-        sender_settings: {
-          ...emailData.sender_settings,
-          password: '******' // Hide password in logs
-        }
-      }));
 
       // Call the edge function to send the email
       const { data, error } = await supabase.functions.invoke('send-email', {
@@ -141,19 +131,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   const formatEmailContent = (text: string): string => {
     if (!text) return "";
     
-    // Ensure paragraphs are properly wrapped
-    // First normalize line endings
-    const normalizedText = text.replace(/\r\n/g, '\n');
-    
     // Split content by double newlines and wrap in paragraphs
-    const paragraphs = normalizedText.split(/\n\n+/);
-    const formattedContent = paragraphs.map(p => {
+    const paragraphs = text.split(/\n\n+/);
+    return paragraphs.map(p => {
       // Replace single newlines with <br>
       const withLineBreaks = p.replace(/\n/g, '<br>');
       return `<p>${withLineBreaks}</p>`;
     }).join('');
-    
-    return formattedContent;
   };
 
   return (
