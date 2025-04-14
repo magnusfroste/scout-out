@@ -18,6 +18,7 @@ export type CompanySearchRecord = {
   email?: string | null;
   phone?: string | null;
   role?: string | null;
+  subject?: string | null;
 };
 
 /**

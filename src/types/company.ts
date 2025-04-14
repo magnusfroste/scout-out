@@ -22,3 +22,22 @@ export type SearchResultType = {
   results?: Answer[];
   contact_info?: ContactInfo;
 };
+
+export interface CompanySearchRecord {
+  id: string;
+  user_id: string;
+  company_name: string;
+  result: any;
+  created_at: string;
+  contact_info?: any;
+  www?: string | null;
+  contact?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  score?: number;
+  advice?: string;
+  introduction?: string;
+  subject?: string;
+  [key: string]: any; 
+}

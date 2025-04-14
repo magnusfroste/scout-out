@@ -22,6 +22,7 @@ interface CompanySearchRecord {
   email?: string | null;
   phone?: string | null;
   role?: string | null;
+  subject?: string | null;
   [key: string]: any; 
 }
 

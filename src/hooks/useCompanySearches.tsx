@@ -19,6 +19,7 @@ export interface CompanySearch {
   score?: number;
   advice?: string;
   introduction?: string;
+  subject?: string;
 }
 
 export function useCompanySearches() {
@@ -123,7 +124,8 @@ export function useCompanySearches() {
         .update({
           score: data.score,
           advice: data.advice,
-          introduction: data.introduction
+          introduction: data.introduction,
+          subject: data.subject
         })
         .eq('id', id)
         .eq('user_id', user.id);
