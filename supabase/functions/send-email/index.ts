@@ -26,38 +26,62 @@ interface EmailRequest {
 
 Deno.serve(async (req) => {
   // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+  
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      }
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     console.log("Received email send request");
     
     // Get request data
-    const emailRequest: EmailRequest = await req.json();
-    
-    console.log("Request data received:", { 
-      to: emailRequest.to,
-      subject: emailRequest.subject,
-      senderEmail: emailRequest.sender_settings?.email,
-      senderHost: emailRequest.sender_settings?.host,
-    });
-    
-    // Validate input
-    if (!emailRequest || !emailRequest.to || !emailRequest.subject || !emailRequest.html_content || !emailRequest.sender_settings) {
+    let emailRequest: EmailRequest;
+    try {
+      emailRequest = await req.json();
+      console.log("Request data received:", { 
+        to: emailRequest.to,
+        subject: emailRequest.subject,
+        senderEmail: emailRequest.sender_settings?.email,
+        senderHost: emailRequest.sender_settings?.host,
+      });
+    } catch (parseError) {
+      console.error("Error parsing request JSON:", parseError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing required email data' }),
+        JSON.stringify({ success: false, error: 'Invalid JSON data' }),
         { 
           status: 400,
           headers: { 
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            ...corsHeaders
+          } 
+        }
+      );
+    }
+    
+    // Validate input
+    if (!emailRequest || !emailRequest.to || !emailRequest.subject || !emailRequest.html_content || !emailRequest.sender_settings) {
+      console.error("Missing required email data:", emailRequest);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Missing required email data',
+          received: {
+            hasTo: Boolean(emailRequest?.to),
+            hasSubject: Boolean(emailRequest?.subject),
+            hasContent: Boolean(emailRequest?.html_content),
+            hasSenderSettings: Boolean(emailRequest?.sender_settings)
+          }
+        }),
+        { 
+          status: 400,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders
           } 
         }
       );
@@ -115,7 +139,7 @@ Deno.serve(async (req) => {
         { 
           headers: { 
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            ...corsHeaders
           } 
         }
       );
@@ -136,7 +160,7 @@ Deno.serve(async (req) => {
           status: 500,
           headers: { 
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            ...corsHeaders
           } 
         }
       );
@@ -154,7 +178,7 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { 
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...corsHeaders
         } 
       }
     );
