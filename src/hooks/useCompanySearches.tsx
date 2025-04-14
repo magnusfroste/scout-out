@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,7 +42,6 @@ export function useCompanySearches() {
 
       if (error) throw error;
       
-      // Add a count of answers for each search
       const searchesWithCounts = data?.map(search => ({
         ...search,
         answer_count: search.company_question_answers?.length || 0
@@ -70,7 +68,6 @@ export function useCompanySearches() {
     try {
       console.log('Deleting company search with ID:', id, 'for user:', user.id);
       
-      // First delete any related answers
       const { error: answersError } = await supabase
         .from('company_question_answers')
         .delete()
@@ -83,7 +80,6 @@ export function useCompanySearches() {
       
       console.log('Related answers deleted (if any)');
 
-      // Then delete the company search itself - ensuring it belongs to the current user
       const { error } = await supabase
         .from('company_searches')
         .delete()
@@ -96,7 +92,6 @@ export function useCompanySearches() {
       
       console.log('Company search deleted successfully');
 
-      // Update the local state
       setSearches(prevSearches => prevSearches.filter(search => search.id !== id));
       
       toast({
@@ -134,7 +129,6 @@ export function useCompanySearches() {
 
       if (error) throw error;
 
-      // Update local state
       setSearches(prevSearches => 
         prevSearches.map(search => 
           search.id === id ? { ...search, ...data } : search

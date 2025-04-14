@@ -110,6 +110,7 @@ export type Database = {
           result: Json | null
           role: string | null
           score: number | null
+          subject: string | null
           user_id: string
           www: string | null
         }
@@ -126,6 +127,7 @@ export type Database = {
           result?: Json | null
           role?: string | null
           score?: number | null
+          subject?: string | null
           user_id: string
           www?: string | null
         }
@@ -142,6 +144,7 @@ export type Database = {
           result?: Json | null
           role?: string | null
           score?: number | null
+          subject?: string | null
           user_id?: string
           www?: string | null
         }
