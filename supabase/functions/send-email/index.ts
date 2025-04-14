@@ -76,14 +76,21 @@ Deno.serve(async (req) => {
       // Extract recipient name if available (use email username as fallback)
       const recipientName = emailRequest.to_name || emailRequest.to.split('@')[0];
       
-      // Create a nicely formatted HTML email
+      // Format the HTML content to ensure it's clean
+      let cleanHtmlContent = emailRequest.html_content;
+      if (!cleanHtmlContent.startsWith('<')) {
+        // If it doesn't start with HTML, wrap it in paragraph tags
+        cleanHtmlContent = `<p>${cleanHtmlContent.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+      }
+      
+      // Create a simple HTML email
       const formattedHtmlContent = createEmailTemplate(
-        emailRequest.html_content,
+        cleanHtmlContent,
         recipientName,
         emailRequest.sender_settings.email
       );
       
-      // Send email with clean subject and content - no text part, just HTML
+      // Send email with simplified parameters
       console.log("Sending email to:", emailRequest.to);
       
       const emailParams = {
