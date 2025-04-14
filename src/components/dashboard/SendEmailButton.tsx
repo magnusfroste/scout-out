@@ -73,10 +73,10 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         senderEmail: emailSettings.email_address
       });
       
-      // Format content as HTML paragraphs
+      // Format content as proper HTML with improved structure
       const htmlContent = formatEmailContent(content);
       
-      // Prepare the request data
+      // Prepare the request data with improved metadata
       const emailData = {
         to: recipientEmail,
         to_name: recipientName,
@@ -126,17 +126,22 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   };
 
   /**
-   * Format email content with proper HTML structure
+   * Format email content with proper HTML structure optimized for deliverability
    */
   const formatEmailContent = (text: string): string => {
     if (!text) return "";
     
-    // Split content by double newlines and wrap in paragraphs
-    const paragraphs = text.split(/\n\n+/);
+    // Normalize line endings first
+    const normalizedText = text.replace(/\r\n/g, '\n');
+    
+    // Split content by double newlines and wrap in paragraphs with proper formatting
+    const paragraphs = normalizedText.split(/\n\n+/);
     return paragraphs.map(p => {
-      // Replace single newlines with <br>
+      // Replace single newlines with <br> tags
       const withLineBreaks = p.replace(/\n/g, '<br>');
-      return `<p>${withLineBreaks}</p>`;
+      
+      // Add proper spacing and styling for better readability and deliverability
+      return `<p style="margin-bottom: 16px; line-height: 1.6;">${withLineBreaks}</p>`;
     }).join('');
   };
 

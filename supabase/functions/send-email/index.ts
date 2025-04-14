@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     
     // Get request body as text first for logging
     const bodyText = await req.text();
-    console.log("Raw request body:", bodyText);
+    console.log("Raw request body received");
     
     // Parse JSON
     let emailRequest: EmailRequest;
@@ -43,8 +43,7 @@ Deno.serve(async (req) => {
       to: emailRequest.to,
       subject: emailRequest.subject,
       contentLength: emailRequest.html_content?.length,
-      senderEmail: emailRequest.sender_settings?.email,
-      senderHost: emailRequest.sender_settings?.host,
+      senderProvider: emailRequest.sender_settings?.provider || 'not specified',
     });
     
     // Validate input
@@ -59,12 +58,8 @@ Deno.serve(async (req) => {
     }
 
     try {
-      // Configure email client
-      console.log("Configuring email client with:", {
-        host: emailRequest.sender_settings.host,
-        port: emailRequest.sender_settings.port,
-        email: emailRequest.sender_settings.email
-      });
+      // Configure email client with deliverability settings
+      console.log("Configuring email client with provider:", emailRequest.sender_settings.provider);
       
       const client = createSMTPClient({
         host: emailRequest.sender_settings.host,
@@ -73,10 +68,10 @@ Deno.serve(async (req) => {
         password: emailRequest.sender_settings.password
       });
       
-      // Extract recipient name if available (use email username as fallback)
+      // Extract recipient name
       const recipientName = emailRequest.to_name || emailRequest.to.split('@')[0];
       
-      // Create properly formatted HTML content
+      // Add proper personalization and clean html
       const formattedHtmlContent = createEmailTemplate(
         emailRequest.html_content,
         recipientName,
@@ -86,18 +81,22 @@ Deno.serve(async (req) => {
       // Send email
       console.log("Sending email to:", emailRequest.to);
       
+      // Create a friendly display name for the sender
+      // Format: "Name via Master Business Agent <email@example.com>"
+      const senderName = emailRequest.sender_settings.email.split('@')[0];
+      const formattedSender = `${senderName} via Master Business Agent <${emailRequest.sender_settings.email}>`;
+      
       const emailParams = {
-        from: emailRequest.sender_settings.email,
+        from: formattedSender,
         to: emailRequest.to,
         subject: emailRequest.subject,
         html: formattedHtmlContent
       };
       
-      console.log("Email parameters:", {
+      console.log("Email parameters prepared:", {
         to: emailParams.to,
         from: emailParams.from,
         subject: emailParams.subject,
-        htmlLength: emailParams.html?.length
       });
       
       await sendEmail(client, emailParams);
@@ -112,8 +111,8 @@ Deno.serve(async (req) => {
         details: {
           host: emailRequest.sender_settings.host,
           port: emailRequest.sender_settings.port,
+          provider: emailRequest.sender_settings.provider,
           errorType: smtpError.name,
-          errorStack: smtpError.stack
         }
       }, 500);
     }
@@ -123,7 +122,6 @@ Deno.serve(async (req) => {
     return createJsonResponse({ 
       success: false, 
       error: `General error: ${error.message}`,
-      stack: error.stack
     }, 500);
   }
 });
