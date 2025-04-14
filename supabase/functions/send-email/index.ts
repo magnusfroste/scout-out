@@ -4,101 +4,13 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-// Using a more reliable email library for Deno
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
-
-interface EmailRequest {
-  to: string;
-  to_name?: string;
-  subject: string;
-  html_content: string;
-  sender_settings: {
-    email: string;
-    host: string;
-    port: number;
-    password: string;
-    provider: string;
-  };
-}
-
-// CORS headers for all responses
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-/**
- * Creates a professional HTML email template with the provided content
- */
-function createEmailTemplate(content: string, senderName: string, senderEmail: string): string {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email from ${senderName}</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .email-container {
-      padding: 20px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-    }
-    .email-header {
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .email-content {
-      padding: 20px 0;
-    }
-    .email-footer {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #eee;
-      font-size: 14px;
-      color: #777;
-    }
-    .email-signature {
-      margin-top: 30px;
-    }
-    a {
-      color: #2563eb;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    p {
-      margin: 1em 0;
-    }
-  </style>
-</head>
-<body>
-  <div class="email-container">
-    <div class="email-content">
-      ${content}
-    </div>
-    <div class="email-footer">
-      <p>This email was sent by ${senderName} via Master Business Agent</p>
-      <p>For any questions, please reply directly to this email at <a href="mailto:${senderEmail}">${senderEmail}</a></p>
-    </div>
-  </div>
-</body>
-</html>
-  `;
-}
+// Import modules
+import { corsHeaders, createJsonResponse } from "./cors.ts";
+import { createEmailTemplate } from "./templates.ts";
+import { createSMTPClient, sendEmail } from "./smtp-client.ts";
+import { EmailRequest, validateEmailRequest } from "./validators.ts";
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -108,16 +20,7 @@ Deno.serve(async (req) => {
   
   // Only allow POST requests
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ success: false, error: 'Method not allowed' }),
-      { 
-        status: 405,
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        } 
-      }
-    );
+    return createJsonResponse({ success: false, error: 'Method not allowed' }, 405);
   }
 
   try {
@@ -133,16 +36,7 @@ Deno.serve(async (req) => {
       emailRequest = JSON.parse(bodyText);
     } catch (parseError) {
       console.error("Error parsing request JSON:", parseError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid JSON data' }),
-        { 
-          status: 400,
-          headers: { 
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          } 
-        }
-      );
+      return createJsonResponse({ success: false, error: 'Invalid JSON data' }, 400);
     }
     
     console.log("Request data parsed:", { 
@@ -153,91 +47,29 @@ Deno.serve(async (req) => {
     });
     
     // Validate input
-    if (!emailRequest?.to || !emailRequest?.subject || !emailRequest?.html_content || !emailRequest?.sender_settings) {
-      console.error("Missing required email data:", {
-        hasTo: Boolean(emailRequest?.to),
-        hasSubject: Boolean(emailRequest?.subject),
-        hasContent: Boolean(emailRequest?.html_content),
-        hasSenderSettings: Boolean(emailRequest?.sender_settings)
-      });
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Missing required email data',
-          received: {
-            hasTo: Boolean(emailRequest?.to),
-            hasSubject: Boolean(emailRequest?.subject),
-            hasContent: Boolean(emailRequest?.html_content),
-            hasSenderSettings: Boolean(emailRequest?.sender_settings)
-          }
-        }),
-        { 
-          status: 400,
-          headers: { 
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          } 
-        }
-      );
-    }
-
-    // Validate sender settings
-    if (!emailRequest.sender_settings.email || 
-        !emailRequest.sender_settings.host || 
-        !emailRequest.sender_settings.port || 
-        !emailRequest.sender_settings.password) {
-      console.error("Missing required sender settings:", {
-        hasEmail: Boolean(emailRequest.sender_settings.email),
-        hasHost: Boolean(emailRequest.sender_settings.host),
-        hasPort: Boolean(emailRequest.sender_settings.port),
-        hasPassword: Boolean(emailRequest.sender_settings.password)
-      });
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Missing required sender settings',
-          details: {
-            hasEmail: Boolean(emailRequest.sender_settings.email),
-            hasHost: Boolean(emailRequest.sender_settings.host), 
-            hasPort: Boolean(emailRequest.sender_settings.port),
-            hasPassword: Boolean(emailRequest.sender_settings.password)
-          }
-        }),
-        { 
-          status: 400,
-          headers: { 
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          } 
-        }
-      );
+    const validation = validateEmailRequest(emailRequest);
+    if (!validation.isValid) {
+      console.error("Validation errors:", validation.errors);
+      return createJsonResponse({ 
+        success: false, 
+        error: 'Missing required email data',
+        errors: validation.errors
+      }, 400);
     }
 
     try {
-      // Configure email client using denomailer
+      // Configure email client
       console.log("Configuring email client with:", {
         host: emailRequest.sender_settings.host,
         port: emailRequest.sender_settings.port,
         email: emailRequest.sender_settings.email
       });
       
-      // Determine secure connection based on port
-      const secure = emailRequest.sender_settings.port === 465;
-      console.log(`Using ${secure ? 'secure' : 'non-secure'} connection`);
-      
-      const client = new SMTPClient({
-        connection: {
-          hostname: emailRequest.sender_settings.host,
-          port: emailRequest.sender_settings.port,
-          tls: secure,
-          auth: {
-            username: emailRequest.sender_settings.email,
-            password: emailRequest.sender_settings.password,
-          },
-        },
-        debug: true, // Enable debug mode for more logs
+      const client = createSMTPClient({
+        host: emailRequest.sender_settings.host,
+        port: emailRequest.sender_settings.port,
+        email: emailRequest.sender_settings.email,
+        password: emailRequest.sender_settings.password
       });
       
       // Extract sender name if available (use email username as fallback)
@@ -272,59 +104,30 @@ Deno.serve(async (req) => {
       
       console.log("Email parameters:", emailParams);
       
-      const sendResult = await client.send(emailParams);
-      console.log("Email send result:", sendResult);
-      
+      await sendEmail(client, emailParams);
       console.log("Email sent successfully");
-      await client.close();
       
-      return new Response(
-        JSON.stringify({ success: true }),
-        { 
-          headers: { 
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          } 
-        }
-      );
+      return createJsonResponse({ success: true });
     } catch (smtpError) {
       console.error("SMTP error:", smtpError);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `SMTP error: ${smtpError.message}`,
-          details: {
-            host: emailRequest.sender_settings.host,
-            port: emailRequest.sender_settings.port,
-            errorType: smtpError.name,
-            errorStack: smtpError.stack
-          }
-        }),
-        { 
-          status: 500,
-          headers: { 
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          } 
+      return createJsonResponse({ 
+        success: false, 
+        error: `SMTP error: ${smtpError.message}`,
+        details: {
+          host: emailRequest.sender_settings.host,
+          port: emailRequest.sender_settings.port,
+          errorType: smtpError.name,
+          errorStack: smtpError.stack
         }
-      );
+      }, 500);
     }
   } catch (error: any) {
     console.error('Error sending email:', error);
     
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: `General error: ${error.message}`,
-        stack: error.stack
-      }),
-      { 
-        status: 500,
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        } 
-      }
-    );
+    return createJsonResponse({ 
+      success: false, 
+      error: `General error: ${error.message}`,
+      stack: error.stack
+    }, 500);
   }
-})
+});
