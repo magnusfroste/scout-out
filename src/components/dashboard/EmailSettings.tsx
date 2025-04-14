@@ -138,7 +138,9 @@ const EmailSettings = () => {
     
     setIsSaving(true);
     try {
-      const settingsData = {
+      // Fix: Ensure we always include app_password in the settingsData object when required
+      // This is the key fix for the error
+      const settingsData: any = {
         email_address: emailAddress,
         email_provider: emailProvider,
         smtp_host: smtpHost,
@@ -147,21 +149,44 @@ const EmailSettings = () => {
         user_id: user.id
       };
       
+      // Add app_password only if a new password is provided, or if this is a new settings entry
       if (emailPassword) {
-        (settingsData as any).app_password = emailPassword;
+        settingsData.app_password = emailPassword;
+      } else if (!existingSettings) {
+        // This is a new settings creation and requires a password
+        // (This should not happen due to the validation check above, but it's an extra safety)
+        throw new Error('App password is required for new email settings');
       }
       
       let result;
       
       if (existingSettings) {
         // Update existing settings
-        result = await supabase
-          .from('user_email_settings')
-          .update(settingsData)
-          .eq('id', existingSettings.id)
-          .eq('user_id', user.id);
+        if (emailPassword) {
+          // If we have a new password, update everything including the password
+          result = await supabase
+            .from('user_email_settings')
+            .update(settingsData)
+            .eq('id', existingSettings.id)
+            .eq('user_id', user.id);
+        } else {
+          // If no new password, we need to exclude app_password from the update
+          // as it's required in the schema but we don't want to overwrite it with null
+          result = await supabase
+            .from('user_email_settings')
+            .update({
+              email_address: emailAddress,
+              email_provider: emailProvider,
+              smtp_host: smtpHost,
+              smtp_port: parseInt(smtpPort),
+              is_active: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingSettings.id)
+            .eq('user_id', user.id);
+        }
       } else {
-        // Insert new settings
+        // Insert new settings - must include app_password
         result = await supabase
           .from('user_email_settings')
           .insert(settingsData);

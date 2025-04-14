@@ -20,8 +20,26 @@ interface CompanySearchDetailProps {
   onUpdate?: (id: string, data: any) => void;
 }
 
+interface CompanySearch {
+  id: string;
+  company_name: string;
+  contact?: string | null;
+  contact_info?: any | null;
+  created_at: string;
+  email?: string | null;
+  phone?: string | null;
+  result?: any | null;
+  role?: string | null;
+  score?: number | null;
+  advice?: string | null;
+  introduction?: string | null;
+  subject?: string | null;
+  user_id: string;
+  www?: string | null;
+}
+
 const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetailProps) => {
-  const [companySearch, setCompanySearch] = useState<any>(null);
+  const [companySearch, setCompanySearch] = useState<CompanySearch | null>(null);
   const [questionAnswers, setQuestionAnswers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
