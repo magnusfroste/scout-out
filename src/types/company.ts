@@ -53,7 +53,7 @@ export interface CompanySearch {
   score: number;
   advice: string;
   introduction: string;
-  subject: string;
+  subject: string;  // Making sure this is explicitly defined in the interface
 }
 
 export interface Question {
