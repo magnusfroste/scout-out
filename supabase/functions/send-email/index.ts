@@ -24,27 +24,35 @@ interface EmailRequest {
   };
 }
 
+// CORS headers for all responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 Deno.serve(async (req) => {
-  // CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-  
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+  
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Method not allowed' }),
+      { 
+        status: 405,
+        headers: { 
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        } 
+      }
+    );
   }
 
   try {
     console.log("Received email send request");
-    
-    // Log request headers for debugging
-    const headers = {};
-    req.headers.forEach((value, key) => {
-      headers[key] = value;
-    });
-    console.log("Request headers:", headers);
     
     // Get request body as text first for logging
     const bodyText = await req.text();
@@ -76,7 +84,7 @@ Deno.serve(async (req) => {
     });
     
     // Validate input
-    if (!emailRequest || !emailRequest.to || !emailRequest.subject || !emailRequest.html_content || !emailRequest.sender_settings) {
+    if (!emailRequest?.to || !emailRequest?.subject || !emailRequest?.html_content || !emailRequest?.sender_settings) {
       console.error("Missing required email data:", {
         hasTo: Boolean(emailRequest?.to),
         hasSubject: Boolean(emailRequest?.subject),
