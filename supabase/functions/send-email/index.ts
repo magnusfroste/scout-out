@@ -82,13 +82,17 @@ Deno.serve(async (req) => {
         emailRequest.sender_settings.email
       );
       
+      // Sanitize subject to prevent encoding issues
+      const sanitizedSubject = emailRequest.subject.trim().replace(/[\r\n\t]+/g, ' ');
+      console.log("Sanitized subject:", sanitizedSubject);
+      
       // Send email
       console.log("Sending email to:", emailRequest.to);
       
       const emailParams = {
         from: emailRequest.sender_settings.email,
         to: emailRequest.to,
-        subject: emailRequest.subject,
+        subject: sanitizedSubject,
         content: "Please view this email in an HTML-compatible email client.",
         html: formattedHtmlContent,
         headers: {

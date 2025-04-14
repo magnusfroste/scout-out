@@ -76,11 +76,14 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       // Format the content with proper HTML
       const formattedContent = convertToProperHtml(content, recipientName);
       
+      // Sanitize subject to prevent encoding issues
+      const sanitizedSubject = subject.trim().replace(/[\r\n\t]+/g, ' ');
+      
       // Prepare the request data
       const emailData = {
         to: recipientEmail,
         to_name: recipientName,
-        subject: subject,
+        subject: sanitizedSubject,
         html_content: formattedContent,
         sender_settings: {
           email: emailSettings.email_address,
@@ -91,7 +94,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       };
       
-      console.log('Email request payload:', JSON.stringify(emailData));
+      console.log('Email request payload:', JSON.stringify({
+        ...emailData,
+        sender_settings: {
+          ...emailData.sender_settings,
+          password: '******' // Hide password in logs
+        }
+      }));
 
       // Call the edge function to send the email using the Supabase Function API
       const { data, error } = await supabase.functions.invoke('send-email', {

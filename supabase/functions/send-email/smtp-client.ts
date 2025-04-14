@@ -42,15 +42,22 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
  */
 export async function sendEmail(client: SMTPClient, params: EmailParams) {
   try {
-    // Set additional headers for better email client compatibility
+    // Ensure subject is properly encoded
     const enhancedParams = {
       ...params,
+      // Remove any potential malformed line breaks or special characters from subject
+      subject: params.subject.trim().replace(/[\r\n\t]+/g, ' '),
       headers: {
         ...params.headers,
+        // Ensure proper content type and encoding headers
         "Content-Type": "text/html; charset=UTF-8",
+        "Content-Transfer-Encoding": "base64",
         "Content-Language": "en-US",
+        "MIME-Version": "1.0"
       }
     };
+    
+    console.log("Sending email with subject:", enhancedParams.subject);
     
     const result = await client.send(enhancedParams);
     console.log("Email sent successfully:", result);
