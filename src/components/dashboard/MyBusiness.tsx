@@ -580,27 +580,8 @@ const MyBusiness = () => {
           )}
         </CardContent>
         {businessData && !isLoadingSettings && !isLoadingProfile && (
-          <CardFooter className="flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={handleResetBusinessData}
-              disabled={isResetting || !businessData || isLoading}
-            >
-              {isResetting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Resetting...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Reset Data
-                </>
-              )}
-            </Button>
-            
-            {/* Save button is only shown if there's unsaved data */}
-            {businessData && !businessData.autoSaved && (
+          <CardFooter>
+            {!businessData.autoSaved && (
               <Button 
                 onClick={handleSaveBusinessData}
                 disabled={isSaving || !businessData || isLoading}
