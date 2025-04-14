@@ -1,10 +1,11 @@
 
 project_id = "pqskutdrekcinpymvigm"
+
 [functions.send-email]
 enabled = true
 verify_jwt = true
-import_map = "./functions/send-email/deno.json"
-entrypoint = "./functions/send-email/index.ts"
+import_map = "supabase/functions/send-email/deno.json"
+entrypoint = "supabase/functions/send-email/index.ts"
 
 [functions.trigger-mybusiness-webhook]
 enabled = true
