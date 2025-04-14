@@ -37,38 +37,60 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
   
   try {
     // Check if responseData is valid
-    if (!Array.isArray(responseData) || responseData.length === 0) {
-      console.error('Invalid webhook response format (not an array or empty array)');
+    if (!responseData) {
+      console.error('Invalid webhook response format (null or undefined)');
       return { processedResults: [] };
     }
     
-    // Check if it's a value proposition response
-    if (responseData[0].output && 
-        (responseData[0].output.score !== undefined || 
-         responseData[0].output.advice !== undefined || 
-         responseData[0].output.introduction !== undefined)) {
-      console.log('Detected value proposition response format');
-      // This is a value proposition response, not meant for this parser
-      return { processedResults: [] };
+    // Check if the response is the new format with method field (from Edge Function)
+    if (responseData.method) {
+      console.log('Detected Edge Function response format with method:', responseData.method);
+      // Extract the actual data from the Edge Function response
+      // The actual data might be in the responseData.data or inside responseData.data[0].output
+      return parseMyBusinessResponse(responseData.data || responseData);
     }
     
-    // For regular company search responses
-    if (responseData[0].output) {
-      const output = responseData[0].output;
-      
-      // Determine which parser to use based on the structure
-      if (output.Company && output.Questions) {
-        return parseCompanySearchResponse(responseData);
-      } else if (output.about_us || output.our_services || output.clients) {
-        return parseMyBusinessResponse(responseData);
-      } else {
-        // Try legacy format as fallback
-        return parseLegacyCompanySearchResponse(responseData);
+    // Check if responseData is an array format (legacy format)
+    if (Array.isArray(responseData)) {
+      if (responseData.length === 0) {
+        console.error('Invalid webhook response format (empty array)');
+        return { processedResults: [] };
       }
+      
+      // Check if it's a value proposition response
+      if (responseData[0].output && 
+          (responseData[0].output.score !== undefined || 
+           responseData[0].output.advice !== undefined || 
+           responseData[0].output.introduction !== undefined)) {
+        console.log('Detected value proposition response format');
+        // This is a value proposition response, not meant for this parser
+        return { processedResults: [] };
+      }
+      
+      // For regular company search responses
+      if (responseData[0].output) {
+        const output = responseData[0].output;
+        
+        // Determine which parser to use based on the structure
+        if (output.Company && output.Questions) {
+          return parseCompanySearchResponse(responseData);
+        } else if (output.about_us || output.our_services || output.clients || output.company_name) {
+          return parseMyBusinessResponse(responseData);
+        } else {
+          // Try legacy format as fallback
+          return parseLegacyCompanySearchResponse(responseData);
+        }
+      }
+    } else if (responseData.output) {
+      // Handle case where responseData is an object with output property
+      return parseMyBusinessResponse([{ output: responseData.output }]);
+    } else if (responseData[0] && responseData[0].output) {
+      // Handle case where responseData is an object with nested output
+      return parseMyBusinessResponse(responseData);
     }
     
     // Default case if we couldn't determine the format
-    console.error('Unknown webhook response format');
+    console.error('Unknown webhook response format:', responseData);
     return { processedResults: [] };
   } catch (error) {
     console.error('Error parsing webhook response:', error);
@@ -190,34 +212,60 @@ const parseMyBusinessResponse = (responseData: any): WebhookParseResult => {
   let elevatorPitch: ElevatorPitch | undefined = undefined;
   
   try {
-    if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
-      const output = responseData[0].output;
-      
-      // Get company name from output data or extract from URL
-      const companyName = output.company_name || output.name || extractCompanyName();
-      
-      // Transform our_services from object to array of {name, description}
-      const servicesArray = transformServicesObject(output.our_services || {});
-      
-      elevatorPitch = {
-        company_name: companyName,
-        tagline: extractTagline(output.about_us || ''),
-        about: output.about_us || '',
-        services: servicesArray,
-        value_proposition: output.delivered_value || '',
-        clients: Array.isArray(output.clients) ? output.clients : [],
-        testimonials: Array.isArray(output.clients_testimonials) 
-          ? output.clients_testimonials.map(t => ({
-              name: t.name || '',
-              position: t.position || '',
-              company: t.company || '',
-              testimonial: t.testimonial || ''
-            }))
-          : []
-      };
-      
-      console.log('Extracted elevator pitch:', elevatorPitch);
+    // Handle both array and object formats
+    let output;
+    
+    if (Array.isArray(responseData) && responseData.length > 0) {
+      // If it's the standard array format
+      if (responseData[0].output) {
+        output = responseData[0].output;
+      }
+    } else if (responseData.output) {
+      // If it's a direct object with output property
+      output = responseData.output;
+    } else if (responseData[0] && typeof responseData[0] === 'object') {
+      // If it's a weird format with a numeric key
+      output = responseData[0].output || responseData[0];
+    } else {
+      // Try to use the data directly as output
+      output = responseData;
     }
+    
+    if (!output) {
+      console.error('Could not extract output from response:', responseData);
+      return { processedResults: [] };
+    }
+    
+    console.log('Extracted output for My Business parser:', output);
+    
+    // Get company name from output data or extract from URL
+    const companyName = output.company_name || output.name || extractCompanyName();
+    
+    // Transform our_services from object to array of {name, description}
+    const servicesArray = transformServicesObject(output.our_services || {});
+    
+    elevatorPitch = {
+      company_name: companyName,
+      tagline: extractTagline(output.about_us || ''),
+      about: output.about_us || '',
+      services: servicesArray,
+      value_proposition: output.delivered_value || '',
+      clients: Array.isArray(output.clients) 
+        ? output.clients 
+        : typeof output.clients === 'string' 
+          ? [output.clients] 
+          : [],
+      testimonials: Array.isArray(output.clients_testimonials) 
+        ? output.clients_testimonials.map(t => ({
+            name: t.name || '',
+            position: t.position || '',
+            company: t.company || '',
+            testimonial: t.testimonial || ''
+          }))
+        : []
+    };
+    
+    console.log('Extracted elevator pitch:', elevatorPitch);
   } catch (error) {
     console.error('Error parsing my business response:', error);
   }
