@@ -1,78 +1,73 @@
+
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { 
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardContent,
+  CardFooter 
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save, Mail } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import { 
+  Mail,
+  Server, 
+  Key,
+  Save,
+  Trash2,
+  Settings as SettingsIcon,
+  Plus,
+  Loader2,
+  CheckCircle2
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface EmailSettings {
-  id?: string;
-  email_provider: string;
+  id: string;
+  user_id: string;
   email_address: string;
   app_password: string;
+  email_provider: string;
   smtp_host: string;
   smtp_port: number;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-const EMAIL_PROVIDERS = [
-  {
-    name: 'Gmail',
-    value: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    instructions: 'For Gmail, you need to create an App Password. Go to your Google Account > Security > App Passwords.'
-  },
-  {
-    name: 'Outlook',
-    value: 'outlook',
-    host: 'smtp.office365.com',
-    port: 587,
-    instructions: 'For Outlook, you need to create an App Password in your Microsoft account security settings.'
-  },
-  {
-    name: 'Yahoo',
-    value: 'yahoo',
-    host: 'smtp.mail.yahoo.com',
-    port: 465,
-    instructions: 'For Yahoo, you need to generate an App Password in your Yahoo account security settings.'
-  },
-  {
-    name: 'Custom',
-    value: 'custom',
-    host: '',
-    port: 587,
-    instructions: 'Enter your custom SMTP server details.'
-  }
-];
-
 const EmailSettings = () => {
-  const [settings, setSettings] = useState<EmailSettings>({
-    email_provider: '',
-    email_address: '',
-    app_password: '',
-    smtp_host: '',
-    smtp_port: 587,
-    is_active: true
-  });
+  const [emailAddress, setEmailAddress] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [emailProvider, setEmailProvider] = useState('');
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('');
   
+  const [existingSettings, setExistingSettings] = useState<EmailSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [hasSettings, setHasSettings] = useState(false);
-  const [instructions, setInstructions] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const { user } = useAuth();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
-      console.log('User authenticated, fetching email settings...');
       fetchEmailSettings();
     }
   }, [user]);
@@ -80,90 +75,31 @@ const EmailSettings = () => {
   const fetchEmailSettings = async () => {
     if (!user) return;
     
-    console.log('Starting to fetch email settings for user:', user.id);
     setIsLoading(true);
     try {
-      // Get the current session to ensure we have fresh auth
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('Current session:', sessionData?.session ? 'Valid' : 'Invalid');
-      
-      if (!sessionData?.session) {
-        console.error('No valid session found');
-        return;
-      }
-      
-      // Use RPC call to bypass potential RLS issues
       const { data, error } = await supabase.rpc('get_user_email_settings');
       
-      console.log('Email settings query result:', { data, error });
+      if (error) throw error;
       
-      if (error) {
-        // If RPC fails, fall back to direct query
-        console.log('RPC failed, falling back to direct query');
-        const { data: directData, error: directError } = await supabase
-          .from('user_email_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-          
-        console.log('Direct query result:', { data: directData, error: directError });
-        
-        if (directError && directError.code !== 'PGRST116') {
-          throw directError;
-        }
-        
-        if (directData) {
-          console.log('Found email settings via direct query:', directData);
-          setSettings({
-            id: directData.id,
-            email_provider: directData.email_provider,
-            email_address: directData.email_address,
-            app_password: directData.app_password,
-            smtp_host: directData.smtp_host,
-            smtp_port: directData.smtp_port,
-            is_active: directData.is_active
-          });
-          setHasSettings(true);
-          
-          // Set instructions based on provider
-          const provider = EMAIL_PROVIDERS.find(p => p.value === directData.email_provider);
-          if (provider) {
-            setInstructions(provider.instructions);
-          }
-        } else {
-          console.log('No email settings found via direct query');
-        }
-        return;
-      }
+      console.log('Fetched email settings:', data);
       
-      if (data) {
-        console.log('Found email settings via RPC:', data);
-        // Map the database fields to our settings state
-        setSettings({
-          id: data.id,
-          email_provider: data.email_provider,
-          email_address: data.email_address,
-          app_password: data.app_password,
-          smtp_host: data.smtp_host,
-          smtp_port: data.smtp_port,
-          is_active: data.is_active
-        });
-        setHasSettings(true);
-        
-        // Set instructions based on provider
-        const provider = EMAIL_PROVIDERS.find(p => p.value === data.email_provider);
-        if (provider) {
-          setInstructions(provider.instructions);
-        }
+      if (data && data.length > 0) {
+        const settings = data[0];
+        setExistingSettings(settings);
+        setEmailAddress(settings.email_address);
+        setEmailProvider(settings.email_provider);
+        setSmtpHost(settings.smtp_host);
+        setSmtpPort(settings.smtp_port.toString());
+        // We don't set the password field from DB for security reasons
       } else {
-        console.log('No email settings found via RPC');
+        setExistingSettings(null);
+        resetForm();
       }
     } catch (error: any) {
       console.error('Error fetching email settings:', error);
       toast({
         title: 'Error',
-        description: `Failed to load email settings: ${error.message}`,
+        description: 'Failed to load email settings: ' + error.message,
         variant: 'destructive',
       });
     } finally {
@@ -171,94 +107,75 @@ const EmailSettings = () => {
     }
   };
 
-  const handleProviderChange = (value: string) => {
-    console.log('Provider changed to:', value);
-    const provider = EMAIL_PROVIDERS.find(p => p.value === value);
-    if (provider) {
-      setSettings({
-        ...settings,
-        email_provider: value,
-        smtp_host: provider.value === 'custom' ? '' : provider.host,
-        smtp_port: provider.port
-      });
-      setInstructions(provider.instructions);
-      console.log('Updated settings after provider change:', {
-        ...settings,
-        email_provider: value,
-        smtp_host: provider.value === 'custom' ? '' : provider.host,
-        smtp_port: provider.port
-      });
-    }
+  const resetForm = () => {
+    setEmailAddress('');
+    setEmailPassword('');
+    setEmailProvider('');
+    setSmtpHost('');
+    setSmtpPort('');
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setSettings({
-      ...settings,
-      [name]: name === 'smtp_port' ? parseInt(value) : value
-    });
-  };
-
-  const saveSettings = async () => {
+  const handleSaveSettings = async () => {
     if (!user) return;
+    
+    if (!emailAddress || !emailProvider || !smtpHost || !smtpPort) {
+      toast({
+        title: 'Missing Fields',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!existingSettings && !emailPassword) {
+      toast({
+        title: 'Missing Password',
+        description: 'Please provide an app password',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     setIsSaving(true);
     try {
-      // First check if settings already exist
-      const { data: existingSettings, error: fetchError } = await supabase
-        .from('user_email_settings')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const settingsData = {
+        email_address: emailAddress,
+        email_provider: emailProvider,
+        smtp_host: smtpHost,
+        smtp_port: parseInt(smtpPort),
+        is_active: true,
+        user_id: user.id
+      };
       
-      if (fetchError) throw fetchError;
+      if (emailPassword) {
+        (settingsData as any).app_password = emailPassword;
+      }
       
       let result;
       
-      if (existingSettings?.id) {
+      if (existingSettings) {
         // Update existing settings
-        const { data, error } = await supabase
+        result = await supabase
           .from('user_email_settings')
-          .update({
-            email_provider: settings.email_provider,
-            email_address: settings.email_address,
-            app_password: settings.app_password,
-            smtp_host: settings.smtp_host,
-            smtp_port: settings.smtp_port,
-            is_active: true,
-            updated_at: new Date().toISOString()
-          })
+          .update(settingsData)
           .eq('id', existingSettings.id)
-          .select();
-          
-        if (error) throw error;
-        result = data;
+          .eq('user_id', user.id);
       } else {
         // Insert new settings
-        const { data, error } = await supabase
+        result = await supabase
           .from('user_email_settings')
-          .insert({
-            user_id: user.id,
-            email_provider: settings.email_provider,
-            email_address: settings.email_address,
-            app_password: settings.app_password,
-            smtp_host: settings.smtp_host,
-            smtp_port: settings.smtp_port,
-            is_active: true
-          })
-          .select();
-          
-        if (error) throw error;
-        result = data;
+          .insert(settingsData);
       }
       
-      console.log('Email settings saved successfully:', result);
+      if (result.error) throw result.error;
       
-      setHasSettings(true);
       toast({
         title: 'Success',
-        description: 'Email settings saved successfully',
+        description: `Email settings ${existingSettings ? 'updated' : 'saved'} successfully`,
       });
+      
+      fetchEmailSettings();
+      setEmailPassword('');
     } catch (error: any) {
       console.error('Error saving email settings:', error);
       toast({
@@ -271,203 +188,220 @@ const EmailSettings = () => {
     }
   };
 
-  const testConnection = async () => {
-    if (!user) return;
+  const handleDeleteSettings = async () => {
+    if (!user || !existingSettings) return;
     
-    setIsTesting(true);
+    setIsDeleting(true);
     try {
-      // Use the correct URL for your Supabase project
-      const response = await fetch(`https://pqskutdrekcinpymvigm.supabase.co/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          emailData: {
-            recipient: settings.email_address, // Send test email to self
-            subject: 'Test Connection',
-            content: 'This is a test email to verify your email settings are working correctly.',
-            senderName: 'Your Business'
-          },
-          userId: user.id
-        })
-      });
+      const { error } = await supabase
+        .from('user_email_settings')
+        .delete()
+        .eq('id', existingSettings.id)
+        .eq('user_id', user.id);
       
-      const result = await response.json();
-      
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to send test email');
-      }
+      if (error) throw error;
       
       toast({
         title: 'Success',
-        description: 'Test email sent successfully. Check your inbox.',
+        description: 'Email settings deleted successfully',
       });
+      
+      setExistingSettings(null);
+      resetForm();
     } catch (error: any) {
-      console.error('Error testing email connection:', error);
+      console.error('Error deleting email settings:', error);
       toast({
         title: 'Error',
-        description: `Failed to send test email: ${error.message}`,
+        description: `Failed to delete email settings: ${error.message}`,
         variant: 'destructive',
       });
     } finally {
-      setIsTesting(false);
+      setIsDeleting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <Card className="shadow-md border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-      <CardHeader className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
-        <CardTitle className="text-xl font-semibold tracking-tight flex items-center gap-2">
-          <Mail className="h-5 w-5" />
+    <Card className="w-full shadow-md">
+      <CardHeader>
+        <CardTitle className="text-2xl flex items-center gap-2">
+          <Mail className="h-5 w-5 text-muted-foreground" />
           Email Settings
         </CardTitle>
         <CardDescription>
-          Configure your email settings to send introduction emails directly from the app
+          Configure your email account to send emails directly from the app
         </CardDescription>
       </CardHeader>
-      
-      <CardContent className="space-y-6 pt-6">
-        <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
-          <Mail className="h-4 w-4" />
-          <AlertTitle>Email Integration</AlertTitle>
-          <AlertDescription>
-            This allows you to send emails directly from the app using your own email account.
-            You'll need to provide an app password from your email provider.
-          </AlertDescription>
-        </Alert>
-        
-        {instructions && (
-          <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900">
-            <AlertTitle>Provider Instructions</AlertTitle>
-            <AlertDescription>
-              {instructions}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email_provider">Email Provider</Label>
-            <Select 
-              value={settings.email_provider || ''} 
-              onValueChange={handleProviderChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your email provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {EMAIL_PROVIDERS.map((provider) => (
-                  <SelectItem key={provider.value} value={provider.value}>
-                    {provider.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email_address">Email Address</Label>
-            <Input
-              id="email_address"
-              name="email_address"
-              type="email"
-              value={settings.email_address}
-              onChange={handleInputChange}
-              placeholder="your@email.com"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="app_password">App Password</Label>
-            <Input
-              id="app_password"
-              name="app_password"
-              type="password"
-              value={settings.app_password}
-              onChange={handleInputChange}
-              onPaste={(e) => {
-                // Allow paste operation
-                console.log('Password pasted');
-              }}
-              className="font-mono"
-              placeholder="Your app password (not your regular password)"
-            />
-            <p className="text-xs text-muted-foreground">
-              For Gmail, enter the 16-character app password without spaces (e.g., "hldvaxerpuvjvzjt")
-            </p>
-          </div>
-          
-          {settings.email_provider === 'custom' && (
-            <>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="smtp_host">SMTP Host</Label>
-                <Input
-                  id="smtp_host"
-                  name="smtp_host"
-                  value={settings.smtp_host}
-                  onChange={handleInputChange}
-                  placeholder="smtp.example.com"
-                />
+                <Label htmlFor="emailAddress">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="emailAddress"
+                    placeholder="your-email@example.com"
+                    value={emailAddress}
+                    onChange={(e) => setEmailAddress(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="smtp_port">SMTP Port</Label>
+                <Label htmlFor="emailProvider">Email Provider</Label>
+                <Select value={emailProvider} onValueChange={setEmailProvider}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select email provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gmail">Gmail</SelectItem>
+                    <SelectItem value="outlook">Outlook</SelectItem>
+                    <SelectItem value="yahoo">Yahoo Mail</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="emailPassword">
+                App Password {existingSettings ? '(Leave blank to keep current password)' : ''}
+              </Label>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="smtp_port"
-                  name="smtp_port"
-                  type="number"
-                  value={settings.smtp_port.toString()}
-                  onChange={handleInputChange}
-                  placeholder="587"
+                  id="emailPassword"
+                  type="password"
+                  placeholder="App password (not your regular email password)"
+                  value={emailPassword}
+                  onChange={(e) => setEmailPassword(e.target.value)}
+                  className="pl-10"
                 />
               </div>
-            </>
-          )}
-        </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Use an app-specific password, not your main account password. 
+                <a 
+                  href="https://support.google.com/mail/answer/185833" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline ml-1"
+                >
+                  How to generate an app password
+                </a>
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="smtpHost">SMTP Host</Label>
+                <div className="relative">
+                  <Server className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="smtpHost"
+                    placeholder="smtp.example.com"
+                    value={smtpHost}
+                    onChange={(e) => setSmtpHost(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="smtpPort">SMTP Port</Label>
+                <Input
+                  id="smtpPort"
+                  placeholder="587"
+                  value={smtpPort}
+                  onChange={(e) => setSmtpPort(e.target.value.replace(/\D/g, ''))}
+                  type="number"
+                />
+              </div>
+            </div>
+            
+            {existingSettings && (
+              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-900">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="font-medium">Email settings configured</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You can now send emails directly from the app using {existingSettings.email_address}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
-      
-      <CardFooter className="flex justify-between bg-gray-50 dark:bg-gray-900 p-6">
-        <Button 
-          variant="outline" 
-          onClick={testConnection} 
-          disabled={isTesting || isSaving || !settings.email_provider || !settings.email_address || !settings.app_password}
-        >
-          {isTesting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Testing...
-            </>
-          ) : (
-            'Test Connection'
-          )}
-        </Button>
-        
-        <Button 
-          onClick={saveSettings} 
-          disabled={isSaving || !settings.email_provider || !settings.email_address || !settings.app_password}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save Settings
-            </>
-          )}
-        </Button>
+      <CardFooter className="flex justify-between">
+        {existingSettings ? (
+          <>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isDeleting || isSaving}>
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Settings
+                    </>
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Email Settings</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete your email settings? You won't be able to send emails until you configure new settings.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteSettings} className="bg-red-600 hover:bg-red-700">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            
+            <Button onClick={handleSaveSettings} disabled={isSaving || isDeleting}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Update Settings
+                </>
+              )}
+            </Button>
+          </>
+        ) : (
+          <Button onClick={handleSaveSettings} disabled={isSaving} className="ml-auto">
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Save Settings
+              </>
+            )}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

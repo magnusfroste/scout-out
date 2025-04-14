@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -187,6 +188,7 @@ export const saveValuePropositionData = async (
 ): Promise<boolean> => {
   try {
     console.log('Saving value proposition data for search:', searchId);
+    console.log('Data to save:', { score, advice, introduction, subject });
     
     const { error } = await supabase
       .from('company_searches')

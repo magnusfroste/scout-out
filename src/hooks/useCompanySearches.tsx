@@ -119,6 +119,8 @@ export function useCompanySearches() {
     if (!user) return;
 
     try {
+      console.log('Updating search details with data:', data);
+      
       const { error } = await supabase
         .from('company_searches')
         .update({

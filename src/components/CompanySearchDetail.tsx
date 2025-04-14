@@ -12,6 +12,7 @@ import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropos
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
 import SendEmailButton from '@/components/dashboard/SendEmailButton';
+import { Input } from '@/components/ui/input';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -375,6 +376,18 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="subject" className="text-sm font-medium">Email Subject</Label>
+                <Input
+                  id="subject"
+                  value={displaySubject}
+                  onChange={(e) => {
+                    setDisplaySubject(e.target.value);
+                    setHasUnsavedChanges(true);
+                  }}
+                  placeholder="Enter email subject line..."
+                  className="mb-3 p-2 text-base font-sans border-gray-200 dark:border-gray-800 shadow-inner focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+
                 <Label htmlFor="introduction" className="text-sm font-medium">Introduction Draft</Label>
                 <Textarea
                   id="introduction"
@@ -391,7 +404,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
                   onCopy={handleCopySuccess}
                 />
                 <div className="flex justify-end mt-2 gap-2">
-                  {companySearch.email && (
+                  {companySearch?.email && (
                     <SendEmailButton
                       recipientEmail={companySearch.email}
                       recipientName={companySearch.company_name}
