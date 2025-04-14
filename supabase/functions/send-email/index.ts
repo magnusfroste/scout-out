@@ -1,3 +1,4 @@
+
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -9,11 +10,18 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Using a more reliable email library for Deno
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-interface EmailData {
-  recipient: string;
+interface EmailRequest {
+  to: string;
+  to_name?: string;
   subject: string;
-  content: string;
-  senderName: string;
+  html_content: string;
+  sender_settings: {
+    email: string;
+    host: string;
+    port: number;
+    password: string;
+    provider: string;
+  };
 }
 
 Deno.serve(async (req) => {
@@ -32,14 +40,19 @@ Deno.serve(async (req) => {
     console.log("Received email send request");
     
     // Get request data
-    const { emailData, userId } = await req.json();
+    const emailRequest: EmailRequest = await req.json();
     
-    console.log("Request data:", { emailDataReceived: !!emailData, userIdReceived: !!userId });
+    console.log("Request data received:", { 
+      to: emailRequest.to,
+      subject: emailRequest.subject,
+      senderEmail: emailRequest.sender_settings?.email,
+      senderHost: emailRequest.sender_settings?.host,
+    });
     
     // Validate input
-    if (!emailData || !userId) {
+    if (!emailRequest || !emailRequest.to || !emailRequest.subject || !emailRequest.html_content || !emailRequest.sender_settings) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing required data' }),
+        JSON.stringify({ success: false, error: 'Missing required email data' }),
         { 
           status: 400,
           headers: { 
@@ -50,112 +63,46 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create authenticated Supabase client using the request's authorization header
-    const authHeader = req.headers.get('Authorization');
-    console.log("Auth header present:", !!authHeader);
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    
-    console.log("Supabase URL available:", !!supabaseUrl);
-    console.log("Supabase Anon Key available:", !!supabaseAnonKey);
-    
-    const supabaseClient = createClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        global: { headers: { Authorization: authHeader || '' } },
-      }
-    );
-    
-    // Get user's email settings
-    console.log("Fetching email settings for user:", userId);
-    
-    const { data: settings, error } = await supabaseClient
-      .from('user_email_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-      
-    if (error) {
-      console.error("Error fetching email settings:", error);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Email settings error: ${error.message}` 
-        }),
-        { 
-          status: 400,
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          } 
-        }
-      );
-    }
-    
-    if (!settings) {
-      console.error("No email settings found");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Email settings not found' 
-        }),
-        { 
-          status: 400,
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          } 
-        }
-      );
-    }
-    
-    console.log("Email settings found:", {
-      provider: settings.email_provider,
-      host: settings.smtp_host,
-      port: settings.smtp_port,
-      email: settings.email_address
-    });
-    
     try {
       // Configure email client using denomailer
-      console.log("Configuring email client");
+      console.log("Configuring email client with:", {
+        host: emailRequest.sender_settings.host,
+        port: emailRequest.sender_settings.port,
+        email: emailRequest.sender_settings.email
+      });
       
       // Determine secure connection based on port
-      const secure = settings.smtp_port === 465;
+      const secure = emailRequest.sender_settings.port === 465;
       console.log(`Using ${secure ? 'secure' : 'non-secure'} connection`);
       
       const client = new SMTPClient({
         connection: {
-          hostname: settings.smtp_host,
-          port: settings.smtp_port,
+          hostname: emailRequest.sender_settings.host,
+          port: emailRequest.sender_settings.port,
           tls: secure,
           auth: {
-            username: settings.email_address,
-            password: settings.app_password,
+            username: emailRequest.sender_settings.email,
+            password: emailRequest.sender_settings.password,
           },
         },
       });
       
       // Send email
-      console.log("Sending email to:", emailData.recipient);
+      console.log("Sending email to:", emailRequest.to);
       
       await client.send({
-        from: settings.email_address,
-        to: emailData.recipient,
-        subject: emailData.subject || `Introduction from ${emailData.senderName}`,
-        content: emailData.content,
-        html: emailData.content.replace(/\n/g, '<br>'),
+        from: emailRequest.sender_settings.email,
+        to: emailRequest.to,
+        subject: emailRequest.subject,
+        content: emailRequest.html_content,
+        html: emailRequest.html_content,
         headers: {
-          "Reply-To": settings.email_address,
+          "Reply-To": emailRequest.sender_settings.email,
           "X-Priority": "3",
-          "List-Unsubscribe": `<mailto:${settings.email_address}?subject=Unsubscribe>`,
+          "List-Unsubscribe": `<mailto:${emailRequest.sender_settings.email}?subject=Unsubscribe>`,
           "X-Mailer": "Master Business Agent",
           "Precedence": "bulk",
-          "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@${settings.smtp_host}>`,
+          "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@${emailRequest.sender_settings.host}>`,
           "MIME-Version": "1.0"
         }
       });
@@ -179,8 +126,8 @@ Deno.serve(async (req) => {
           success: false, 
           error: `SMTP error: ${smtpError.message}`,
           details: {
-            host: settings.smtp_host,
-            port: settings.smtp_port,
+            host: emailRequest.sender_settings.host,
+            port: emailRequest.sender_settings.port,
             errorType: smtpError.name,
             errorStack: smtpError.stack
           }
@@ -213,15 +160,3 @@ Deno.serve(async (req) => {
     );
   }
 })
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/send-email' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"emailData":{"recipient":"test@example.com","subject":"Introduction","content":"Hello!","senderName":"My Business"},"userId":"your-user-id"}'
-
-*/

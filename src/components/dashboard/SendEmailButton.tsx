@@ -14,20 +14,6 @@ interface SendEmailButtonProps {
   disabled?: boolean;
 }
 
-type ElevatorPitch = {
-  company_name?: string;
-  industry?: string;
-  challenges?: string[];
-  solutions?: string[];
-};
-
-type ContactInfo = {
-  name?: string;
-  email?: string;
-  phone?: string;
-  title?: string;
-};
-
 const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   recipientEmail,
   recipientName = "",
