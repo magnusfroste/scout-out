@@ -12,8 +12,7 @@ export function createEmailTemplate(content: string, recipientName: string, send
     content = '<p>This email was sent with no content.</p>';
   }
   
-  return `
-<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -32,11 +31,6 @@ export function createEmailTemplate(content: string, recipientName: string, send
       border: 1px solid #eee;
       border-radius: 8px;
     }
-    .email-header {
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #eee;
-    }
     .email-content {
       padding: 20px 0;
     }
@@ -47,15 +41,9 @@ export function createEmailTemplate(content: string, recipientName: string, send
       font-size: 14px;
       color: #777;
     }
-    .email-signature {
-      margin-top: 30px;
-    }
     a {
       color: #2563eb;
       text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
     }
     p {
       margin: 1em 0;
@@ -73,6 +61,5 @@ export function createEmailTemplate(content: string, recipientName: string, send
     </div>
   </div>
 </body>
-</html>
-  `;
+</html>`;
 }
