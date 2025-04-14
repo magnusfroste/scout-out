@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
           "List-Unsubscribe": `<mailto:${emailRequest.sender_settings.email}?subject=Unsubscribe>`,
           "X-Mailer": "Master Business Agent",
           "Precedence": "bulk",
+          "Content-Type": "text/html; charset=UTF-8",
           "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@${emailRequest.sender_settings.host}>`,
           "MIME-Version": "1.0"
         }

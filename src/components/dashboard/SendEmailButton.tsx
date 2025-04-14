@@ -74,18 +74,14 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       });
       
       // Format the content with proper HTML
-      const formattedContent = content
-        .replace(/\n\n/g, '</p><p>') // Convert double line breaks to paragraphs
-        .replace(/\n/g, '<br>');      // Convert single line breaks to <br>
-      
-      const htmlContent = `<p>${formattedContent}</p>`;
+      const formattedContent = convertToProperHtml(content, recipientName);
       
       // Prepare the request data
       const emailData = {
         to: recipientEmail,
         to_name: recipientName,
         subject: subject,
-        html_content: htmlContent,
+        html_content: formattedContent,
         sender_settings: {
           email: emailSettings.email_address,
           host: emailSettings.smtp_host,
@@ -130,6 +126,28 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     } finally {
       setIsSending(false);
     }
+  };
+
+  /**
+   * Convert plain text with simple formatting to proper HTML with professional styling
+   */
+  const convertToProperHtml = (text: string, recipientName?: string): string => {
+    if (!text) return "";
+    
+    // Replace line breaks with paragraph tags
+    let html = text
+      .replace(/\n{2,}/g, '</p><p>') // Convert double line breaks to paragraphs
+      .replace(/\n/g, '<br>');       // Convert single line breaks to <br>
+    
+    // Make sure content is wrapped in paragraphs
+    if (!html.startsWith('<p>')) {
+      html = '<p>' + html;
+    }
+    if (!html.endsWith('</p>')) {
+      html = html + '</p>';
+    }
+
+    return html;
   };
 
   return (

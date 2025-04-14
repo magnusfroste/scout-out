@@ -42,7 +42,17 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
  */
 export async function sendEmail(client: SMTPClient, params: EmailParams) {
   try {
-    const result = await client.send(params);
+    // Set additional headers for better email client compatibility
+    const enhancedParams = {
+      ...params,
+      headers: {
+        ...params.headers,
+        "Content-Type": "text/html; charset=UTF-8",
+        "Content-Language": "en-US",
+      }
+    };
+    
+    const result = await client.send(enhancedParams);
     console.log("Email sent successfully:", result);
     await client.close();
     return result;
