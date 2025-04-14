@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
         }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending email:', error);
     
     return new Response(

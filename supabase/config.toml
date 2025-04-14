@@ -1,3 +1,4 @@
+
 project_id = "pqskutdrekcinpymvigm"
 [functions.send-email]
 enabled = true
@@ -9,3 +10,19 @@ entrypoint = "./functions/send-email/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-email/*.html" ]
+
+[functions.trigger-mybusiness-webhook]
+enabled = true
+verify_jwt = true
+
+[functions.trigger-n8n-workflow]
+enabled = true
+verify_jwt = true
+
+[functions.trigger-questions-webhook]
+enabled = true
+verify_jwt = true
+
+[functions.trigger-value-proposition-webhook]
+enabled = true
+verify_jwt = true

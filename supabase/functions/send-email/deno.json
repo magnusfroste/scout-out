@@ -1,3 +1,8 @@
+
 {
-  "imports": {}
+  "imports": {
+    "jsr:@supabase/functions-js/edge-runtime.d.ts": "https://esm.sh/@supabase/functions-js@2/edge-runtime.d.ts",
+    "https://esm.sh/@supabase/supabase-js@2": "https://esm.sh/@supabase/supabase-js@2.38.4",
+    "https://deno.land/x/denomailer@1.6.0/mod.ts": "https://deno.land/x/denomailer@1.6.0/mod.ts"
+  }
 }

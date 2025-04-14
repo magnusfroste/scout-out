@@ -66,13 +66,15 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error('No active email settings found. Please configure your email settings.');
       }
 
-      // Call the edge function to send the email
-      const response = await fetch('https://pqskutdrekcinpymvigm.supabase.co/functions/v1/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
+      console.log('Sending email with settings:', {
+        to: recipientEmail,
+        subject: subject,
+        emailProvider: emailSettings.email_provider,
+        senderEmail: emailSettings.email_address
+      });
+
+      // Call the edge function to send the email using the Supabase Function API
+      const { data, error } = await supabase.functions.invoke('send-email', {
         body: JSON.stringify({
           to: recipientEmail,
           to_name: recipientName,
@@ -88,11 +90,18 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send email');
+      if (error) {
+        console.error('Error from Edge Function:', error);
+        throw new Error(error.message || 'Failed to send email');
       }
 
+      if (!data || !data.success) {
+        const errorMessage = data?.error || 'Unknown error occurred';
+        console.error('Email sending failed:', data);
+        throw new Error(errorMessage);
+      }
+
+      console.log('Email sent successfully:', data);
       toast({
         title: "Email sent",
         description: `Email successfully sent to ${recipientEmail}`,
