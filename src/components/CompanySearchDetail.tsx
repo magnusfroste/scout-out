@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -226,6 +227,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       );
 
       if (success) {
+        // Update local state to reflect saved values
         setDbScore(displayScore);
         setDbAdvice(displayAdvice);
         setDbIntroduction(displayIntroduction);
@@ -233,6 +235,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         
         setHasUnsavedChanges(false);
 
+        // Update the companySearch state
         setCompanySearch({
           ...companySearch,
           score: scoreValue,
@@ -246,6 +249,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
           description: 'Value proposition updated successfully',
         });
 
+        // Call onUpdate prop if provided to update parent component
         if (onUpdate) {
           onUpdate(searchId, {
             ...companySearch,
@@ -255,6 +259,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             subject: displaySubject
           });
         }
+      } else {
+        // Handle save failure
+        toast({
+          title: 'Error',
+          description: 'Failed to update value proposition',
+          variant: 'destructive',
+        });
       }
     } catch (error: any) {
       console.error('Error updating company details:', error);

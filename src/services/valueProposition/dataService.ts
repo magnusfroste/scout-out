@@ -8,7 +8,7 @@ export const saveValuePropositionData = async (
   searchId: string,
   score: number | null,
   advice: string | null,
-  introduction: string | null,
+  introduction: string | null, 
   subject: string | null
 ): Promise<boolean> => {
   try {
