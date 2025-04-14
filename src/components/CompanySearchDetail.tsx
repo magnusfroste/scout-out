@@ -10,9 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import MagicValuePropositionButton from '@/components/dashboard/MagicValuePropositionButton';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { saveValuePropositionData } from '@/services/value-proposition';
+import { saveValuePropositionData } from '@/services/valuePropositionWebhookService';
 import SendEmailButton from '@/components/dashboard/SendEmailButton';
-import { CompanySearch } from '@/types/company';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -21,7 +20,7 @@ interface CompanySearchDetailProps {
 }
 
 const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetailProps) => {
-  const [companySearch, setCompanySearch] = useState<CompanySearch | null>(null);
+  const [companySearch, setCompanySearch] = useState<any>(null);
   const [questionAnswers, setQuestionAnswers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,23 +60,17 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
       if (searchError) throw searchError;
       console.log('Fetched company search data:', searchData);
-      
-      const typedSearchData: CompanySearch = {
-        ...searchData,
-        subject: searchData.subject || ''
-      };
-      
-      setCompanySearch(typedSearchData);
+      setCompanySearch(searchData);
 
-      setDbScore(typedSearchData.score?.toString() || '');
-      setDbAdvice(typedSearchData.advice || '');
-      setDbIntroduction(typedSearchData.introduction || '');
-      setDbSubject(typedSearchData.subject || '');
+      setDbScore(searchData.score?.toString() || '');
+      setDbAdvice(searchData.advice || '');
+      setDbIntroduction(searchData.introduction || '');
+      setDbSubject(searchData.subject || '');
       
-      setDisplayScore(typedSearchData.score?.toString() || '');
-      setDisplayAdvice(typedSearchData.advice || '');
-      setDisplayIntroduction(typedSearchData.introduction || '');
-      setDisplaySubject(typedSearchData.subject || '');
+      setDisplayScore(searchData.score?.toString() || '');
+      setDisplayAdvice(searchData.advice || '');
+      setDisplayIntroduction(searchData.introduction || '');
+      setDisplaySubject(searchData.subject || '');
 
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')

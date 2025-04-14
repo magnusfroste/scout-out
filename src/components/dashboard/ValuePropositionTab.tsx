@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import CompanySearchesList from '@/components/CompanySearchesList';
@@ -6,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/value-proposition';
+import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valuePropositionWebhookService';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import { useCompanySearches } from '@/hooks/useCompanySearches';

@@ -18,9 +18,6 @@ interface EmailSettings {
   smtp_host: string;
   smtp_port: number;
   is_active: boolean;
-  user_id?: string;
-  created_at?: string | null;
-  updated_at?: string | null;
 }
 
 const EMAIL_PROVIDERS = [
@@ -95,22 +92,54 @@ const EmailSettings = () => {
         return;
       }
       
-      // Use direct query for email settings
-      const { data, error } = await supabase
-        .from('user_email_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle();
+      // Use RPC call to bypass potential RLS issues
+      const { data, error } = await supabase.rpc('get_user_email_settings');
       
       console.log('Email settings query result:', { data, error });
       
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        // If RPC fails, fall back to direct query
+        console.log('RPC failed, falling back to direct query');
+        const { data: directData, error: directError } = await supabase
+          .from('user_email_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+          
+        console.log('Direct query result:', { data: directData, error: directError });
+        
+        if (directError && directError.code !== 'PGRST116') {
+          throw directError;
+        }
+        
+        if (directData) {
+          console.log('Found email settings via direct query:', directData);
+          setSettings({
+            id: directData.id,
+            email_provider: directData.email_provider,
+            email_address: directData.email_address,
+            app_password: directData.app_password,
+            smtp_host: directData.smtp_host,
+            smtp_port: directData.smtp_port,
+            is_active: directData.is_active
+          });
+          setHasSettings(true);
+          
+          // Set instructions based on provider
+          const provider = EMAIL_PROVIDERS.find(p => p.value === directData.email_provider);
+          if (provider) {
+            setInstructions(provider.instructions);
+          }
+        } else {
+          console.log('No email settings found via direct query');
+        }
+        return;
       }
       
       if (data) {
-        console.log('Found email settings:', data);
+        console.log('Found email settings via RPC:', data);
+        // Map the database fields to our settings state
         setSettings({
           id: data.id,
           email_provider: data.email_provider,
@@ -128,7 +157,7 @@ const EmailSettings = () => {
           setInstructions(provider.instructions);
         }
       } else {
-        console.log('No email settings found');
+        console.log('No email settings found via RPC');
       }
     } catch (error: any) {
       console.error('Error fetching email settings:', error);

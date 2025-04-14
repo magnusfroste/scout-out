@@ -1,4 +1,4 @@
-import { Answer } from '@/types/company';
+import { Answer } from '@/utils/webhookResponseParser';
 import { Question } from '@/types/company';
 import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
 import { supabase } from '@/integrations/supabase/client';

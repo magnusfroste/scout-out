@@ -7,7 +7,6 @@ export interface CompanySearch {
   created_at: string;
   user_id?: string;
   result?: any;
-  subject?: string;
 }
 
 export interface SearchResult {
@@ -20,6 +19,5 @@ export interface SearchResult {
     contact?: string;
     email?: string;
     phone?: string;
-    address?: string;
   };
 }

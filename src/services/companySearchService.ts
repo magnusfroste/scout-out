@@ -12,13 +12,12 @@ export type CompanySearchRecord = {
   company_name: string;
   result: any;
   created_at: string;
-  contact_info?: any | null;
+  contact_info?: ContactInfo | null;
   www?: string | null;
   contact?: string | null;
   email?: string | null;
   phone?: string | null;
   role?: string | null;
-  subject?: string | null;
 };
 
 /**
@@ -50,7 +49,7 @@ export const storeSearchResults = async (
     // Add contact info if available
     if (contactInfo) {
       // Store the full contact info in the JSON field for backward compatibility
-      searchRecord.contact_info = JSON.parse(JSON.stringify(contactInfo));
+      searchRecord.contact_info = contactInfo;
       
       // Store individual fields in their respective columns
       searchRecord.www = contactInfo.www || null;

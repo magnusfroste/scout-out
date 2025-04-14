@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from '@/types/company';
+import { Json } from '@/integrations/supabase/types';
 
 export interface CompanyAnswer {
   id: string;
