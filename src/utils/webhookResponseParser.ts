@@ -1,4 +1,5 @@
-import { Answer, ContactInfo } from '@/types/company';
+
+import { Answer as CompanyAnswer, ContactInfo } from '@/types/company';
 
 export interface ElevatorPitch {
   industry?: string;
@@ -8,6 +9,26 @@ export interface ElevatorPitch {
   website?: string;
   founded?: string;
   summary?: string;
+  company_name?: string;
+  tagline?: string;
+  about?: string;
+  services?: Array<{
+    name: string;
+    description: string;
+  }>;
+  testimonials?: Array<{
+    name: string;
+    position: string;
+    company?: string;
+    testimonial: string;
+  }>;
+  clients?: string[];
+  value_proposition?: string;
+}
+
+export interface Answer {
+  question_id: string;
+  answer: string;
 }
 
 export const parseContactInfo = (data: any): ContactInfo | undefined => {

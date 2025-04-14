@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -62,17 +61,23 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
 
       if (searchError) throw searchError;
       console.log('Fetched company search data:', searchData);
-      setCompanySearch(searchData);
-
-      setDbScore(searchData.score?.toString() || '');
-      setDbAdvice(searchData.advice || '');
-      setDbIntroduction(searchData.introduction || '');
-      setDbSubject(searchData.subject || '');
       
-      setDisplayScore(searchData.score?.toString() || '');
-      setDisplayAdvice(searchData.advice || '');
-      setDisplayIntroduction(searchData.introduction || '');
-      setDisplaySubject(searchData.subject || '');
+      const typedSearchData: CompanySearch = {
+        ...searchData,
+        subject: searchData.subject || ''
+      };
+      
+      setCompanySearch(typedSearchData);
+
+      setDbScore(typedSearchData.score?.toString() || '');
+      setDbAdvice(typedSearchData.advice || '');
+      setDbIntroduction(typedSearchData.introduction || '');
+      setDbSubject(typedSearchData.subject || '');
+      
+      setDisplayScore(typedSearchData.score?.toString() || '');
+      setDisplayAdvice(typedSearchData.advice || '');
+      setDisplayIntroduction(typedSearchData.introduction || '');
+      setDisplaySubject(typedSearchData.subject || '');
 
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')

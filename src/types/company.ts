@@ -20,6 +20,22 @@ export interface ElevatorPitch {
   website?: string;
   founded?: string;
   summary?: string;
+  // Adding missing properties
+  company_name?: string;
+  tagline?: string;
+  about?: string;
+  services?: Array<{
+    name: string;
+    description: string;
+  }>;
+  testimonials?: Array<{
+    name: string;
+    position: string;
+    company?: string;
+    testimonial: string;
+  }>;
+  clients?: string[];
+  value_proposition?: string;
 }
 
 export interface CompanySearch {

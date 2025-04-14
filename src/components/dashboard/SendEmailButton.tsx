@@ -46,12 +46,17 @@ const SendEmailButton = ({
   const handleSendEmail = async () => {
     if (!user || !recipientEmail || !emailContent) return;
     
+    // Accessing the company name safely
+    const senderCompanyName = userProfile?.business_data?.elevator_pitch?.company_name || 
+                             userProfile?.business_data?.contact_info?.company_name || 
+                             'Your Business';
+    
     const success = await sendEmail({
       recipientEmail,
       emailSubject,
       emailContent,
       userId: user.id,
-      senderName: userProfile?.business_data?.company_name || 'Your Business'
+      senderName: senderCompanyName
     });
     
     if (success) {
