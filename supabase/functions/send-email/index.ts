@@ -31,6 +31,75 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Creates a professional HTML email template with the provided content
+ */
+function createEmailTemplate(content: string, senderName: string, senderEmail: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email from ${senderName}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .email-container {
+      padding: 20px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+    .email-header {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .email-content {
+      padding: 20px 0;
+    }
+    .email-footer {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 14px;
+      color: #777;
+    }
+    .email-signature {
+      margin-top: 30px;
+    }
+    a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    p {
+      margin: 1em 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-content">
+      ${content}
+    </div>
+    <div class="email-footer">
+      <p>This email was sent by ${senderName} via Master Business Agent</p>
+      <p>For any questions, please reply directly to this email at <a href="mailto:${senderEmail}">${senderEmail}</a></p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -171,6 +240,16 @@ Deno.serve(async (req) => {
         debug: true, // Enable debug mode for more logs
       });
       
+      // Extract sender name if available (use email username as fallback)
+      const senderName = emailRequest.to_name || emailRequest.sender_settings.email.split('@')[0];
+      
+      // Create a nicely formatted HTML email
+      const formattedHtmlContent = createEmailTemplate(
+        emailRequest.html_content,
+        senderName,
+        emailRequest.sender_settings.email
+      );
+      
       // Send email
       console.log("Sending email to:", emailRequest.to);
       
@@ -178,8 +257,8 @@ Deno.serve(async (req) => {
         from: emailRequest.sender_settings.email,
         to: emailRequest.to,
         subject: emailRequest.subject,
-        content: emailRequest.html_content,
-        html: emailRequest.html_content,
+        content: "Please view this email in an HTML-compatible email client.",
+        html: formattedHtmlContent,
         headers: {
           "Reply-To": emailRequest.sender_settings.email,
           "X-Priority": "3",

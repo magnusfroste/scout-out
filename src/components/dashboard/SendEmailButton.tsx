@@ -73,12 +73,19 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         senderEmail: emailSettings.email_address
       });
       
+      // Format the content with proper HTML
+      const formattedContent = content
+        .replace(/\n\n/g, '</p><p>') // Convert double line breaks to paragraphs
+        .replace(/\n/g, '<br>');      // Convert single line breaks to <br>
+      
+      const htmlContent = `<p>${formattedContent}</p>`;
+      
       // Prepare the request data
       const emailData = {
         to: recipientEmail,
         to_name: recipientName,
         subject: subject,
-        html_content: content.replace(/\n/g, '<br>'),
+        html_content: htmlContent,
         sender_settings: {
           email: emailSettings.email_address,
           host: emailSettings.smtp_host,
