@@ -116,7 +116,20 @@ const MyBusiness = () => {
         throw new Error(`Service temporarily unavailable`);
       }
       
-      const responseData = await response.json();
+      // Clone the response before reading the body
+      const responseClone = response.clone();
+      let responseData;
+      
+      try {
+        responseData = await response.json();
+      } catch (error) {
+        console.error('Error parsing response JSON:', error);
+        // Try to get response as text if JSON parsing fails
+        const textResponse = await responseClone.text();
+        console.log('Response as text:', textResponse);
+        throw new Error('Invalid response format from service');
+      }
+      
       console.log('Raw webhook response:', responseData);
       
       // Check if the response contains method information

@@ -1,3 +1,4 @@
+
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -33,10 +34,15 @@ export const callMyBusinessWebhook = async (webhookUrl: string, websiteUrl: stri
     
     console.log(`Edge Function response status: ${response.status}`);
     
+    // Check if the response is ok without consuming the body
     if (!response.ok) {
       let errorMessage = 'Service unavailable. Please try again later.';
+      
+      // Clone the response to avoid consuming the body stream
+      const errorResponse = response.clone();
+      
       try {
-        const errorData = await response.json();
+        const errorData = await errorResponse.json();
         console.error('MyBusiness webhook error response:', errorData);
         if (errorData.message) {
           errorMessage = errorData.message;
@@ -66,29 +72,39 @@ export const callMyBusinessWebhook = async (webhookUrl: string, websiteUrl: stri
           }
         }
       } catch (e) {
-        const errorText = await response.text();
-        console.error('MyBusiness webhook error (text):', errorText);
+        console.error('MyBusiness webhook error (text):', await response.clone().text());
       }
       throw new Error(errorMessage);
     }
     
-    // Check if the response has the expected format
-    const responseData = await response.json();
-    console.log('Edge Function response data:', responseData);
-    console.log('✅ METHOD USED: Edge Function');
+    // Clone the response before using it
+    const responseClone = response.clone();
     
-    // If the Edge Function returns a nested response, extract the actual data
-    if (responseData.success && responseData.data) {
-      console.log('Extracting nested data from Edge Function response');
-      // Return the nested data directly instead of creating a new Response
-      return {
-        ok: true,
-        json: () => Promise.resolve(responseData.data)
-      } as Response;
+    try {
+      // Check if the response has the expected format
+      const responseData = await response.json();
+      console.log('Edge Function response data:', responseData);
+      console.log('✅ METHOD USED: Edge Function');
+      
+      // If the Edge Function returns a nested response, extract the actual data
+      if (responseData.success && responseData.data) {
+        console.log('Extracting nested data from Edge Function response');
+        // Create a new response object with the nested data
+        return new Response(JSON.stringify(responseData.data), {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          status: 200
+        });
+      }
+      
+      // If the response doesn't have the expected format, return the cloned response
+      return responseClone;
+    } catch (parseError) {
+      console.error('Error parsing JSON response:', parseError);
+      // If JSON parsing fails, return the cloned response
+      return responseClone;
     }
-    
-    // If the response doesn't have the expected format, return it as is
-    return response;
   } catch (error) {
     console.error('Error in callMyBusinessWebhook:', error);
     // Let the calling component handle the toast to provide a better user experience
