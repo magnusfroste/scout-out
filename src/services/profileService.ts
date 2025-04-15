@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ElevatorPitch } from '@/utils/webhookResponseParser';
@@ -12,7 +13,6 @@ export interface UserProfile {
   avatar_url: string | null;
   is_admin: boolean;
   website_url?: string | null;
-  // sales_info field removed
   business_data?: {
     elevator_pitch?: ElevatorPitch;
     contact_info?: ContactInfo;
@@ -40,11 +40,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       console.error('Error fetching user profile:', error);
       // If it's not a "not found" error, return null
       if (error.code !== 'PGRST116') {
-        toast({
-          title: "Profile Error",
-          description: "Could not load your profile. Please try again later.",
-          variant: "destructive",
-        });
+        // Only show toast for non-initialization errors
         return null;
       }
       
@@ -68,11 +64,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         
       if (insertError) {
         console.error('Error creating user profile:', insertError);
-        toast({
-          title: "Profile Error",
-          description: "Could not create user profile. Please try again later.",
-          variant: "destructive",
-        });
         return null;
       }
       
@@ -103,11 +94,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     } as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
-    toast({
-      title: "Profile Error",
-      description: "An unexpected error occurred. Please try again later.",
-      variant: "destructive",
-    });
     return null;
   }
 };
@@ -121,27 +107,12 @@ export const updateUserProfile = async (userId: string, updates: Partial<Omit<Us
       
     if (error) {
       console.error('Error updating profile:', error);
-      toast({
-        title: "Update Failed",
-        description: "Could not update your profile. Please try again.",
-        variant: "destructive",
-      });
       return false;
     }
-    
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been successfully updated.",
-    });
     
     return true;
   } catch (error) {
     console.error('Error updating profile:', error);
-    toast({
-      title: "Update Failed",
-      description: "Could not update your profile. Please try again.",
-      variant: "destructive",
-    });
     return false;
   }
 };

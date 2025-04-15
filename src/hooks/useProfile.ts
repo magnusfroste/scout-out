@@ -7,8 +7,9 @@ export const useProfile = (userId: string | undefined) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const refreshUserProfile = useCallback(async () => {
+  const refreshUserProfile = useCallback(async (showToasts = false) => {
     if (!userId) {
       setLoading(false);
       return;
@@ -21,28 +22,39 @@ export const useProfile = (userId: string | undefined) => {
     try {
       const profile = await fetchUserProfile(userId);
       setUserProfile(profile);
+      
+      if (showToasts && !isInitialLoad) {
+        toast({
+          title: "Success",
+          description: "Profile refreshed successfully.",
+        });
+      }
     } catch (err) {
       console.error('Error refreshing profile:', err);
       setError(err instanceof Error ? err : new Error('Failed to refresh profile'));
-      toast({
-        title: "Error",
-        description: "Failed to refresh your profile. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (showToasts) {
+        toast({
+          title: "Error",
+          description: "Failed to refresh your profile. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
-  }, [userId]);
+  }, [userId, isInitialLoad]);
 
-  // Fetch profile when userId changes
+  // Only fetch profile on initial mount and when userId changes
   useEffect(() => {
     if (userId) {
-      refreshUserProfile();
+      refreshUserProfile(false);
     } else {
       setUserProfile(null);
       setLoading(false);
     }
-  }, [userId, refreshUserProfile]);
+  }, [userId]);
 
   const updateProfile = async (updates: Partial<Omit<UserProfile, 'id'>>) => {
     if (!userId) return false;
@@ -51,9 +63,21 @@ export const useProfile = (userId: string | undefined) => {
     try {
       const success = await updateUserProfile(userId, updates);
       if (success) {
-        await refreshUserProfile();
+        await refreshUserProfile(false);
+        toast({
+          title: "Profile Updated",
+          description: "Your profile has been successfully updated.",
+        });
       }
       return success;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update your profile. Please try again.",
+        variant: "destructive",
+      });
+      return false;
     } finally {
       setLoading(false);
     }
