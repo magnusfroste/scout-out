@@ -6,7 +6,6 @@
 
 // TypeScript interface showing what should be added to user_email_settings types
 export interface UserEmailSettingsOAuth2Fields {
-  // For user_email_settings Row type:
   oauth2_client_id?: string | null;
   oauth2_client_secret?: string | null;
   oauth2_refresh_token?: string | null;
