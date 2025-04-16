@@ -111,11 +111,11 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       });
 
       // Call the edge function to send the email
-      const { data, error, status } = await supabase.functions.invoke('send-email', {
+      const { data, error } = await supabase.functions.invoke('send-email', {
         body: JSON.stringify(emailData)
       });
       
-      console.log('Edge function response:', { data, status });
+      console.log('Edge function response:', { data });
 
       if (error) {
         console.error('Error from Edge Function:', error);
