@@ -1,10 +1,16 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, Loader2 } from 'lucide-react';
+import { Mail, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
 
 interface SendEmailButtonProps {
   recipientEmail: string;
@@ -22,6 +28,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   disabled = false
 }) => {
   const [isSending, setIsSending] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -45,7 +52,11 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     }
 
     setIsSending(true);
+    setLastError(null);
+    
     try {
+      console.log('Starting email sending process...');
+      
       // Get user's email settings first
       const { data: emailSettings, error: settingsError } = await supabase
         .from('user_email_settings')
@@ -66,11 +77,11 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error('No active email settings found. Please configure your email settings.');
       }
 
-      console.log('Sending email with settings:', {
-        to: recipientEmail,
-        subject: subject,
-        emailProvider: emailSettings.email_provider,
-        senderEmail: emailSettings.email_address
+      console.log('Email settings retrieved:', {
+        provider: emailSettings.email_provider,
+        email: emailSettings.email_address,
+        host: emailSettings.smtp_host,
+        port: emailSettings.smtp_port
       });
       
       // Format content as proper HTML with improved structure
@@ -91,12 +102,20 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       };
 
+      console.log('Calling edge function with email data:', {
+        to: emailData.to,
+        subject: emailData.subject,
+        provider: emailData.sender_settings.provider,
+        host: emailData.sender_settings.host,
+        port: emailData.sender_settings.port
+      });
+
       // Call the edge function to send the email
-      const { data, error } = await supabase.functions.invoke('send-email', {
+      const { data, error, status } = await supabase.functions.invoke('send-email', {
         body: JSON.stringify(emailData)
       });
       
-      console.log('Edge function response:', data);
+      console.log('Edge function response:', { data, status });
 
       if (error) {
         console.error('Error from Edge Function:', error);
@@ -115,9 +134,11 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       });
     } catch (error: any) {
       console.error('Error sending email:', error);
+      const errorMsg = error.message || "There was a problem sending your email. Please try again.";
+      setLastError(errorMsg);
       toast({
         title: "Error sending email",
-        description: error.message || "There was a problem sending your email. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -146,25 +167,37 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   };
 
   return (
-    <Button
-      onClick={sendEmail}
-      disabled={disabled || isSending}
-      variant="secondary"
-      size="sm"
-      className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/50 dark:border-blue-800"
-    >
-      {isSending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Sending...
-        </>
-      ) : (
-        <>
-          <Mail className="mr-2 h-4 w-4" />
-          Send Email
-        </>
-      )}
-    </Button>
+    <TooltipProvider>
+      <Tooltip open={!!lastError}>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={sendEmail}
+            disabled={disabled || isSending}
+            variant="secondary"
+            size="sm"
+            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/50 dark:border-blue-800"
+          >
+            {isSending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                Send Email
+              </>
+            )}
+            {lastError && <AlertCircle className="ml-2 h-4 w-4 text-red-500" />}
+          </Button>
+        </TooltipTrigger>
+        {lastError && (
+          <TooltipContent className="max-w-sm">
+            <p className="text-sm text-red-500">{lastError}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
