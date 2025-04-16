@@ -12,7 +12,11 @@ import {
   TooltipTrigger 
 } from '@/components/ui/tooltip';
 
-type CompleteEmailSettings = EmailSettings;
+interface CompleteEmailSettings extends EmailSettings {
+  oauth2_client_id?: string | null;
+  oauth2_client_secret?: string | null;
+  oauth2_refresh_token?: string | null;
+}
 
 interface SendEmailButtonProps {
   recipientEmail: string;
