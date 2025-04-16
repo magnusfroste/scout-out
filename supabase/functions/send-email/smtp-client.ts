@@ -38,6 +38,15 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
     // Log password length but not the actual password
     console.log(`Password provided with length: ${config.password.length}`);
     
+    // Log the actual configuration being used (without password)
+    console.log(`SMTP Configuration: ${JSON.stringify({
+      hostname: config.host,
+      port: config.port,
+      tls: secure,
+      starttls: config.port === 587,
+      username: config.email
+    }, null, 2)}`);
+    
     return new SMTPClient({
       connection: {
         hostname: config.host,
@@ -99,12 +108,15 @@ export async function sendEmail(client: SMTPClient, params: EmailParams): Promis
     await client.close();
     return { success: true };
   } catch (error: any) {
+    // Log detailed error information to help diagnose the issue
     console.error("Error sending email:", {
       message: error.message,
       name: error.name,
       code: error.code,
       stack: error.stack,
       response: error.response || "No response info",
+      commandQueue: error.commandQueue || "No command queue info",
+      lastCommand: error.lastCommand || "No last command info"
     });
     
     try {

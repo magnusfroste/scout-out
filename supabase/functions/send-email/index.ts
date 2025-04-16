@@ -106,14 +106,19 @@ Deno.serve(async (req) => {
       // Enhanced error handling - save result to check for errors
       const result = await sendEmail(client, emailParams);
       if (!result.success) {
-        throw new Error(result.error || "Unknown error sending email");
+        console.error("Email sending failed with error:", result.error, "Details:", result.details);
+        return createJsonResponse({ 
+          success: false, 
+          error: result.error || "Unknown error sending email",
+          details: result.details || {}
+        }, 500);
       }
       
       console.log("Email sent successfully");
       
       return createJsonResponse({ success: true });
-    } catch (smtpError) {
-      console.error("SMTP error:", smtpError);
+    } catch (smtpError: any) {
+      console.error("SMTP error:", smtpError, "Stack:", smtpError.stack);
       return createJsonResponse({ 
         success: false, 
         error: `SMTP error: ${smtpError.message}`,
@@ -122,6 +127,7 @@ Deno.serve(async (req) => {
           port: emailRequest.sender_settings.port,
           provider: emailRequest.sender_settings.provider,
           errorType: smtpError.name,
+          stack: smtpError.stack
         }
       }, 500);
     }
@@ -131,6 +137,7 @@ Deno.serve(async (req) => {
     return createJsonResponse({ 
       success: false, 
       error: `General error: ${error.message}`,
+      stack: error.stack
     }, 500);
   }
 });
