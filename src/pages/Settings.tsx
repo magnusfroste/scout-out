@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,7 +28,6 @@ const Settings = () => {
   const [adminChecked, setAdminChecked] = useState(false);
 
   useEffect(() => {
-    // Once authentication loading is done, check if user is admin
     if (!loading) {
       if (user && userProfile?.is_admin) {
         console.log('User is admin, loading webhook settings');
@@ -53,11 +51,11 @@ const Settings = () => {
         setWebhookUrl(settings.url || '');
         setMyBusinessWebhookUrl(settings.mybusiness_url || '');
         setValuePropositionWebhookUrl(settings.value_proposition_url || '');
-        setCompanyResearchWebhookUrl(settings.url || ''); // Use url field for company research
+        setCompanyResearchWebhookUrl(settings.url || '');
         console.log(`Set webhook URL: ${settings.url}`);
         console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
         console.log(`Set value proposition URL: ${settings.value_proposition_url}`);
-        console.log(`Set company research URL: ${settings.url}`); // Using url field
+        console.log(`Set company research URL: ${settings.url}`);
       } else {
         console.warn('No webhook settings found');
         toast({
@@ -78,7 +76,6 @@ const Settings = () => {
     }
   };
 
-  // Show loading state while fetching auth information or webhook settings
   if (loading || (isLoading && !adminChecked)) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -93,7 +90,6 @@ const Settings = () => {
     );
   }
 
-  // Redirect if not logged in
   if (!user) {
     console.log('User not logged in, redirecting to login');
     return <Navigate to="/login" replace />;
@@ -104,7 +100,6 @@ const Settings = () => {
       const success = await updateWebhookSettings(newUrl);
       if (success) {
         setWebhookUrl(newUrl);
-        // Update company research URL too since it's the same field
         setCompanyResearchWebhookUrl(newUrl);
       }
     } catch (error) {
@@ -154,7 +149,6 @@ const Settings = () => {
       const success = await updateCompanyResearchWebhookSettings(newUrl);
       if (success) {
         setCompanyResearchWebhookUrl(newUrl);
-        // Update the regular webhook URL too since it's the same field
         setWebhookUrl(newUrl);
       }
     } catch (error) {
@@ -196,6 +190,20 @@ const Settings = () => {
             
             {userProfile?.is_admin && (
               <TabsContent value="admin" className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Step 1: My Business Webhook Configuration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MyBusinessWebhookForm 
+                      webhookUrl={myBusinessWebhookUrl}
+                      setWebhookUrl={handleMyBusinessWebhookUpdate}
+                      isDisabled={isLoading}
+                      showDescription={true}
+                    />
+                  </CardContent>
+                </Card>
+                
                 <Card>
                   <CardHeader>
                     <CardTitle>Step 2: Questions Webhook Configuration</CardTitle>
@@ -249,20 +257,6 @@ const Settings = () => {
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 1: My Business Webhook Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <MyBusinessWebhookForm 
-                      webhookUrl={myBusinessWebhookUrl}
-                      setWebhookUrl={handleMyBusinessWebhookUpdate}
-                      isDisabled={isLoading}
-                      showDescription={true}
-                    />
                   </CardContent>
                 </Card>
                 
