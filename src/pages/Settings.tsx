@@ -198,7 +198,7 @@ const Settings = () => {
               <TabsContent value="admin" className="space-y-8">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Questions Webhook Configuration (Step 2)</CardTitle>
+                    <CardTitle>Step 2: Questions Webhook Configuration</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <WebhookForm 
@@ -207,12 +207,15 @@ const Settings = () => {
                       isDisabled={isLoading}
                       showDescription={true}
                     />
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      This URL is shared with Step 3 (Company Research). Changing this affects both steps.
+                    </div>
                   </CardContent>
                 </Card>
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Company Research Webhook Configuration (Step 3)</CardTitle>
+                    <CardTitle>Step 3: Company Research Webhook Configuration</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -238,10 +241,12 @@ const Settings = () => {
                             Save
                           </button>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          URL for the company research webhook used in Step 3. This is used for researching companies.
-                          <strong>Note: This updates the same field as the Questions webhook.</strong>
-                        </p>
+                        <div className="text-xs text-muted-foreground">
+                          <p>URL for the company research webhook used in Step 3.</p>
+                          <p className="mt-1 font-semibold">
+                            Note: This updates the same field as the Questions webhook (Step 2).
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -249,7 +254,7 @@ const Settings = () => {
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle>My Business Webhook Configuration</CardTitle>
+                    <CardTitle>Step 1: My Business Webhook Configuration</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <MyBusinessWebhookForm 
@@ -263,7 +268,7 @@ const Settings = () => {
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Value Proposition Webhook Configuration</CardTitle>
+                    <CardTitle>Step 4: Value Proposition Webhook Configuration</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ValuePropositionWebhookForm 
