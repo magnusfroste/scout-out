@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
       senderHost: emailRequest.sender_settings?.host,
       senderPort: emailRequest.sender_settings?.port,
       hasPassword: !!emailRequest.sender_settings?.password,
-      passwordLength: emailRequest.sender_settings?.password ? emailRequest.sender_settings.password.length : 0
+      passwordLength: emailRequest.sender_settings?.password ? emailRequest.sender_settings.password.length : 0,
+      hasOauth2: !!emailRequest.sender_settings?.oauth2,
     });
     
     // Validate input
@@ -65,12 +66,24 @@ Deno.serve(async (req) => {
       // Configure email client with deliverability settings
       console.log("Configuring email client with provider:", emailRequest.sender_settings.provider);
       
-      const client = createSMTPClient({
+      // Create SMTP client configuration
+      const smtpConfig: any = {
         host: emailRequest.sender_settings.host,
         port: emailRequest.sender_settings.port,
         email: emailRequest.sender_settings.email,
-        password: emailRequest.sender_settings.password
-      });
+        provider: emailRequest.sender_settings.provider
+      };
+      
+      // Add appropriate authentication based on provider
+      if (emailRequest.sender_settings.provider === 'office365' && emailRequest.sender_settings.oauth2) {
+        smtpConfig.oauth2 = emailRequest.sender_settings.oauth2;
+      } else if (emailRequest.sender_settings.password) {
+        smtpConfig.password = emailRequest.sender_settings.password;
+      } else {
+        throw new Error("Missing authentication credentials");
+      }
+      
+      const client = createSMTPClient(smtpConfig);
       
       // Extract recipient name
       const recipientName = emailRequest.to_name || emailRequest.to.split('@')[0];

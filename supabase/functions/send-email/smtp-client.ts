@@ -5,7 +5,16 @@ export interface SMTPConfig {
   host: string;
   port: number;
   email: string;
-  password: string;
+  password?: string;
+  oauth2?: OAuth2Config;
+  provider: string;
+}
+
+export interface OAuth2Config {
+  user: string;
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
 }
 
 export interface EmailParams {
@@ -29,37 +38,71 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
   const secure = config.port === 465;
   
   try {
-    console.log(`Creating SMTP client for host: ${config.host}, port: ${config.port}, email: ${config.email}, secure: ${secure}`);
+    console.log(`Creating SMTP client for host: ${config.host}, port: ${config.port}, email: ${config.email}, secure: ${secure}, provider: ${config.provider}`);
     
-    if (!config.host || !config.port || !config.email || !config.password) {
+    // Log if using OAuth2 (without credentials)
+    if (config.oauth2) {
+      console.log(`Using OAuth2 authentication for user: ${config.oauth2.user}`);
+    }
+    
+    if (config.provider === 'office365' && !config.oauth2) {
+      throw new Error("OAuth2 configuration is required for Office365");
+    }
+    
+    if (!config.host || !config.port || !config.email) {
       throw new Error("Missing required SMTP configuration parameters");
     }
     
-    // Log password length but not the actual password
-    console.log(`Password provided with length: ${config.password.length}`);
+    // Log password length but not the actual password (if using password auth)
+    if (config.password) {
+      console.log(`Password provided with length: ${config.password.length}`);
+    }
     
-    // Log the actual configuration being used (without password)
+    // Log the actual configuration being used (without sensitive data)
     console.log(`SMTP Configuration: ${JSON.stringify({
       hostname: config.host,
       port: config.port,
       tls: secure,
       starttls: config.port === 587,
-      username: config.email
+      username: config.email,
+      authMethod: config.oauth2 ? 'XOAUTH2' : 'LOGIN'
     }, null, 2)}`);
     
-    // FIXED: Removed the new URL() that was causing the error
+    // Create the connection config object
+    const connectionConfig: any = {
+      hostname: config.host,
+      port: config.port,
+      tls: secure,
+      // For Office365 and Gmail port 587, need to use STARTTLS
+      starttls: config.port === 587,
+    };
+    
+    // Add appropriate authentication based on provider
+    if (config.oauth2) {
+      // Using OAuth2 authentication (primarily for Office365)
+      connectionConfig.auth = {
+        username: config.oauth2.user,
+        method: "XOAUTH2",
+        // OAuth2 authentication setup
+        oauth2: {
+          user: config.oauth2.user,
+          clientId: config.oauth2.clientId,
+          clientSecret: config.oauth2.clientSecret,
+          refreshToken: config.oauth2.refreshToken,
+        }
+      };
+    } else if (config.password) {
+      // Traditional password authentication
+      connectionConfig.auth = {
+        username: config.email,
+        password: config.password,
+      };
+    } else {
+      throw new Error("Either password or OAuth2 configuration is required");
+    }
+    
     return new SMTPClient({
-      connection: {
-        hostname: config.host,
-        port: config.port,
-        tls: secure,
-        // For Gmail port 587, need to use STARTTLS
-        starttls: config.port === 587,
-        auth: {
-          username: config.email,
-          password: config.password,
-        },
-      },
+      connection: connectionConfig,
       // Set pool to false to create a new connection each time for better error handling
       pool: false,
       client: {

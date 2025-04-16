@@ -21,7 +21,8 @@ import {
   Settings as SettingsIcon,
   Plus,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,18 +38,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface EmailSettings {
   id: string;
   user_id: string;
   email_address: string;
-  app_password: string;
+  app_password?: string;
   email_provider: string;
   smtp_host: string;
   smtp_port: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  oauth2_client_id?: string;
+  oauth2_client_secret?: string;
+  oauth2_refresh_token?: string;
 }
 
 const EmailSettings = () => {
@@ -57,6 +62,12 @@ const EmailSettings = () => {
   const [emailProvider, setEmailProvider] = useState('');
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('');
+  const [authType, setAuthType] = useState<'password' | 'oauth2'>('password');
+  
+  // OAuth2 fields
+  const [oauth2ClientId, setOauth2ClientId] = useState('');
+  const [oauth2ClientSecret, setOauth2ClientSecret] = useState('');
+  const [oauth2RefreshToken, setOauth2RefreshToken] = useState('');
   
   const [existingSettings, setExistingSettings] = useState<EmailSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +82,27 @@ const EmailSettings = () => {
       fetchEmailSettings();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Set default SMTP settings when provider changes
+    if (emailProvider === 'gmail') {
+      setSmtpHost('smtp.gmail.com');
+      setSmtpPort('587');
+      setAuthType('password');
+    } else if (emailProvider === 'outlook') {
+      setSmtpHost('smtp-mail.outlook.com');
+      setSmtpPort('587');
+      setAuthType('password');
+    } else if (emailProvider === 'office365') {
+      setSmtpHost('smtp.office365.com');
+      setSmtpPort('587');
+      setAuthType('oauth2');
+    } else if (emailProvider === 'yahoo') {
+      setSmtpHost('smtp.mail.yahoo.com');
+      setSmtpPort('587');
+      setAuthType('password');
+    }
+  }, [emailProvider]);
 
   const fetchEmailSettings = async () => {
     if (!user) return;
@@ -90,6 +122,21 @@ const EmailSettings = () => {
         setEmailProvider(settings.email_provider);
         setSmtpHost(settings.smtp_host);
         setSmtpPort(settings.smtp_port.toString());
+        
+        // Set OAuth2 fields if they exist
+        if (settings.oauth2_client_id) {
+          setOauth2ClientId(settings.oauth2_client_id);
+          setAuthType('oauth2');
+        }
+        
+        if (settings.oauth2_client_secret) {
+          setOauth2ClientSecret(settings.oauth2_client_secret);
+        }
+        
+        if (settings.oauth2_refresh_token) {
+          setOauth2RefreshToken(settings.oauth2_refresh_token);
+        }
+        
         // We don't set the password field from DB for security reasons
       } else {
         setExistingSettings(null);
@@ -113,33 +160,53 @@ const EmailSettings = () => {
     setEmailProvider('');
     setSmtpHost('');
     setSmtpPort('');
+    setOauth2ClientId('');
+    setOauth2ClientSecret('');
+    setOauth2RefreshToken('');
+    setAuthType('password');
   };
 
-  const handleSaveSettings = async () => {
-    if (!user) return;
-    
+  const validateForm = () => {
     if (!emailAddress || !emailProvider || !smtpHost || !smtpPort) {
       toast({
         title: 'Missing Fields',
         description: 'Please fill in all required fields',
         variant: 'destructive',
       });
-      return;
+      return false;
     }
     
-    if (!existingSettings && !emailPassword) {
-      toast({
-        title: 'Missing Password',
-        description: 'Please provide an app password',
-        variant: 'destructive',
-      });
-      return;
+    if (authType === 'password') {
+      if (!existingSettings && !emailPassword) {
+        toast({
+          title: 'Missing Password',
+          description: 'Please provide an app password',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    } else if (authType === 'oauth2') {
+      if (!oauth2ClientId || !oauth2ClientSecret || !oauth2RefreshToken) {
+        toast({
+          title: 'Missing OAuth2 Credentials',
+          description: 'Please provide all OAuth2 credentials',
+          variant: 'destructive',
+        });
+        return false;
+      }
     }
+    
+    return true;
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    
+    if (!validateForm()) return;
     
     setIsSaving(true);
     try {
-      // Fix: Ensure we always include app_password in the settingsData object when required
-      // This is the key fix for the error
+      // Create base settings data
       const settingsData: any = {
         email_address: emailAddress,
         email_provider: emailProvider,
@@ -149,20 +216,36 @@ const EmailSettings = () => {
         user_id: user.id
       };
       
-      // Add app_password only if a new password is provided, or if this is a new settings entry
-      if (emailPassword) {
-        settingsData.app_password = emailPassword;
-      } else if (!existingSettings) {
-        // This is a new settings creation and requires a password
-        // (This should not happen due to the validation check above, but it's an extra safety)
-        throw new Error('App password is required for new email settings');
+      // Add authentication based on type
+      if (authType === 'password') {
+        // Add app_password only if a new password is provided, or if this is a new settings entry
+        if (emailPassword) {
+          settingsData.app_password = emailPassword;
+        } else if (!existingSettings) {
+          throw new Error('App password is required for new email settings');
+        }
+        
+        // Clear OAuth2 fields if using password auth
+        settingsData.oauth2_client_id = null;
+        settingsData.oauth2_client_secret = null;
+        settingsData.oauth2_refresh_token = null;
+      } else if (authType === 'oauth2') {
+        // Add OAuth2 credentials
+        settingsData.oauth2_client_id = oauth2ClientId;
+        settingsData.oauth2_client_secret = oauth2ClientSecret;
+        settingsData.oauth2_refresh_token = oauth2RefreshToken;
+        
+        // Set a placeholder for app_password if required by the DB
+        if (!existingSettings || !existingSettings.app_password) {
+          settingsData.app_password = 'oauth2_not_used';
+        }
       }
       
       let result;
       
       if (existingSettings) {
         // Update existing settings
-        if (emailPassword) {
+        if (authType === 'password' && emailPassword) {
           // If we have a new password, update everything including the password
           result = await supabase
             .from('user_email_settings')
@@ -170,23 +253,20 @@ const EmailSettings = () => {
             .eq('id', existingSettings.id)
             .eq('user_id', user.id);
         } else {
-          // If no new password, we need to exclude app_password from the update
-          // as it's required in the schema but we don't want to overwrite it with null
+          // Only update the fields that are provided
+          const updateData = { ...settingsData };
+          if (authType === 'password' && !emailPassword) {
+            delete updateData.app_password;
+          }
+          
           result = await supabase
             .from('user_email_settings')
-            .update({
-              email_address: emailAddress,
-              email_provider: emailProvider,
-              smtp_host: smtpHost,
-              smtp_port: parseInt(smtpPort),
-              is_active: true,
-              updated_at: new Date().toISOString()
-            })
+            .update(updateData)
             .eq('id', existingSettings.id)
             .eq('user_id', user.id);
         }
       } else {
-        // Insert new settings - must include app_password
+        // Insert new settings
         result = await supabase
           .from('user_email_settings')
           .insert(settingsData);
@@ -245,6 +325,94 @@ const EmailSettings = () => {
     }
   };
 
+  const renderAuthFields = () => {
+    if (authType === 'password') {
+      return (
+        <div className="space-y-2">
+          <Label htmlFor="emailPassword">
+            App Password {existingSettings ? '(Leave blank to keep current password)' : ''}
+          </Label>
+          <div className="relative">
+            <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="emailPassword"
+              type="password"
+              placeholder="App password (not your regular email password)"
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Use an app-specific password, not your main account password. 
+            <a 
+              href="https://support.google.com/mail/answer/185833" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline ml-1"
+            >
+              How to generate an app password
+            </a>
+          </p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-4 border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+          <h3 className="font-medium flex items-center">
+            OAuth2 Configuration 
+            <a 
+              href="https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="ml-2 text-blue-600 hover:underline text-sm inline-flex items-center"
+            >
+              <span>Microsoft Azure App Registration Guide</span>
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </a>
+          </h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="oauth2ClientId">Client ID</Label>
+            <Input
+              id="oauth2ClientId"
+              placeholder="Enter your Microsoft Azure app Client ID"
+              value={oauth2ClientId}
+              onChange={(e) => setOauth2ClientId(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="oauth2ClientSecret">Client Secret</Label>
+            <Input
+              id="oauth2ClientSecret"
+              type="password"
+              placeholder="Enter your Microsoft Azure app Client Secret"
+              value={oauth2ClientSecret}
+              onChange={(e) => setOauth2ClientSecret(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="oauth2RefreshToken">Refresh Token</Label>
+            <Input
+              id="oauth2RefreshToken"
+              type="password"
+              placeholder="Enter the OAuth2 Refresh Token"
+              value={oauth2RefreshToken}
+              onChange={(e) => setOauth2RefreshToken(e.target.value)}
+            />
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            You need to register an application in the Microsoft Azure portal and obtain these credentials.
+            The app must have the SMTP.Send permission.
+          </p>
+        </div>
+      );
+    }
+  };
+
   return (
     <Card className="w-full shadow-md">
       <CardHeader>
@@ -287,6 +455,7 @@ const EmailSettings = () => {
                   <SelectContent>
                     <SelectItem value="gmail">Gmail</SelectItem>
                     <SelectItem value="outlook">Outlook</SelectItem>
+                    <SelectItem value="office365">Office 365</SelectItem>
                     <SelectItem value="yahoo">Yahoo Mail</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
@@ -294,33 +463,32 @@ const EmailSettings = () => {
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="emailPassword">
-                App Password {existingSettings ? '(Leave blank to keep current password)' : ''}
-              </Label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="emailPassword"
-                  type="password"
-                  placeholder="App password (not your regular email password)"
-                  value={emailPassword}
-                  onChange={(e) => setEmailPassword(e.target.value)}
-                  className="pl-10"
-                />
+            {emailProvider && (
+              <div>
+                {emailProvider === 'office365' ? (
+                  <div className="flex justify-between items-center mb-2">
+                    <Label>Authentication Method</Label>
+                    <div className="text-xs text-blue-600">
+                      Office 365 requires OAuth2 authentication
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center mb-2">
+                    <Label>Authentication Method</Label>
+                    <div>
+                      <Tabs value={authType} onValueChange={(value) => setAuthType(value as 'password' | 'oauth2')}>
+                        <TabsList className="grid w-[200px] grid-cols-2">
+                          <TabsTrigger value="password">Password</TabsTrigger>
+                          <TabsTrigger value="oauth2">OAuth2</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
+                  </div>
+                )}
+                
+                {renderAuthFields()}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Use an app-specific password, not your main account password. 
-                <a 
-                  href="https://support.google.com/mail/answer/185833" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline ml-1"
-                >
-                  How to generate an app password
-                </a>
-              </p>
-            </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

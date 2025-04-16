@@ -82,16 +82,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         email: emailSettings.email_address,
         host: emailSettings.smtp_host,
         port: emailSettings.smtp_port,
-        // Log masked app_password to confirm it exists (without revealing it)
-        hasPassword: !!emailSettings.app_password,
-        passwordLength: emailSettings.app_password ? emailSettings.app_password.length : 0
       });
       
       // Format content as proper HTML with improved structure
       const htmlContent = formatEmailContent(content);
       
       // Prepare the request data with improved metadata
-      const emailData = {
+      const emailData: any = {
         to: recipientEmail,
         to_name: recipientName,
         subject: subject,
@@ -100,10 +97,31 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           email: emailSettings.email_address,
           host: emailSettings.smtp_host,
           port: emailSettings.smtp_port,
-          password: emailSettings.app_password,
           provider: emailSettings.email_provider
         }
       };
+      
+      // Add appropriate authentication based on provider
+      if (emailSettings.email_provider === 'office365' && 
+          emailSettings.oauth2_client_id && 
+          emailSettings.oauth2_client_secret && 
+          emailSettings.oauth2_refresh_token) {
+        
+        // Use OAuth2 for Office 365
+        emailData.sender_settings.oauth2 = {
+          user: emailSettings.email_address,
+          clientId: emailSettings.oauth2_client_id,
+          clientSecret: emailSettings.oauth2_client_secret,
+          refreshToken: emailSettings.oauth2_refresh_token
+        };
+        
+        console.log('Using OAuth2 authentication for Office 365');
+      } else if (emailSettings.app_password) {
+        // Use password authentication for other providers
+        emailData.sender_settings.password = emailSettings.app_password;
+      } else {
+        throw new Error('Authentication credentials are missing. Please update your email settings.');
+      }
 
       console.log('Calling edge function with email data:', {
         to: emailData.to,
@@ -111,9 +129,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         provider: emailData.sender_settings.provider,
         host: emailData.sender_settings.host,
         port: emailData.sender_settings.port,
-        // Log if password exists without revealing it
-        hasPassword: !!emailData.sender_settings.password,
-        passwordLength: emailData.sender_settings.password ? emailData.sender_settings.password.length : 0
+        hasOauth2: !!emailData.sender_settings.oauth2
       });
 
       // Call the edge function to send the email
