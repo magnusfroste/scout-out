@@ -9,6 +9,9 @@ import { toast } from '@/hooks/use-toast';
 // In production, we should NEVER use mock data regardless of the environment variable
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
 
+// Default company research webhook URL as fallback - this is specific to Step 3
+const DEFAULT_COMPANY_WEBHOOK_URL = 'https://agent.froste.eu/webhook/company';
+
 // Log the environment configuration
 console.log('Webhook Service Configuration:', { 
   isDev: import.meta.env.DEV,
@@ -68,9 +71,8 @@ export const callCompanyWebhook = async (
       throw new Error('Authentication required. Please sign in again.');
     }
     
-    // Call the Edge Function instead of the webhook directly
-    const edgeFunctionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-questions-webhook';
-    console.log(`📡 Calling Edge Function URL: ${edgeFunctionUrl}`);
+    // Make a direct call to the webhook
+    console.log(`📡 Calling webhook directly: ${webhookUrl}`);
     
     // Create the request body
     const requestBody = { 
@@ -83,8 +85,8 @@ export const callCompanyWebhook = async (
     
     console.log(`📦 Request body:`, JSON.stringify(requestBody, null, 2));
     
-    console.log('🚀 Sending request to Edge Function');
-    const response = await fetch(edgeFunctionUrl, {
+    console.log('🚀 Sending request to webhook');
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,73 +96,63 @@ export const callCompanyWebhook = async (
       body: JSON.stringify(requestBody)
     });
     
-    console.log(`📊 Edge Function response status: ${response.status}`);
+    console.log(`📊 Webhook response status: ${response.status}`);
     
     if (!response.ok) {
-      console.error(`❌ Edge Function error status: ${response.status}`);
+      console.error(`❌ Webhook error status: ${response.status}`);
       let errorMessage = 'Service unavailable. Please try again later.';
       try {
         const errorData = await response.json();
-        console.error('Questions webhook error response:', errorData);
+        console.error('Company webhook error response:', errorData);
         if (errorData.message) {
           errorMessage = errorData.message;
           console.error('Error message:', errorData.message);
         }
-        if (errorData.details) {
-          console.error('Error details:', errorData.details);
-          
-          // If the Edge Function couldn't reach the webhook, try direct call as fallback
-          if (errorData.message && errorData.message.includes('error sending request for url')) {
-            console.log('⚠️ Edge Function could not reach webhook. Attempting direct call as fallback...');
-            
-            // Make a direct call to the webhook as a fallback
-            console.log('🔄 Making direct webhook call to:', webhookUrl);
-            const directResponse = await fetch(webhookUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Client-Info': 'Lovable Web App - Direct Fallback'
-              },
-              body: JSON.stringify(requestBody)
-            });
-            
-            console.log('Direct webhook call status:', directResponse.status);
-            
-            if (directResponse.ok) {
-              console.log('✅ METHOD USED: Direct webhook call (fallback)');
-              return directResponse;
-            } else {
-              console.error('❌ Direct webhook call also failed:', await directResponse.text());
-            }
-          }
-        }
       } catch (e) {
         const errorText = await response.text();
-        console.error('Questions webhook error (text):', errorText);
+        console.error('Company webhook error (text):', errorText);
       }
       throw new Error(errorMessage);
     }
     
     // Check if the response has the expected format
-    console.log('👍 Edge Function response received, parsing data');
+    console.log('👍 Webhook response received, parsing data');
     const responseData = await response.json();
-    console.log('Edge Function response data:', responseData);
-    console.log('✅ METHOD USED: Edge Function');
+    console.log('Webhook response data:', responseData);
+    console.log('✅ METHOD USED: Direct webhook call');
     
-    // If the Edge Function returns a nested response, extract the actual data
-    if (responseData.success && responseData.data) {
-      console.log('Extracting nested data from Edge Function response');
-      // Return the nested data directly instead of creating a new Response
-      return {
-        ok: true,
-        json: () => Promise.resolve(responseData.data)
-      } as Response;
-    }
-    
-    // If the response doesn't have the expected format, return it as is
-    return response;
+    // Return the response
+    return {
+      ok: true,
+      json: () => Promise.resolve(responseData)
+    } as Response;
   } catch (error) {
     console.error('❌ Error in callCompanyWebhook:', error);
     throw error;
+  }
+};
+
+/**
+ * Get the webhook URL for company research (Step 3)
+ */
+export const getCompanyWebhookUrl = async (): Promise<string> => {
+  try {
+    console.log('Fetching company research webhook URL from settings');
+    const { data, error } = await supabase
+      .from('webhook_settings')
+      .select('company_research_url')
+      .single();
+      
+    if (error) {
+      console.error('Error fetching company research webhook URL:', error);
+      return DEFAULT_COMPANY_WEBHOOK_URL;
+    }
+    
+    const webhookUrl = data?.company_research_url || DEFAULT_COMPANY_WEBHOOK_URL;
+    console.log('Retrieved company research webhook URL:', webhookUrl);
+    return webhookUrl;
+  } catch (error) {
+    console.error('Error in getCompanyWebhookUrl:', error);
+    return DEFAULT_COMPANY_WEBHOOK_URL;
   }
 };

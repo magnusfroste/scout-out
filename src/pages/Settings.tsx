@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +14,8 @@ import {
   fetchWebhookSettings, 
   updateWebhookSettings, 
   updateMyBusinessWebhookSettings,
-  updateValuePropositionWebhookSettings
+  updateValuePropositionWebhookSettings,
+  updateCompanyResearchWebhookSettings
 } from '@/services/webhookService';
 import { toast } from '@/hooks/use-toast';
 
@@ -22,6 +24,7 @@ const Settings = () => {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [myBusinessWebhookUrl, setMyBusinessWebhookUrl] = useState('');
   const [valuePropositionWebhookUrl, setValuePropositionWebhookUrl] = useState('');
+  const [companyResearchWebhookUrl, setCompanyResearchWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [adminChecked, setAdminChecked] = useState(false);
 
@@ -50,9 +53,11 @@ const Settings = () => {
         setWebhookUrl(settings.url || '');
         setMyBusinessWebhookUrl(settings.mybusiness_url || '');
         setValuePropositionWebhookUrl(settings.value_proposition_url || '');
+        setCompanyResearchWebhookUrl(settings.company_research_url || '');
         console.log(`Set webhook URL: ${settings.url}`);
         console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
         console.log(`Set value proposition URL: ${settings.value_proposition_url}`);
+        console.log(`Set company research URL: ${settings.company_research_url}`);
       } else {
         console.warn('No webhook settings found');
         toast({
@@ -142,6 +147,22 @@ const Settings = () => {
     }
   };
 
+  const handleCompanyResearchWebhookUpdate = async (newUrl: string) => {
+    try {
+      const success = await updateCompanyResearchWebhookSettings(newUrl);
+      if (success) {
+        setCompanyResearchWebhookUrl(newUrl);
+      }
+    } catch (error) {
+      console.error('Error updating Company Research webhook URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update Company Research webhook URL",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
@@ -173,7 +194,7 @@ const Settings = () => {
               <TabsContent value="admin" className="space-y-8">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Webhook Configuration</CardTitle>
+                    <CardTitle>Questions Webhook Configuration (Step 2)</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <WebhookForm 
@@ -182,6 +203,42 @@ const Settings = () => {
                       isDisabled={isLoading}
                       showDescription={true}
                     />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Company Research Webhook Configuration (Step 3)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="companyResearchWebhookUrl" className="text-sm font-medium">
+                          Company Research Webhook URL
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            id="companyResearchWebhookUrl"
+                            type="text"
+                            value={companyResearchWebhookUrl}
+                            onChange={(e) => setCompanyResearchWebhookUrl(e.target.value)}
+                            placeholder="Enter company research webhook URL"
+                            disabled={isLoading}
+                            className="flex-1 px-3 py-2 border border-input bg-transparent rounded-md"
+                          />
+                          <button
+                            onClick={() => handleCompanyResearchWebhookUpdate(companyResearchWebhookUrl)}
+                            disabled={isLoading}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          URL for the company research webhook used in Step 3. This is used for researching companies.
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
                 

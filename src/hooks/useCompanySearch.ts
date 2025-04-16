@@ -5,11 +5,8 @@ import { deductCredits, calculateCreditCost } from '@/utils/creditUtils';
 import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import { storeSearchResults } from '@/services/companySearchService';
-import { callCompanyWebhook } from '@/services/companyWebhookService';
+import { callCompanyWebhook, getCompanyWebhookUrl } from '@/services/companyWebhookService';
 import { Question, SearchResultType } from '@/types/company';
-
-// Default webhook URL as fallback
-const DEFAULT_WEBHOOK_URL = 'https://agent.froste.eu/webhook/company';
 
 // Simplified search process states
 export enum SearchState {
@@ -23,7 +20,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   const [companyName, setCompanyName] = useState('');
   const [searchState, setSearchState] = useState<SearchState>(SearchState.IDLE);
   const [result, setResult] = useState<SearchResultType | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
+  const [webhookUrl, setWebhookUrl] = useState<string>('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProcessingCredits, setIsProcessingCredits] = useState(false);
@@ -48,17 +45,13 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     const loadWebhookUrl = async () => {
       setIsLoadingWebhook(true);
       try {
-        const settings = await fetchWebhookSettings();
-        if (settings?.url) {
-          setWebhookUrl(settings.url);
-          console.log("Loaded webhook URL:", settings.url);
-        } else {
-          console.log("No webhook URL configured, using default");
-          setWebhookUrl(DEFAULT_WEBHOOK_URL);
-        }
+        // Use the new function to get the company research webhook URL
+        const url = await getCompanyWebhookUrl();
+        setWebhookUrl(url);
+        console.log("Loaded company research webhook URL:", url);
       } catch (error) {
-        console.error('Error loading webhook settings:', error);
-        setWebhookUrl(DEFAULT_WEBHOOK_URL);
+        console.error('Error loading company research webhook URL:', error);
+        setWebhookUrl('');
       } finally {
         setIsLoadingWebhook(false);
       }
@@ -149,8 +142,15 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    // Always use either the loaded webhook URL or the default one
-    const currentWebhookUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
+    // Check if webhook URL is available
+    if (!webhookUrl) {
+      toast({
+        title: "Error",
+        description: "Company research webhook URL is not configured",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!user || !userProfile) {
       console.error("User or user profile is missing", { user, userProfile });
@@ -177,12 +177,12 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     // This allows us to handle the finally block properly
     const performSearch = async () => {
       try {
-        console.log("Making webhook call to:", currentWebhookUrl);
+        console.log("Making webhook call to:", webhookUrl);
         console.log("Searching for company:", companyName);
         
         // Make the webhook call - this is where we need to ensure the button stays in searching state
         console.log("Starting webhook call - button should remain in searching state");
-        const directResponse = await callCompanyWebhook(currentWebhookUrl, companyName, questions);
+        const directResponse = await callCompanyWebhook(webhookUrl, companyName, questions);
         
         // Check if the search was cancelled or another search started
         if (!isSearchingRef.current) {

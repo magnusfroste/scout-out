@@ -4,26 +4,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { callCompanyWebhook } from '@/services/companyWebhookService';
+import { callCompanyWebhook, getCompanyWebhookUrl } from '@/services/companyWebhookService';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import { Question, SearchResultType } from '@/types/company';
 import QuestionsList from './QuestionsList';
 import SearchResults from './SearchResults';
-import { fetchWebhookSettings } from '@/services/webhookService';
 
 interface SimpleSearchProps {
   questions: Question[];
 }
-
-// Default webhook URL as fallback
-const DEFAULT_WEBHOOK_URL = 'https://agent.froste.eu/webhook/company';
 
 const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
   const [companyName, setCompanyName] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [result, setResult] = useState<SearchResultType | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
+  const [webhookUrl, setWebhookUrl] = useState<string>('');
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
   const { toast } = useToast();
 
@@ -32,18 +28,12 @@ const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
     const loadWebhookUrl = async () => {
       setIsLoadingWebhook(true);
       try {
-        const settings = await fetchWebhookSettings();
-        if (settings?.url) {
-          setWebhookUrl(settings.url);
-          console.log("Loaded webhook URL for SimpleSearch:", settings.url);
-        } else {
-          console.log("No webhook URL configured in settings, using default:", DEFAULT_WEBHOOK_URL);
-          setWebhookUrl(DEFAULT_WEBHOOK_URL);
-        }
+        const url = await getCompanyWebhookUrl();
+        setWebhookUrl(url);
+        console.log("Loaded company research webhook URL for SimpleSearch:", url);
       } catch (error) {
-        console.error('Error loading webhook settings:', error);
-        console.log("Using default webhook URL due to error:", DEFAULT_WEBHOOK_URL);
-        setWebhookUrl(DEFAULT_WEBHOOK_URL);
+        console.error('Error loading company research webhook URL:', error);
+        setWebhookUrl('');
       } finally {
         setIsLoadingWebhook(false);
       }
@@ -63,8 +53,15 @@ const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
       return;
     }
 
-    // Always use either the loaded webhook URL or the default one
-    const currentWebhookUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
+    // Check if webhook URL is available
+    if (!webhookUrl) {
+      toast({
+        title: "Error",
+        description: "Company research webhook URL is not configured",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSearching(true);
     setError(null);
@@ -79,10 +76,10 @@ const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
     
     try {
       console.log("Starting simple search for:", companyName);
-      console.log("Using webhook URL:", currentWebhookUrl);
+      console.log("Using webhook URL:", webhookUrl);
       
       // Make the webhook call directly without credit deduction
-      const response = await callCompanyWebhook(currentWebhookUrl, companyName, questions);
+      const response = await callCompanyWebhook(webhookUrl, companyName, questions);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -163,7 +160,7 @@ const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
             <div className="flex justify-between items-center">
               <Button 
                 type="submit" 
-                disabled={isSearching}
+                disabled={isSearching || !webhookUrl}
                 className={isSearching ? "animate-pulse" : ""}
               >
                 {isSearching ? (
@@ -185,7 +182,7 @@ const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
             
             {/* Display webhook URL for debugging */}
             <div className="mt-4 text-xs text-muted-foreground border-t pt-2">
-              <p>Webhook URL: {webhookUrl || DEFAULT_WEBHOOK_URL}</p>
+              <p>Webhook URL: {webhookUrl || "Not configured"}</p>
             </div>
           </form>
         </CardContent>

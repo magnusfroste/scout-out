@@ -2,14 +2,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 export interface WebhookSettings {
-  id: string;
-  url: string;
-  mybusiness_url: string;
-  questions_url: string;
-  value_proposition_url: string;
-  default_signup_credits: number;
-  created_at: string;
-  updated_at: string;
+  id?: string;
+  url?: string;
+  mybusiness_url?: string;
+  value_proposition_url?: string;
+  company_research_url?: string;
+  default_signup_credits?: number;
 }
 
 export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> => {
@@ -583,3 +581,77 @@ export const updateValuePropositionWebhookSettings = async (value_proposition_ur
     return false;
   }
 };
+
+/**
+ * Update the company research webhook URL
+ */
+export async function updateCompanyResearchWebhookSettings(url: string): Promise<boolean> {
+  try {
+    console.log('Updating company research webhook URL to:', url);
+    
+    // Check if settings already exist
+    const { data: existingSettings, error: fetchError } = await supabase
+      .from('webhook_settings')
+      .select('id, company_research_url')
+      .limit(1);
+      
+    if (fetchError) {
+      console.error('Error fetching webhook settings:', fetchError);
+      toast({
+        title: "Error",
+        description: "Failed to fetch current webhook settings",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (existingSettings && existingSettings.length > 0) {
+      // Update existing settings
+      const { error: updateError } = await supabase
+        .from('webhook_settings')
+        .update({ company_research_url: url })
+        .eq('id', existingSettings[0].id);
+        
+      if (updateError) {
+        console.error('Error updating company research webhook settings:', updateError);
+        toast({
+          title: "Error",
+          description: "Failed to update company research webhook URL",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } else {
+      // Create new settings
+      const { error: insertError } = await supabase
+        .from('webhook_settings')
+        .insert({ company_research_url: url });
+        
+      if (insertError) {
+        console.error('Error creating company research webhook settings:', insertError);
+        toast({
+          title: "Error",
+          description: "Failed to create company research webhook settings",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    
+    console.log('Company research webhook URL updated successfully');
+    toast({
+      title: "Success",
+      description: "Company research webhook URL updated successfully",
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateCompanyResearchWebhookSettings:', error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred",
+      variant: "destructive",
+    });
+    return false;
+  }
+}
