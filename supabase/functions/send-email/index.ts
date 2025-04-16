@@ -99,7 +99,12 @@ Deno.serve(async (req) => {
         subject: emailParams.subject,
       });
       
-      await sendEmail(client, emailParams);
+      // Enhanced error handling - save result to check for errors
+      const result = await sendEmail(client, emailParams);
+      if (!result.success) {
+        throw new Error(result.error || "Unknown error sending email");
+      }
+      
       console.log("Email sent successfully");
       
       return createJsonResponse({ success: true });

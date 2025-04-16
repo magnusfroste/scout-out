@@ -15,38 +15,49 @@ export interface EmailParams {
   html: string;
 }
 
+export interface EmailResult {
+  success: boolean;
+  error?: string;
+  details?: any;
+}
+
 /**
  * Creates and configures an SMTP client with deliverability-optimized settings
  */
 export function createSMTPClient(config: SMTPConfig): SMTPClient {
   const secure = config.port === 465;
   
-  return new SMTPClient({
-    connection: {
-      hostname: config.host,
-      port: config.port,
-      tls: secure,
-      auth: {
-        username: config.email,
-        password: config.password,
+  try {
+    return new SMTPClient({
+      connection: {
+        hostname: config.host,
+        port: config.port,
+        tls: secure,
+        auth: {
+          username: config.email,
+          password: config.password,
+        },
       },
-    },
-    pool: false,
-    client: {
-      // Add proper identification for better deliverability
-      name: "Master Business Agent",
-      version: "1.0.0",
-      // Using a common domain for delivery authentication
-      hostname: new URL(config.host).hostname || "localhost",
-    },
-  });
+      pool: false,
+      client: {
+        // Add proper identification for better deliverability
+        name: "Master Business Agent",
+        version: "1.0.0",
+        // Using a common domain for delivery authentication
+        hostname: new URL(config.host).hostname || "localhost",
+      },
+    });
+  } catch (error) {
+    console.error("Error creating SMTP client:", error);
+    throw new Error(`Failed to create SMTP client: ${error.message}`);
+  }
 }
 
 /**
  * Sends an email using the provided SMTP client and email parameters
  * Optimized for deliverability with proper headers and configuration
  */
-export async function sendEmail(client: SMTPClient, params: EmailParams) {
+export async function sendEmail(client: SMTPClient, params: EmailParams): Promise<EmailResult> {
   try {
     console.log("Starting email sending process");
     
@@ -77,7 +88,14 @@ export async function sendEmail(client: SMTPClient, params: EmailParams) {
     } catch (closeError) {
       console.error("Error closing SMTP client:", closeError);
     }
-    throw error;
+    return { 
+      success: false, 
+      error: error.message,
+      details: {
+        name: error.name,
+        code: error.code
+      }
+    };
   }
 }
 
