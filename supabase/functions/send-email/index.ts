@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     
     // Get request body as text first for logging
     const bodyText = await req.text();
-    console.log("Raw request body received");
+    console.log("Raw request body received, length:", bodyText.length);
     
     // Parse JSON
     let emailRequest: EmailRequest;
@@ -44,6 +44,10 @@ Deno.serve(async (req) => {
       subject: emailRequest.subject,
       contentLength: emailRequest.html_content?.length,
       senderProvider: emailRequest.sender_settings?.provider || 'not specified',
+      senderHost: emailRequest.sender_settings?.host,
+      senderPort: emailRequest.sender_settings?.port,
+      hasPassword: !!emailRequest.sender_settings?.password,
+      passwordLength: emailRequest.sender_settings?.password ? emailRequest.sender_settings.password.length : 0
     });
     
     // Validate input

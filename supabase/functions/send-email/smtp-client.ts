@@ -25,6 +25,7 @@ export interface EmailResult {
  * Creates and configures an SMTP client with deliverability-optimized settings
  */
 export function createSMTPClient(config: SMTPConfig): SMTPClient {
+  // For gmail with port 587, we need to explicitly set secure to false and use STARTTLS
   const secure = config.port === 465;
   
   try {
@@ -34,16 +35,22 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
       throw new Error("Missing required SMTP configuration parameters");
     }
     
+    // Log password length but not the actual password
+    console.log(`Password provided with length: ${config.password.length}`);
+    
     return new SMTPClient({
       connection: {
         hostname: config.host,
         port: config.port,
         tls: secure,
+        // For Gmail port 587, need to use STARTTLS
+        starttls: config.port === 587,
         auth: {
           username: config.email,
           password: config.password,
         },
       },
+      // Set pool to false to create a new connection each time for better error handling
       pool: false,
       client: {
         // Add proper identification for better deliverability
@@ -96,7 +103,8 @@ export async function sendEmail(client: SMTPClient, params: EmailParams): Promis
       message: error.message,
       name: error.name,
       code: error.code,
-      stack: error.stack
+      stack: error.stack,
+      response: error.response || "No response info",
     });
     
     try {
