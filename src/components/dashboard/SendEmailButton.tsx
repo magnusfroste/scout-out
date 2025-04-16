@@ -115,13 +115,14 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         body: JSON.stringify(emailData)
       });
       
-      console.log('Edge function response:', { data });
+      console.log('Edge function response:', { data, error });
 
       if (error) {
         console.error('Error from Edge Function:', error);
         throw new Error(error.message || 'Failed to send email');
       }
 
+      // Remove .status check which was causing the TypeScript error
       if (!data || !data.success) {
         const errorMessage = data?.error || 'Unknown error occurred';
         console.error('Email sending failed:', data);
