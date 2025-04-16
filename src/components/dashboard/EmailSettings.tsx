@@ -40,20 +40,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmailSettings as EmailSettingsType } from '@/types/email';
 
-interface EmailSettings {
-  id: string;
-  user_id: string;
-  email_address: string;
-  app_password?: string;
-  email_provider: string;
-  smtp_host: string;
-  smtp_port: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  oauth2_client_id?: string;
-  oauth2_client_secret?: string;
-  oauth2_refresh_token?: string;
+interface CompleteEmailSettings extends EmailSettingsType {
+  oauth2_client_id?: string | null;
+  oauth2_client_secret?: string | null;
+  oauth2_refresh_token?: string | null;
 }
 
 const EmailSettings = () => {
@@ -68,7 +58,7 @@ const EmailSettings = () => {
   const [oauth2ClientSecret, setOauth2ClientSecret] = useState('');
   const [oauth2RefreshToken, setOauth2RefreshToken] = useState('');
   
-  const [existingSettings, setExistingSettings] = useState<EmailSettingsType | null>(null);
+  const [existingSettings, setExistingSettings] = useState<CompleteEmailSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -114,7 +104,7 @@ const EmailSettings = () => {
       console.log('Fetched email settings:', data);
       
       if (data && data.length > 0) {
-        const settings = data[0] as EmailSettingsType;
+        const settings = data[0] as CompleteEmailSettings;
         setExistingSettings(settings);
         setEmailAddress(settings.email_address);
         setEmailProvider(settings.email_provider);

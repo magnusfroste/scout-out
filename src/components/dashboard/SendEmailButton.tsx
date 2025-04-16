@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2, AlertCircle } from 'lucide-react';
@@ -12,6 +11,12 @@ import {
   TooltipProvider,
   TooltipTrigger 
 } from '@/components/ui/tooltip';
+
+interface CompleteEmailSettings extends EmailSettings {
+  oauth2_client_id?: string | null;
+  oauth2_client_secret?: string | null;
+  oauth2_refresh_token?: string | null;
+}
 
 interface SendEmailButtonProps {
   recipientEmail: string;
@@ -58,7 +63,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     try {
       console.log('Starting email sending process...');
       
-      // Get user's email settings first
       const { data: emailSettings, error: settingsError } = await supabase
         .from('user_email_settings')
         .select('*')
@@ -78,7 +82,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error('No active email settings found. Please configure your email settings.');
       }
 
-      const settings = emailSettings as EmailSettings;
+      const settings = emailSettings as CompleteEmailSettings;
 
       console.log('Email settings retrieved:', {
         provider: settings.email_provider,
@@ -87,10 +91,8 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         port: settings.smtp_port,
       });
       
-      // Format content as proper HTML with improved structure
       const htmlContent = formatEmailContent(content);
       
-      // Prepare the request data with improved metadata
       const emailData: any = {
         to: recipientEmail,
         to_name: recipientName,
@@ -104,13 +106,11 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       };
       
-      // Add appropriate authentication based on provider
       if (settings.email_provider === 'office365' && 
           settings.oauth2_client_id && 
           settings.oauth2_client_secret && 
           settings.oauth2_refresh_token) {
         
-        // Use OAuth2 for Office 365
         emailData.sender_settings.oauth2 = {
           user: settings.email_address,
           clientId: settings.oauth2_client_id,
@@ -120,7 +120,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         
         console.log('Using OAuth2 authentication for Office 365');
       } else if (settings.app_password) {
-        // Use password authentication for other providers
         emailData.sender_settings.password = settings.app_password;
       } else {
         throw new Error('Authentication credentials are missing. Please update your email settings.');
@@ -135,7 +134,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         hasOauth2: !!emailData.sender_settings.oauth2
       });
 
-      // Call the edge function to send the email
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: JSON.stringify(emailData)
       });
@@ -147,7 +145,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error(error.message || 'Failed to send email');
       }
 
-      // Check the response
       if (!data) {
         throw new Error('No response data returned from edge function');
       }
@@ -177,22 +174,15 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     }
   };
 
-  /**
-   * Format email content with proper HTML structure optimized for deliverability
-   */
   const formatEmailContent = (text: string): string => {
     if (!text) return "";
     
-    // Normalize line endings first
     const normalizedText = text.replace(/\r\n/g, '\n');
     
-    // Split content by double newlines and wrap in paragraphs with proper formatting
     const paragraphs = normalizedText.split(/\n\n+/);
     return paragraphs.map(p => {
-      // Replace single newlines with <br> tags
       const withLineBreaks = p.replace(/\n/g, '<br>');
       
-      // Add proper spacing and styling for better readability and deliverability
       return `<p style="margin-bottom: 16px; line-height: 1.6;">${withLineBreaks}</p>`;
     }).join('');
   };
