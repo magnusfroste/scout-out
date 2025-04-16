@@ -47,6 +47,7 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
       username: config.email
     }, null, 2)}`);
     
+    // FIXED: Removed the new URL() that was causing the error
     return new SMTPClient({
       connection: {
         hostname: config.host,
@@ -65,8 +66,8 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
         // Add proper identification for better deliverability
         name: "Master Business Agent",
         version: "1.0.0",
-        // Using a common domain for delivery authentication
-        hostname: new URL(config.host).hostname || "localhost",
+        // Using a static valid domain instead of trying to parse the host
+        hostname: "localhost",
       },
     });
   } catch (error) {
