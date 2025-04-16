@@ -53,11 +53,11 @@ const Settings = () => {
         setWebhookUrl(settings.url || '');
         setMyBusinessWebhookUrl(settings.mybusiness_url || '');
         setValuePropositionWebhookUrl(settings.value_proposition_url || '');
-        setCompanyResearchWebhookUrl(settings.company_research_url || '');
+        setCompanyResearchWebhookUrl(settings.url || ''); // Use url field for company research
         console.log(`Set webhook URL: ${settings.url}`);
         console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
         console.log(`Set value proposition URL: ${settings.value_proposition_url}`);
-        console.log(`Set company research URL: ${settings.company_research_url}`);
+        console.log(`Set company research URL: ${settings.url}`); // Using url field
       } else {
         console.warn('No webhook settings found');
         toast({
@@ -104,6 +104,8 @@ const Settings = () => {
       const success = await updateWebhookSettings(newUrl);
       if (success) {
         setWebhookUrl(newUrl);
+        // Update company research URL too since it's the same field
+        setCompanyResearchWebhookUrl(newUrl);
       }
     } catch (error) {
       console.error('Error updating webhook URL:', error);
@@ -152,6 +154,8 @@ const Settings = () => {
       const success = await updateCompanyResearchWebhookSettings(newUrl);
       if (success) {
         setCompanyResearchWebhookUrl(newUrl);
+        // Update the regular webhook URL too since it's the same field
+        setWebhookUrl(newUrl);
       }
     } catch (error) {
       console.error('Error updating Company Research webhook URL:', error);
@@ -236,6 +240,7 @@ const Settings = () => {
                         </div>
                         <p className="text-xs text-muted-foreground">
                           URL for the company research webhook used in Step 3. This is used for researching companies.
+                          <strong>Note: This updates the same field as the Questions webhook.</strong>
                         </p>
                       </div>
                     </div>

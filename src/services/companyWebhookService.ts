@@ -148,8 +148,8 @@ export const getCompanyWebhookUrl = async (): Promise<string> => {
       return DEFAULT_COMPANY_WEBHOOK_URL;
     }
     
-    // We now use company_research_url instead of url for step 3
-    const webhookUrl = data?.company_research_url || DEFAULT_COMPANY_WEBHOOK_URL;
+    // We now use 'url' for step 3 (company research)
+    const webhookUrl = data?.url || DEFAULT_COMPANY_WEBHOOK_URL;
     console.log('Retrieved company research webhook URL:', webhookUrl);
     return webhookUrl;
   } catch (error) {

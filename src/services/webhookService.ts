@@ -6,7 +6,6 @@ export interface WebhookSettings {
   url?: string;
   mybusiness_url?: string;
   value_proposition_url?: string;
-  company_research_url?: string;
   questions_url?: string;
   default_signup_credits?: number;
   created_at?: string;
@@ -64,8 +63,8 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
         
         const webhookSettings: WebhookSettings = {
           ...data,
-          questions_url: (data as any).questions_url || '',
-          value_proposition_url: (data as any).value_proposition_url || '',
+          questions_url: data.questions_url || '',
+          value_proposition_url: data.value_proposition_url || '',
           default_signup_credits: data.default_signup_credits !== null ? data.default_signup_credits : 50
         };
         return webhookSettings;
@@ -105,8 +104,8 @@ export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> =>
     if (data) {
       const webhookSettings: WebhookSettings = {
         ...data,
-        questions_url: (data as any).questions_url || '',
-        value_proposition_url: (data as any).value_proposition_url || '',
+        questions_url: data.questions_url || '',
+        value_proposition_url: data.value_proposition_url || '',
         default_signup_credits: data.default_signup_credits !== null ? data.default_signup_credits : 50
       };
       return webhookSettings;
@@ -595,7 +594,7 @@ export async function updateCompanyResearchWebhookSettings(url: string): Promise
     // Check if settings already exist
     const { data: existingSettings, error: fetchError } = await supabase
       .from('webhook_settings')
-      .select('id, company_research_url')
+      .select('id')
       .limit(1);
       
     if (fetchError) {
@@ -609,10 +608,10 @@ export async function updateCompanyResearchWebhookSettings(url: string): Promise
     }
     
     if (existingSettings && existingSettings.length > 0) {
-      // Update existing settings
+      // Update existing settings - use the 'url' field as there is no company_research_url in the DB
       const { error: updateError } = await supabase
         .from('webhook_settings')
-        .update({ company_research_url: url })
+        .update({ url: url })
         .eq('id', existingSettings[0].id);
         
       if (updateError) {
@@ -628,7 +627,7 @@ export async function updateCompanyResearchWebhookSettings(url: string): Promise
       // Create new settings
       const { error: insertError } = await supabase
         .from('webhook_settings')
-        .insert([{ company_research_url: url }]);
+        .insert([{ url: url }]);
         
       if (insertError) {
         console.error('Error creating company research webhook settings:', insertError);
