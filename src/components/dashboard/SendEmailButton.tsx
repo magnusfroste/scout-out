@@ -5,6 +5,7 @@ import { Mail, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { EmailSettings } from '@/types/email';
 import { 
   Tooltip,
   TooltipContent,
@@ -77,11 +78,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error('No active email settings found. Please configure your email settings.');
       }
 
+      const settings = emailSettings as EmailSettings;
+
       console.log('Email settings retrieved:', {
-        provider: emailSettings.email_provider,
-        email: emailSettings.email_address,
-        host: emailSettings.smtp_host,
-        port: emailSettings.smtp_port,
+        provider: settings.email_provider,
+        email: settings.email_address,
+        host: settings.smtp_host,
+        port: settings.smtp_port,
       });
       
       // Format content as proper HTML with improved structure
@@ -94,31 +97,31 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         subject: subject,
         html_content: htmlContent,
         sender_settings: {
-          email: emailSettings.email_address,
-          host: emailSettings.smtp_host,
-          port: emailSettings.smtp_port,
-          provider: emailSettings.email_provider
+          email: settings.email_address,
+          host: settings.smtp_host,
+          port: settings.smtp_port,
+          provider: settings.email_provider
         }
       };
       
       // Add appropriate authentication based on provider
-      if (emailSettings.email_provider === 'office365' && 
-          emailSettings.oauth2_client_id && 
-          emailSettings.oauth2_client_secret && 
-          emailSettings.oauth2_refresh_token) {
+      if (settings.email_provider === 'office365' && 
+          settings.oauth2_client_id && 
+          settings.oauth2_client_secret && 
+          settings.oauth2_refresh_token) {
         
         // Use OAuth2 for Office 365
         emailData.sender_settings.oauth2 = {
-          user: emailSettings.email_address,
-          clientId: emailSettings.oauth2_client_id,
-          clientSecret: emailSettings.oauth2_client_secret,
-          refreshToken: emailSettings.oauth2_refresh_token
+          user: settings.email_address,
+          clientId: settings.oauth2_client_id,
+          clientSecret: settings.oauth2_client_secret,
+          refreshToken: settings.oauth2_refresh_token
         };
         
         console.log('Using OAuth2 authentication for Office 365');
-      } else if (emailSettings.app_password) {
+      } else if (settings.app_password) {
         // Use password authentication for other providers
-        emailData.sender_settings.password = emailSettings.app_password;
+        emailData.sender_settings.password = settings.app_password;
       } else {
         throw new Error('Authentication credentials are missing. Please update your email settings.');
       }

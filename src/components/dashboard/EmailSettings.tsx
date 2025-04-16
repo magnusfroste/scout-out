@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -39,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EmailSettings as EmailSettingsType } from '@/types/email';
 
 interface EmailSettings {
   id: string;
@@ -64,12 +64,11 @@ const EmailSettings = () => {
   const [smtpPort, setSmtpPort] = useState('');
   const [authType, setAuthType] = useState<'password' | 'oauth2'>('password');
   
-  // OAuth2 fields
   const [oauth2ClientId, setOauth2ClientId] = useState('');
   const [oauth2ClientSecret, setOauth2ClientSecret] = useState('');
   const [oauth2RefreshToken, setOauth2RefreshToken] = useState('');
   
-  const [existingSettings, setExistingSettings] = useState<EmailSettings | null>(null);
+  const [existingSettings, setExistingSettings] = useState<EmailSettingsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -84,7 +83,6 @@ const EmailSettings = () => {
   }, [user]);
 
   useEffect(() => {
-    // Set default SMTP settings when provider changes
     if (emailProvider === 'gmail') {
       setSmtpHost('smtp.gmail.com');
       setSmtpPort('587');
@@ -116,14 +114,13 @@ const EmailSettings = () => {
       console.log('Fetched email settings:', data);
       
       if (data && data.length > 0) {
-        const settings = data[0];
+        const settings = data[0] as EmailSettingsType;
         setExistingSettings(settings);
         setEmailAddress(settings.email_address);
         setEmailProvider(settings.email_provider);
         setSmtpHost(settings.smtp_host);
         setSmtpPort(settings.smtp_port.toString());
         
-        // Set OAuth2 fields if they exist
         if (settings.oauth2_client_id) {
           setOauth2ClientId(settings.oauth2_client_id);
           setAuthType('oauth2');
@@ -136,8 +133,6 @@ const EmailSettings = () => {
         if (settings.oauth2_refresh_token) {
           setOauth2RefreshToken(settings.oauth2_refresh_token);
         }
-        
-        // We don't set the password field from DB for security reasons
       } else {
         setExistingSettings(null);
         resetForm();
@@ -206,7 +201,6 @@ const EmailSettings = () => {
     
     setIsSaving(true);
     try {
-      // Create base settings data
       const settingsData: any = {
         email_address: emailAddress,
         email_provider: emailProvider,
@@ -216,26 +210,21 @@ const EmailSettings = () => {
         user_id: user.id
       };
       
-      // Add authentication based on type
       if (authType === 'password') {
-        // Add app_password only if a new password is provided, or if this is a new settings entry
         if (emailPassword) {
           settingsData.app_password = emailPassword;
         } else if (!existingSettings) {
           throw new Error('App password is required for new email settings');
         }
         
-        // Clear OAuth2 fields if using password auth
         settingsData.oauth2_client_id = null;
         settingsData.oauth2_client_secret = null;
         settingsData.oauth2_refresh_token = null;
       } else if (authType === 'oauth2') {
-        // Add OAuth2 credentials
         settingsData.oauth2_client_id = oauth2ClientId;
         settingsData.oauth2_client_secret = oauth2ClientSecret;
         settingsData.oauth2_refresh_token = oauth2RefreshToken;
         
-        // Set a placeholder for app_password if required by the DB
         if (!existingSettings || !existingSettings.app_password) {
           settingsData.app_password = 'oauth2_not_used';
         }
@@ -244,16 +233,13 @@ const EmailSettings = () => {
       let result;
       
       if (existingSettings) {
-        // Update existing settings
         if (authType === 'password' && emailPassword) {
-          // If we have a new password, update everything including the password
           result = await supabase
             .from('user_email_settings')
             .update(settingsData)
             .eq('id', existingSettings.id)
             .eq('user_id', user.id);
         } else {
-          // Only update the fields that are provided
           const updateData = { ...settingsData };
           if (authType === 'password' && !emailPassword) {
             delete updateData.app_password;
@@ -266,7 +252,6 @@ const EmailSettings = () => {
             .eq('user_id', user.id);
         }
       } else {
-        // Insert new settings
         result = await supabase
           .from('user_email_settings')
           .insert(settingsData);
