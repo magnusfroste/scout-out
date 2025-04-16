@@ -9,13 +9,17 @@ interface WebhookFormProps {
   setWebhookUrl: (url: string) => void;
   isDisabled: boolean;
   showDescription?: boolean;
+  labelText?: string;
+  description?: string;
 }
 
 const WebhookForm: React.FC<WebhookFormProps> = ({
   webhookUrl,
   setWebhookUrl,
   isDisabled,
-  showDescription = false
+  showDescription = false,
+  labelText = "Webhook URL",
+  description = "Enter your webhook URL"
 }) => {
   const [inputValue, setInputValue] = useState(webhookUrl);
   
@@ -26,13 +30,13 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="webhookUrl">Webhook URL</Label>
+        <Label htmlFor="webhookUrl">{labelText}</Label>
         <div className="flex gap-2">
           <Input
             id="webhookUrl"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter your webhook URL"
+            placeholder={`Enter your ${labelText.toLowerCase()}`}
             disabled={isDisabled}
             className="flex-1"
           />
@@ -45,7 +49,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
         </div>
         {showDescription && (
           <p className="text-xs text-muted-foreground">
-            Enter the URL for your questions webhook endpoint (used in Steps 2 and 3)
+            {description}
           </p>
         )}
       </div>

@@ -12,10 +12,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   fetchWebhookSettings, 
-  updateWebhookSettings, 
+  updateWebhookSettings,
   updateMyBusinessWebhookSettings,
   updateValuePropositionWebhookSettings,
-  updateCompanyResearchWebhookSettings
+  updateCompanyResearchWebhookSettings,
+  updateQuestionsWebhookSettings
 } from '@/services/webhookService';
 import { toast } from '@/hooks/use-toast';
 
@@ -25,6 +26,7 @@ const Settings = () => {
   const [myBusinessWebhookUrl, setMyBusinessWebhookUrl] = useState('');
   const [valuePropositionWebhookUrl, setValuePropositionWebhookUrl] = useState('');
   const [companyResearchWebhookUrl, setCompanyResearchWebhookUrl] = useState('');
+  const [questionsWebhookUrl, setQuestionsWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [adminChecked, setAdminChecked] = useState(false);
 
@@ -49,13 +51,15 @@ const Settings = () => {
       console.log('Webhook settings received:', settings);
       
       if (settings) {
-        // 'url' is used for Company Research (Step 3)
-        // There is no separate column for Questions webhook (Step 2) in the database
+        // Set URLs for each step from their respective database columns
+        setQuestionsWebhookUrl(settings.questions_url || '');
         setWebhookUrl(settings.url || '');
         setMyBusinessWebhookUrl(settings.mybusiness_url || '');
         setValuePropositionWebhookUrl(settings.value_proposition_url || '');
         setCompanyResearchWebhookUrl(settings.url || '');
-        console.log(`Set webhook URL (Step 2 & 3): ${settings.url}`);
+        
+        console.log(`Set questions URL (Step 2): ${settings.questions_url}`);
+        console.log(`Set company research URL (Step 3): ${settings.url}`);
         console.log(`Set mybusiness URL (Step 1): ${settings.mybusiness_url}`);
         console.log(`Set value proposition URL (Step 4): ${settings.value_proposition_url}`);
       } else {
@@ -97,19 +101,18 @@ const Settings = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const handleWebhookUpdate = async (newUrl: string) => {
+  const handleQuestionsWebhookUpdate = async (newUrl: string) => {
     try {
-      // This updates the 'url' column which is used for both Step 2 (Questions) and Step 3 (Company Research)
-      const success = await updateWebhookSettings(newUrl);
+      // Update the questions_url column for Step 2
+      const success = await updateQuestionsWebhookSettings(newUrl);
       if (success) {
-        setWebhookUrl(newUrl);
-        setCompanyResearchWebhookUrl(newUrl);
+        setQuestionsWebhookUrl(newUrl);
       }
     } catch (error) {
-      console.error('Error updating webhook URL:', error);
+      console.error('Error updating questions webhook URL:', error);
       toast({
         title: "Error",
-        description: "Failed to update webhook URL",
+        description: "Failed to update questions webhook URL",
         variant: "destructive",
       });
     }
@@ -149,7 +152,7 @@ const Settings = () => {
 
   const handleCompanyResearchWebhookUpdate = async (newUrl: string) => {
     try {
-      // This also updates the 'url' column which is shared with Step 2 (Questions)
+      // This updates the 'url' column used for Step 3 (Company Research)
       const success = await updateCompanyResearchWebhookSettings(newUrl);
       if (success) {
         setCompanyResearchWebhookUrl(newUrl);
@@ -214,14 +217,13 @@ const Settings = () => {
                   </CardHeader>
                   <CardContent>
                     <WebhookForm 
-                      webhookUrl={webhookUrl}
-                      setWebhookUrl={handleWebhookUpdate}
+                      webhookUrl={questionsWebhookUrl}
+                      setWebhookUrl={handleQuestionsWebhookUpdate}
                       isDisabled={isLoading}
                       showDescription={true}
+                      labelText="Questions Webhook URL"
+                      description="Enter the URL for your questions webhook endpoint (used in Step 2)"
                     />
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      This URL is shared with Step 3 (Company Research). Changing this affects both steps.
-                    </div>
                   </CardContent>
                 </Card>
                 
@@ -230,37 +232,14 @@ const Settings = () => {
                     <CardTitle>Step 3: Company Research Webhook Configuration</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="companyResearchWebhookUrl" className="text-sm font-medium">
-                          Company Research Webhook URL
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            id="companyResearchWebhookUrl"
-                            type="text"
-                            value={companyResearchWebhookUrl}
-                            onChange={(e) => setCompanyResearchWebhookUrl(e.target.value)}
-                            placeholder="Enter company research webhook URL"
-                            disabled={isLoading}
-                            className="flex-1 px-3 py-2 border border-input bg-transparent rounded-md"
-                          />
-                          <button
-                            onClick={() => handleCompanyResearchWebhookUpdate(companyResearchWebhookUrl)}
-                            disabled={isLoading}
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
-                          >
-                            Save
-                          </button>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          <p>URL for the company research webhook used in Step 3.</p>
-                          <p className="mt-1 font-semibold">
-                            Note: This updates the same field as the Questions webhook (Step 2).
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <WebhookForm 
+                      webhookUrl={companyResearchWebhookUrl}
+                      setWebhookUrl={handleCompanyResearchWebhookUpdate}
+                      isDisabled={isLoading}
+                      showDescription={true}
+                      labelText="Company Research Webhook URL"
+                      description="Enter the URL for your company research webhook endpoint (used in Step 3)"
+                    />
                   </CardContent>
                 </Card>
                 
