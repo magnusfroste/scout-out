@@ -7,7 +7,10 @@ export interface WebhookSettings {
   mybusiness_url?: string;
   value_proposition_url?: string;
   company_research_url?: string;
+  questions_url?: string;
   default_signup_credits?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const fetchWebhookSettings = async (): Promise<WebhookSettings | null> => {
@@ -625,7 +628,7 @@ export async function updateCompanyResearchWebhookSettings(url: string): Promise
       // Create new settings
       const { error: insertError } = await supabase
         .from('webhook_settings')
-        .insert({ company_research_url: url });
+        .insert([{ company_research_url: url }]);
         
       if (insertError) {
         console.error('Error creating company research webhook settings:', insertError);

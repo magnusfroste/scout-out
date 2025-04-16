@@ -140,7 +140,7 @@ export const getCompanyWebhookUrl = async (): Promise<string> => {
     console.log('Fetching company research webhook URL from settings');
     const { data, error } = await supabase
       .from('webhook_settings')
-      .select('company_research_url')
+      .select('*')
       .single();
       
     if (error) {
@@ -148,6 +148,7 @@ export const getCompanyWebhookUrl = async (): Promise<string> => {
       return DEFAULT_COMPANY_WEBHOOK_URL;
     }
     
+    // We now use company_research_url instead of url for step 3
     const webhookUrl = data?.company_research_url || DEFAULT_COMPANY_WEBHOOK_URL;
     console.log('Retrieved company research webhook URL:', webhookUrl);
     return webhookUrl;
