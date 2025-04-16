@@ -81,7 +81,10 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         provider: emailSettings.email_provider,
         email: emailSettings.email_address,
         host: emailSettings.smtp_host,
-        port: emailSettings.smtp_port
+        port: emailSettings.smtp_port,
+        // Log masked app_password to confirm it exists (without revealing it)
+        hasPassword: !!emailSettings.app_password,
+        passwordLength: emailSettings.app_password ? emailSettings.app_password.length : 0
       });
       
       // Format content as proper HTML with improved structure
@@ -107,7 +110,10 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         subject: emailData.subject,
         provider: emailData.sender_settings.provider,
         host: emailData.sender_settings.host,
-        port: emailData.sender_settings.port
+        port: emailData.sender_settings.port,
+        // Log if password exists without revealing it
+        hasPassword: !!emailData.sender_settings.password,
+        passwordLength: emailData.sender_settings.password ? emailData.sender_settings.password.length : 0
       });
 
       // Call the edge function to send the email
@@ -122,11 +128,16 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         throw new Error(error.message || 'Failed to send email');
       }
 
-      // Remove .status check which was causing the TypeScript error
-      if (!data || !data.success) {
-        const errorMessage = data?.error || 'Unknown error occurred';
-        console.error('Email sending failed:', data);
-        throw new Error(errorMessage);
+      // Check the response
+      if (!data) {
+        throw new Error('No response data returned from edge function');
+      }
+      
+      if (!data.success) {
+        const errorMessage = data.error || 'Unknown error occurred';
+        const errorDetails = data.details ? JSON.stringify(data.details) : '';
+        console.error('Email sending failed:', { error: errorMessage, details: errorDetails });
+        throw new Error(`${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}`);
       }
 
       toast({

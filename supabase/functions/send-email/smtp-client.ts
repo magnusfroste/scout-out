@@ -28,6 +28,12 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
   const secure = config.port === 465;
   
   try {
+    console.log(`Creating SMTP client for host: ${config.host}, port: ${config.port}, email: ${config.email}, secure: ${secure}`);
+    
+    if (!config.host || !config.port || !config.email || !config.password) {
+      throw new Error("Missing required SMTP configuration parameters");
+    }
+    
     return new SMTPClient({
       connection: {
         hostname: config.host,
@@ -59,10 +65,14 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
  */
 export async function sendEmail(client: SMTPClient, params: EmailParams): Promise<EmailResult> {
   try {
-    console.log("Starting email sending process");
+    console.log("Starting email sending process with parameters:", {
+      from: params.from,
+      to: params.to,
+      subject: params.subject,
+    });
     
     // Add proper email headers and structure for improved deliverability
-    await client.send({
+    const result = await client.send({
       from: params.from,
       to: params.to,
       subject: params.subject,
@@ -78,22 +88,30 @@ export async function sendEmail(client: SMTPClient, params: EmailParams): Promis
       text: htmlToPlainText(params.html),
     });
     
-    console.log("Email sent successfully");
+    console.log("Email sent successfully with transaction ID:", result?.id || "unknown");
     await client.close();
     return { success: true };
-  } catch (error) {
-    console.error("Error sending email:", error);
+  } catch (error: any) {
+    console.error("Error sending email:", {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      stack: error.stack
+    });
+    
     try {
       await client.close();
     } catch (closeError) {
       console.error("Error closing SMTP client:", closeError);
     }
+    
     return { 
       success: false, 
       error: error.message,
       details: {
         name: error.name,
-        code: error.code
+        code: error.code,
+        info: error.response || error.info || "No additional information"
       }
     };
   }
