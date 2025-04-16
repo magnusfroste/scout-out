@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,14 +49,15 @@ const Settings = () => {
       console.log('Webhook settings received:', settings);
       
       if (settings) {
+        // 'url' is used for Company Research (Step 3)
+        // There is no separate column for Questions webhook (Step 2) in the database
         setWebhookUrl(settings.url || '');
         setMyBusinessWebhookUrl(settings.mybusiness_url || '');
         setValuePropositionWebhookUrl(settings.value_proposition_url || '');
         setCompanyResearchWebhookUrl(settings.url || '');
-        console.log(`Set webhook URL: ${settings.url}`);
-        console.log(`Set mybusiness URL: ${settings.mybusiness_url}`);
-        console.log(`Set value proposition URL: ${settings.value_proposition_url}`);
-        console.log(`Set company research URL: ${settings.url}`);
+        console.log(`Set webhook URL (Step 2 & 3): ${settings.url}`);
+        console.log(`Set mybusiness URL (Step 1): ${settings.mybusiness_url}`);
+        console.log(`Set value proposition URL (Step 4): ${settings.value_proposition_url}`);
       } else {
         console.warn('No webhook settings found');
         toast({
@@ -97,6 +99,7 @@ const Settings = () => {
 
   const handleWebhookUpdate = async (newUrl: string) => {
     try {
+      // This updates the 'url' column which is used for both Step 2 (Questions) and Step 3 (Company Research)
       const success = await updateWebhookSettings(newUrl);
       if (success) {
         setWebhookUrl(newUrl);
@@ -146,6 +149,7 @@ const Settings = () => {
 
   const handleCompanyResearchWebhookUpdate = async (newUrl: string) => {
     try {
+      // This also updates the 'url' column which is shared with Step 2 (Questions)
       const success = await updateCompanyResearchWebhookSettings(newUrl);
       if (success) {
         setCompanyResearchWebhookUrl(newUrl);

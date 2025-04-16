@@ -26,7 +26,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="webhookUrl">Questions Webhook URL</Label>
+        <Label htmlFor="webhookUrl">Webhook URL</Label>
         <div className="flex gap-2">
           <Input
             id="webhookUrl"
@@ -45,7 +45,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({
         </div>
         {showDescription && (
           <p className="text-xs text-muted-foreground">
-            Enter the URL for your questions webhook endpoint (used in Step 2)
+            Enter the URL for your questions webhook endpoint (used in Steps 2 and 3)
           </p>
         )}
       </div>
