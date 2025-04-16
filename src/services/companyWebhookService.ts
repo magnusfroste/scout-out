@@ -1,3 +1,4 @@
+
 import { Answer } from '@/utils/webhookResponseParser';
 import { Question } from '@/types/company';
 import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
@@ -26,9 +27,11 @@ export const callCompanyWebhook = async (
   companyName: string,
   questions: Question[]
 ): Promise<Response> => {
-  console.log('Calling webhook with company:', companyName);
-  console.log('Calling webhook with questions:', JSON.stringify(questions));
-  console.log('Using webhook URL (for reference only):', webhookUrl);
+  console.log('▶️ WEBHOOK CALL INITIATED');
+  console.log('Company:', companyName);
+  console.log('Questions count:', questions.length);
+  console.log('Questions:', JSON.stringify(questions, null, 2));
+  console.log('Webhook URL:', webhookUrl);
   console.log('Mock mode status:', USE_MOCK_DATA ? 'ENABLED' : 'DISABLED');
   console.log('Environment mode:', import.meta.env.MODE);
   
@@ -49,16 +52,25 @@ export const callCompanyWebhook = async (
   
   try {
     // Get the current user's session token for authentication
-    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('🔐 Getting auth session token');
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
+      throw new Error(`Authentication error: ${sessionError.message}`);
+    }
+    
     const accessToken = sessionData?.session?.access_token;
+    console.log('Access token available:', !!accessToken);
     
     if (!accessToken) {
+      console.error('❌ No access token available');
       throw new Error('Authentication required. Please sign in again.');
     }
     
     // Call the Edge Function instead of the webhook directly
     const edgeFunctionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-questions-webhook';
-    console.log(`Calling Edge Function URL: ${edgeFunctionUrl}`);
+    console.log(`📡 Calling Edge Function URL: ${edgeFunctionUrl}`);
     
     // Create the request body
     const requestBody = { 
@@ -69,26 +81,30 @@ export const callCompanyWebhook = async (
       }))
     };
     
-    console.log(`Request body:`, requestBody);
+    console.log(`📦 Request body:`, JSON.stringify(requestBody, null, 2));
     
+    console.log('🚀 Sending request to Edge Function');
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${accessToken}`,
+        'X-Client-Info': 'Lovable Web App'
       },
       body: JSON.stringify(requestBody)
     });
     
-    console.log(`Edge Function response status: ${response.status}`);
+    console.log(`📊 Edge Function response status: ${response.status}`);
     
     if (!response.ok) {
+      console.error(`❌ Edge Function error status: ${response.status}`);
       let errorMessage = 'Service unavailable. Please try again later.';
       try {
         const errorData = await response.json();
         console.error('Questions webhook error response:', errorData);
         if (errorData.message) {
           errorMessage = errorData.message;
+          console.error('Error message:', errorData.message);
         }
         if (errorData.details) {
           console.error('Error details:', errorData.details);
@@ -98,19 +114,23 @@ export const callCompanyWebhook = async (
             console.log('⚠️ Edge Function could not reach webhook. Attempting direct call as fallback...');
             
             // Make a direct call to the webhook as a fallback
+            console.log('🔄 Making direct webhook call to:', webhookUrl);
             const directResponse = await fetch(webhookUrl, {
               method: 'POST',
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Client-Info': 'Lovable Web App - Direct Fallback'
               },
               body: JSON.stringify(requestBody)
             });
+            
+            console.log('Direct webhook call status:', directResponse.status);
             
             if (directResponse.ok) {
               console.log('✅ METHOD USED: Direct webhook call (fallback)');
               return directResponse;
             } else {
-              console.error('Direct webhook call also failed:', await directResponse.text());
+              console.error('❌ Direct webhook call also failed:', await directResponse.text());
             }
           }
         }
@@ -122,6 +142,7 @@ export const callCompanyWebhook = async (
     }
     
     // Check if the response has the expected format
+    console.log('👍 Edge Function response received, parsing data');
     const responseData = await response.json();
     console.log('Edge Function response data:', responseData);
     console.log('✅ METHOD USED: Edge Function');
@@ -139,7 +160,7 @@ export const callCompanyWebhook = async (
     // If the response doesn't have the expected format, return it as is
     return response;
   } catch (error) {
-    console.error('Error in callCompanyWebhook:', error);
+    console.error('❌ Error in callCompanyWebhook:', error);
     throw error;
   }
 };
