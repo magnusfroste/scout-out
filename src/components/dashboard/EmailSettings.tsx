@@ -368,15 +368,18 @@ const EmailSettings = () => {
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="oauth2RefreshToken">Refresh Token</Label>
-            <Input
-              id="oauth2RefreshToken"
-              type="password"
-              placeholder="Enter the OAuth2 Refresh Token"
-              value={oauth2RefreshToken}
-              onChange={(e) => setOauth2RefreshToken(e.target.value)}
-            />
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Redirect URIs to configure in Azure:</strong><br />
+              • https://mba.froste.eu/settings<br />
+              • https://mba.froste.eu/auth/callback<br />
+              {import.meta.env.DEV && (
+                <>
+                  • http://localhost:5173/settings<br />
+                  • http://localhost:5173/auth/callback
+                </>
+              )}
+            </p>
           </div>
           
           <p className="text-sm text-muted-foreground">
