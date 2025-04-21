@@ -25,7 +25,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     
     // Get default credits from webhook settings
     const webhookSettings = await fetchWebhookSettings();
-    const defaultCredits = webhookSettings?.default_signup_credits || 5; // Changed fallback from 50 to 5
+    const defaultCredits = webhookSettings?.default_signup_credits || 5; // Ensure fallback is 5
     
     console.log('Default signup credits:', defaultCredits);
     
@@ -51,7 +51,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         .from('profiles')
         .insert({
           id: userId,
-          credits: defaultCredits,
+          credits: defaultCredits, // Use the defaultCredits here
           first_name: null,
           last_name: null,
           avatar_url: null,
