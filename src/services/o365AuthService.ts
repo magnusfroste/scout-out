@@ -58,6 +58,9 @@ export const handleO365AuthCallback = async (
   redirectUri: string
 ) => {
   console.log('Starting OAuth callback handling with code:', code ? code.substring(0, 6) + '...' : 'no code');
+  console.log('Using client ID:', clientId ? clientId.substring(0, 5) + '...' : 'missing');
+  console.log('Using client secret:', clientSecret ? '[REDACTED]' : 'missing');
+  console.log('Using redirect URI:', redirectUri);
   
   try {
     // We'll use the edge function to handle the token exchange
@@ -96,7 +99,7 @@ export const handleO365AuthCallback = async (
   }
 };
 
-// New function to verify if a user has valid OAuth2 credentials
+// Verify if a user has valid OAuth2 credentials
 export const verifyO365Auth = async (userId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase

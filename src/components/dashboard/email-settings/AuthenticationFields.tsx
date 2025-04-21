@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Key, Loader2, ExternalLink, AlertCircle, HelpCircle } from 'lucide-react';
+import { Key, Loader2, ExternalLink, AlertCircle, HelpCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { 
   Tooltip,
   TooltipContent,
@@ -71,6 +70,9 @@ export const AuthenticationFields = ({
     );
   }
 
+  const hasStoredCredentials = existingSettings?.oauth2_client_id && existingSettings?.oauth2_client_secret;
+  const needsAuthentication = !existingSettings?.oauth2_refresh_token;
+  
   return (
     <div className="space-y-4 border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
       {!oauthColumnsExist && (
@@ -97,6 +99,16 @@ export const AuthenticationFields = ({
         </a>
       </h3>
       
+      {hasStoredCredentials && (
+        <Alert className="bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+          <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle>OAuth2 Credentials Stored</AlertTitle>
+          <AlertDescription>
+            Your Office 365 client ID and secret are already stored. You can update them below or reconnect with the existing credentials.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="oauth2ClientId">Client ID</Label>
@@ -115,7 +127,7 @@ export const AuthenticationFields = ({
         </div>
         <Input
           id="oauth2ClientId"
-          placeholder="Enter your Microsoft Azure app Client ID"
+          placeholder={hasStoredCredentials ? "Using stored Client ID (change only if needed)" : "Enter your Microsoft Azure app Client ID"}
           value={oauth2ClientId}
           onChange={(e) => onOauth2ClientIdChange(e.target.value)}
           disabled={!oauthColumnsExist}
@@ -141,7 +153,7 @@ export const AuthenticationFields = ({
         <Input
           id="oauth2ClientSecret"
           type="password"
-          placeholder="Enter your Microsoft Azure app Client Secret"
+          placeholder={hasStoredCredentials ? "Using stored Client Secret (change only if needed)" : "Enter your Microsoft Azure app Client Secret"}
           value={oauth2ClientSecret}
           onChange={(e) => onOauth2ClientSecretChange(e.target.value)}
           disabled={!oauthColumnsExist}
@@ -156,26 +168,29 @@ export const AuthenticationFields = ({
         </p>
       </div>
 
-      {(!existingSettings?.oauth2_refresh_token || !oauthColumnsExist) && (
-        <Button 
-          type="button" 
-          onClick={onInitiateOAuth2}
-          disabled={isAuthenticating || !oauthColumnsExist || !oauth2ClientId || !oauth2ClientSecret}
-          className="w-full"
-        >
-          {isAuthenticating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Authenticating...
-            </>
-          ) : (
-            <>
-              <Key className="mr-2 h-4 w-4" />
-              Connect to Office 365
-            </>
-          )}
-        </Button>
-      )}
+      <Button 
+        type="button" 
+        onClick={onInitiateOAuth2}
+        disabled={isAuthenticating || !oauthColumnsExist}
+        className="w-full"
+      >
+        {isAuthenticating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Authenticating...
+          </>
+        ) : needsAuthentication ? (
+          <>
+            <Key className="mr-2 h-4 w-4" />
+            Connect to Office 365
+          </>
+        ) : (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reconnect to Office 365
+          </>
+        )}
+      </Button>
       
       <Alert className="mt-4">
         <AlertCircle className="h-4 w-4" />

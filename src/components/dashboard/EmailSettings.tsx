@@ -254,30 +254,47 @@ const EmailSettings = () => {
   };
 
   const initiateOAuth2 = async () => {
-    if (!oauth2ClientId) {
-      toast({
-        title: "Missing Client ID",
-        description: "Please enter your Azure App Client ID first",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!oauth2ClientSecret) {
-      toast({
-        title: "Missing Client Secret",
-        description: "Please enter your Azure App Client Secret first",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsAuthenticating(true);
+      
+      let clientId = oauth2ClientId;
+      let clientSecret = oauth2ClientSecret;
+      
+      if (existingSettings?.oauth2_client_id && existingSettings?.oauth2_client_secret) {
+        console.log('Using existing OAuth2 credentials from database');
+        clientId = existingSettings.oauth2_client_id;
+        clientSecret = existingSettings.oauth2_client_secret;
+      } else {
+        if (!clientId) {
+          toast({
+            title: "Missing Client ID",
+            description: "Please enter your Azure App Client ID first",
+            variant: "destructive",
+          });
+          setIsAuthenticating(false);
+          return;
+        }
+        
+        if (!clientSecret) {
+          toast({
+            title: "Missing Client Secret",
+            description: "Please enter your Azure App Client Secret first",
+            variant: "destructive",
+          });
+          setIsAuthenticating(false);
+          return;
+        }
+      }
+
       const redirectUri = `${window.location.origin}/settings`;
       console.log('Initiating OAuth2 with redirect URI:', redirectUri);
-      console.log('Client ID:', oauth2ClientId);
-      await initiateO365Auth(oauth2ClientId, redirectUri);
+      console.log('Client ID being used:', clientId);
+      
+      sessionStorage.setItem('emailSettings_clientId', clientId);
+      sessionStorage.setItem('emailSettings_clientSecret', clientSecret);
+      sessionStorage.setItem('emailSettings_redirectUri', redirectUri);
+      
+      await initiateO365Auth(clientId, redirectUri);
     } catch (error) {
       console.error('Error initiating OAuth2:', error);
       toast({
@@ -300,10 +317,19 @@ const EmailSettings = () => {
     setIsAuthenticating(true);
     try {
       const redirectUri = sessionStorage.getItem('emailSettings_redirectUri') || `${window.location.origin}/settings`;
-      const clientId = sessionStorage.getItem('emailSettings_clientId') || oauth2ClientId;
+      let clientId = sessionStorage.getItem('emailSettings_clientId');
+      let clientSecret = sessionStorage.getItem('emailSettings_clientSecret');
       
-      if (!clientId || !oauth2ClientSecret) {
-        console.error('Missing OAuth credentials:', { clientId: !!clientId, clientSecret: !!oauth2ClientSecret });
+      if (!clientId) clientId = oauth2ClientId;
+      if (!clientSecret) clientSecret = oauth2ClientSecret;
+      
+      if ((!clientId || !clientSecret) && existingSettings) {
+        clientId = existingSettings.oauth2_client_id || '';
+        clientSecret = existingSettings.oauth2_client_secret || '';
+      }
+      
+      if (!clientId || !clientSecret) {
+        console.error('Missing OAuth credentials:', { clientId: !!clientId, clientSecret: !!clientSecret });
         throw new Error('OAuth2 client ID and client secret are required');
       }
       
@@ -311,7 +337,7 @@ const EmailSettings = () => {
       const data = await handleO365AuthCallback(
         code, 
         clientId, 
-        oauth2ClientSecret, 
+        clientSecret, 
         redirectUri
       );
       
@@ -320,10 +346,15 @@ const EmailSettings = () => {
         window.history.replaceState({}, document.title, window.location.pathname);
         sessionStorage.removeItem('emailSettings_redirecting');
         sessionStorage.removeItem('emailSettings_clientId');
+        sessionStorage.removeItem('emailSettings_clientSecret');
         sessionStorage.removeItem('emailSettings_redirectUri');
         
         if (clientId !== oauth2ClientId) {
           setOauth2ClientId(clientId);
+        }
+        
+        if (clientSecret !== oauth2ClientSecret) {
+          setOauth2ClientSecret(clientSecret);
         }
         
         await handleSaveSettings(data.refreshToken);
