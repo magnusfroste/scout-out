@@ -21,11 +21,22 @@ serve(async (req) => {
       to, 
       subject, 
       body, 
-      senderEmail 
+      senderEmail,
+      debug = false 
     } = requestBody;
 
     if (!accessToken || !to || !subject || !body) {
       throw new Error("Missing required email parameters");
+    }
+
+    if (debug) {
+      console.log('Graph email function input:', {
+        to,
+        subject,
+        bodyLength: body?.length || 0,
+        accessTokenLength: accessToken?.length || 0,
+        senderEmail
+      });
     }
 
     const emailPayload = {
@@ -40,13 +51,21 @@ serve(async (req) => {
             address: to
           }
         }],
-        from: {
-          emailAddress: {
-            address: senderEmail
+        // The from field is only used if the app has the right permissions
+        ...(senderEmail ? {
+          from: {
+            emailAddress: {
+              address: senderEmail
+            }
           }
-        }
-      }
+        } : {})
+      },
+      saveToSentItems: true // Save to the user's sent items folder
     };
+
+    if (debug) {
+      console.log('Sending email payload to Graph API:', JSON.stringify(emailPayload, null, 2));
+    }
 
     const graphResponse = await fetch(`${MICROSOFT_GRAPH_URL}/me/sendMail`, {
       method: 'POST',
@@ -60,7 +79,16 @@ serve(async (req) => {
     if (!graphResponse.ok) {
       const errorText = await graphResponse.text();
       console.error('Graph API email send error:', errorText);
-      throw new Error(`Failed to send email: ${errorText}`);
+      
+      // Try to extract detailed error information
+      let errorDetails = {};
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch (e) {
+        errorDetails = { raw: errorText };
+      }
+      
+      throw new Error(`Failed to send email via Graph API: ${errorText}`);
     }
 
     return new Response(

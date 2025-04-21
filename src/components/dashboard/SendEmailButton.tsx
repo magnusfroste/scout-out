@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailSettings } from '@/types/email';
-import { verifyO365Auth } from '@/services/o365AuthService';
+import { verifyO365Auth, sendEmailViaGraphAPI } from '@/services/o365AuthService';
 import { 
   Tooltip,
   TooltipContent,
@@ -49,6 +49,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
   const [hasValidOAuth, setHasValidOAuth] = useState(true);
   const [isO365SmtpDisabled, setIsO365SmtpDisabled] = useState(false);
+  const [useGraphAPI, setUseGraphAPI] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -67,6 +68,38 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     
     checkOAuthStatus();
   }, [user]);
+
+  const getGraphAccessToken = async (settings: CompleteEmailSettings): Promise<string> => {
+    if (!settings.oauth2_client_id || !settings.oauth2_client_secret || !settings.oauth2_refresh_token) {
+      throw new Error('Missing OAuth2 credentials');
+    }
+
+    try {
+      console.log('Getting fresh access token from refresh token');
+      const { data, error } = await supabase.functions.invoke('o365-auth-refresh', {
+        body: JSON.stringify({
+          clientId: settings.oauth2_client_id,
+          clientSecret: settings.oauth2_client_secret,
+          refreshToken: settings.oauth2_refresh_token
+        })
+      });
+
+      if (error) {
+        console.error('Error refreshing token:', error);
+        throw new Error('Failed to refresh OAuth2 token. Please re-authenticate with Microsoft.');
+      }
+
+      if (!data || !data.access_token) {
+        throw new Error('No access token received from token refresh');
+      }
+
+      console.log('Access token refreshed successfully');
+      return data.access_token;
+    } catch (error) {
+      console.error('Error getting Graph access token:', error);
+      throw error;
+    }
+  };
 
   const sendEmail = async () => {
     if (!user) {
@@ -91,6 +124,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     setLastError(null);
     setDiagnosticInfo(null);
     setIsO365SmtpDisabled(false);
+    setUseGraphAPI(false);
     
     try {
       console.log('Starting email sending process...');
@@ -142,6 +176,60 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       
       const htmlContent = formatEmailContent(content);
       
+      // First, try to use Graph API for Office 365
+      if (settings.email_provider === 'office365' && 
+          settings.oauth2_client_id && 
+          settings.oauth2_client_secret && 
+          settings.oauth2_refresh_token) {
+        
+        try {
+          console.log('Attempting to send email via Microsoft Graph API');
+          setUseGraphAPI(true);
+          
+          // Get a fresh access token using the refresh token
+          const accessToken = await getGraphAccessToken(settings);
+          
+          // Send the email via Graph API
+          const graphResult = await sendEmailViaGraphAPI(
+            accessToken,
+            recipientEmail,
+            subject,
+            htmlContent,
+            settings.email_address
+          );
+          
+          console.log('Graph API email result:', graphResult);
+          
+          toast({
+            title: "Email sent via Graph API",
+            description: `Email successfully sent to ${recipientEmail}`,
+          });
+          
+          setDiagnosticInfo({
+            success: true,
+            method: 'graph_api',
+            timestamp: new Date().toISOString()
+          });
+          
+          setIsSending(false);
+          return;
+        } catch (graphError) {
+          console.error('Error sending email via Graph API:', graphError);
+          
+          // If we're explicitly trying to use Graph API, don't fall back
+          if (useGraphAPI) {
+            throw graphError;
+          }
+          
+          console.log('Graph API failed, falling back to SMTP if possible');
+          setDiagnosticInfo({
+            graphApiError: graphError.message,
+            fallbackToSMTP: true
+          });
+        }
+      }
+      
+      // If Graph API failed or wasn't used, try SMTP
       const emailData: any = {
         to: recipientEmail,
         to_name: recipientName,
@@ -233,7 +321,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         if (errorMessage.includes('SmtpClientAuthentication is disabled') || 
             errorMessage.includes('smtp_auth_disabled')) {
           setIsO365SmtpDisabled(true);
-          throw new Error('Microsoft has disabled SMTP Authentication for your tenant. Please visit https://aka.ms/smtp_auth_disabled for more information.');
+          throw new Error('Microsoft has disabled SMTP Authentication for your tenant. Try using Microsoft Graph API instead.');
         }
         
         // Check if we need to refresh OAuth2 authentication
@@ -254,6 +342,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       
       setDiagnosticInfo({
         success: true,
+        method: 'smtp',
         timestamp: new Date().toISOString()
       });
     } catch (error: any) {
@@ -348,7 +437,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
                   className="ml-2 text-xs text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800"
                 >
                   <InfoIcon className="mr-1 h-3 w-3" />
-                  Microsoft SMTP Auth Disabled
+                  Using Graph API Instead
                 </Button>
               )}
             </div>

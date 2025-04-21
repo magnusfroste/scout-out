@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -35,6 +36,7 @@ serve(async (req) => {
       code: code,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
+      // Include both SMTP and Graph Mail.Send scopes - Graph API is preferred
       scope: 'offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read'
     });
     

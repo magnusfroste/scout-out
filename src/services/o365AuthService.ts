@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const checkOAuthColumnsExist = async (): Promise<boolean> => {
@@ -260,7 +261,8 @@ export const sendEmailViaGraphAPI = async (
         to,
         subject,
         body: content,
-        senderEmail
+        senderEmail,
+        debug: true
       })
     });
 
