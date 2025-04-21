@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
@@ -22,14 +21,12 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // Ensure profile is up to date when component mounts
     if (user && !userProfile) {
       refreshUserProfile();
     }
   }, [user, userProfile, refreshUserProfile]);
 
   useEffect(() => {
-    // Update local state when userProfile changes
     if (userProfile) {
       setFirstName(userProfile.first_name || '');
       setLastName(userProfile.last_name || '');
@@ -57,7 +54,6 @@ const Profile = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form values to current profile values
     if (userProfile) {
       setFirstName(userProfile.first_name || '');
       setLastName(userProfile.last_name || '');
@@ -93,7 +89,6 @@ const Profile = () => {
     }
   };
 
-  // Show loading state with full layout
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -108,7 +103,6 @@ const Profile = () => {
     );
   }
 
-  // Silent redirect without toast message
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -256,7 +250,7 @@ const Profile = () => {
                       <ul className="list-disc pl-5 space-y-1">
                         <li>1 credit = 10 questions per search</li>
                         <li>Unused credits never expire</li>
-                        <li>New accounts start with 50 credits</li>
+                        <li>New accounts start with 5 credits</li>
                       </ul>
                     </div>
                   </div>
