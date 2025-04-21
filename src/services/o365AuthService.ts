@@ -57,63 +57,64 @@ export const handleO365AuthCallback = async (
   clientSecret: string,
   redirectUri: string
 ) => {
-  // Call token endpoint to exchange code for tokens
-  const tokenEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+  console.log('Starting OAuth callback handling with code:', code ? code.substring(0, 6) + '...' : 'no code');
   
-  const params = new URLSearchParams();
-  params.append('client_id', clientId);
-  params.append('client_secret', clientSecret);
-  params.append('code', code);
-  params.append('redirect_uri', redirectUri);
-  params.append('grant_type', 'authorization_code');
-  params.append('scope', 'https://outlook.office.com/SMTP.Send offline_access');
-
   try {
-    console.log('Exchanging auth code for tokens...');
-    console.log('Using client ID:', clientId);
-    console.log('Using client secret:', clientSecret ? '[REDACTED]' : 'MISSING');
-    console.log('Using redirect URI:', redirectUri);
-    console.log('Using auth code:', code ? '[REDACTED]' : 'MISSING');
-    
-    const response = await fetch(tokenEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
+    // We'll use the edge function to handle the token exchange
+    console.log('Calling o365-auth edge function to exchange code for tokens');
+    const { data, error } = await supabase.functions.invoke('o365-auth', {
+      body: JSON.stringify({
+        code,
+        clientId,
+        clientSecret,
+        redirectUri
+      })
     });
     
-    // Log the full response for debugging
-    console.log('Token response status:', response.status);
-    const responseText = await response.text();
-    console.log('Token response body length:', responseText.length);
-    
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = JSON.parse(responseText);
-      } catch (e) {
-        errorData = { error: 'Could not parse error response' };
-      }
-      console.error('Token exchange failed:', errorData);
-      console.error('Status:', response.status);
-      throw new Error(errorData.error_description || 'Failed to get token');
+    if (error) {
+      console.error('Error from o365-auth edge function:', error);
+      throw new Error(`Edge function error: ${error.message}`);
     }
     
-    const data = JSON.parse(responseText);
-    console.log('Received tokens successfully');
+    if (!data || !data.refresh_token) {
+      console.error('No refresh_token received from token exchange:', data);
+      throw new Error('Failed to get refresh token');
+    }
+    
+    console.log('Successfully received tokens from Microsoft');
     console.log('Access token length:', data.access_token?.length || 0);
     console.log('Refresh token length:', data.refresh_token?.length || 0);
-    console.log('Expires in:', data.expires_in);
     
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in,
     };
-    
   } catch (error: any) {
-    console.error('Error exchanging code for token:', error);
-    throw new Error(error.message || 'Failed to get token');
+    console.error('Error in handleO365AuthCallback:', error);
+    throw new Error(error.message || 'Failed to complete authentication');
+  }
+};
+
+// New function to verify if a user has valid OAuth2 credentials
+export const verifyO365Auth = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_email_settings')
+      .select('oauth2_refresh_token')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .eq('email_provider', 'office365')
+      .single();
+    
+    if (error) {
+      console.error('Error verifying OAuth2 credentials:', error);
+      return false;
+    }
+    
+    return !!data?.oauth2_refresh_token;
+  } catch (error) {
+    console.error('Exception verifying OAuth2 credentials:', error);
+    return false;
   }
 };

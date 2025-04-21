@@ -36,6 +36,9 @@ serve(async (req) => {
     }
 
     console.log(`Exchanging code for tokens with redirect URI: ${redirectUri}`);
+    console.log('Code length:', code?.length || 0);
+    console.log('Client ID length:', clientId?.length || 0);
+    console.log('Client Secret length:', clientSecret?.length || 0);
 
     // Exchange authorization code for tokens
     const tokenResponse = await fetch(`${MICROSOFT_OAUTH_URL}/token`, {
@@ -53,15 +56,35 @@ serve(async (req) => {
       }),
     });
 
+    const responseStatus = tokenResponse.status;
+    console.log('Token response status:', responseStatus);
+    
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('Token exchange error:', errorText);
       console.error('Status:', tokenResponse.status);
-      throw new Error(`Failed to exchange code for tokens: ${errorText}`);
+      
+      // Try to parse error response
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch {
+        errorDetails = { error: 'unknown', error_description: errorText };
+      }
+      
+      throw new Error(`Failed to exchange code for tokens: ${errorDetails.error_description || errorText}`);
     }
 
     const tokens: TokenResponse = await tokenResponse.json();
     console.log('Successfully obtained tokens');
+    console.log('Access token length:', tokens.access_token?.length || 0);
+    console.log('Refresh token length:', tokens.refresh_token?.length || 0);
+    console.log('Token expires in:', tokens.expires_in);
+
+    if (!tokens.refresh_token) {
+      console.error('No refresh token received!');
+      throw new Error('No refresh token received from Microsoft. Please try again.');
+    }
 
     // Return only what's needed in the frontend
     return new Response(

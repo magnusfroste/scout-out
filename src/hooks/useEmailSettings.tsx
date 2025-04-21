@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailSettings } from '@/types/email';
-import { checkOAuthColumnsExist } from '@/services/o365AuthService';
+import { checkOAuthColumnsExist, verifyO365Auth } from '@/services/o365AuthService';
 
 interface CompleteEmailSettings extends EmailSettings {
   oauth2_client_id?: string | null;
@@ -27,6 +27,7 @@ export const useEmailSettings = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [oauthColumnsExist, setOauthColumnsExist] = useState(true);
+  const [hasValidOAuth, setHasValidOAuth] = useState(false);
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -39,6 +40,17 @@ export const useEmailSettings = () => {
     } catch (error) {
       console.error('Error checking OAuth columns:', error);
       setOauthColumnsExist(false);
+    }
+  };
+
+  const checkOAuthStatus = async () => {
+    if (!user) return;
+    try {
+      const hasValid = await verifyO365Auth(user.id);
+      setHasValidOAuth(hasValid);
+      console.log('User has valid OAuth2 credentials:', hasValid);
+    } catch (error) {
+      console.error('Error checking OAuth status:', error);
     }
   };
 
@@ -91,6 +103,10 @@ export const useEmailSettings = () => {
         if (settings.oauth2_client_secret) {
           setOauth2ClientSecret(settings.oauth2_client_secret);
         }
+
+        // Check if we have a valid OAuth2 refresh token
+        setHasValidOAuth(!!settings.oauth2_refresh_token && settings.email_provider === 'office365');
+        console.log('Has valid OAuth2 token:', !!settings.oauth2_refresh_token);
       } else {
         setExistingSettings(null);
         resetForm();
@@ -116,6 +132,7 @@ export const useEmailSettings = () => {
     setOauth2ClientId('');
     setOauth2ClientSecret('');
     setAuthType('password');
+    setHasValidOAuth(false);
   };
 
   const validateForm = () => {
@@ -179,7 +196,10 @@ export const useEmailSettings = () => {
     isAuthenticating,
     setIsAuthenticating,
     oauthColumnsExist,
+    hasValidOAuth,
+    setHasValidOAuth,
     checkMigrationStatus,
+    checkOAuthStatus,
     fetchEmailSettings,
     resetForm,
     validateForm,

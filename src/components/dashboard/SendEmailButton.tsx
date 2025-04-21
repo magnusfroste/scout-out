@@ -1,17 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailSettings } from '@/types/email';
+import { verifyO365Auth } from '@/services/o365AuthService';
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger 
 } from '@/components/ui/tooltip';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
 
 interface CompleteEmailSettings extends EmailSettings {
   oauth2_client_id?: string | null;
@@ -36,8 +45,27 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
 }) => {
   const [isSending, setIsSending] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
+  const [hasValidOAuth, setHasValidOAuth] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const checkOAuthStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const hasValid = await verifyO365Auth(user.id);
+        setHasValidOAuth(hasValid);
+        console.log('User has valid OAuth2 credentials:', hasValid);
+      } catch (error) {
+        console.error('Error checking OAuth status:', error);
+      }
+    };
+    
+    checkOAuthStatus();
+  }, [user]);
 
   const sendEmail = async () => {
     if (!user) {
@@ -60,6 +88,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
 
     setIsSending(true);
     setLastError(null);
+    setDiagnosticInfo(null);
     
     try {
       console.log('Starting email sending process...');
@@ -93,6 +122,21 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         port: settings.smtp_port,
         hasOAuth2: !!(settings.oauth2_client_id && settings.oauth2_client_secret && settings.oauth2_refresh_token)
       });
+      
+      // Update validation to make sure Office 365 has valid OAuth2 credentials
+      if (settings.email_provider === 'office365') {
+        if (!settings.oauth2_client_id || !settings.oauth2_client_secret || !settings.oauth2_refresh_token) {
+          console.error('Missing OAuth2 credentials for Office 365');
+          throw new Error('OAuth2 credentials are required for Office 365. Please update your email settings.');
+        }
+        
+        // Double-check refresh token exists
+        if (!settings.oauth2_refresh_token) {
+          console.error('Missing OAuth2 refresh token for Office 365');
+          setHasValidOAuth(false);
+          throw new Error('Missing OAuth2 refresh token for Office 365. Please authenticate with Microsoft again.');
+        }
+      }
       
       const htmlContent = formatEmailContent(content);
       
@@ -146,36 +190,77 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         hasPassword: !!emailData.sender_settings.password
       });
 
+      // Call the edge function with debug flag to get more info
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: JSON.stringify(emailData)
+        body: JSON.stringify({
+          ...emailData,
+          debug: true
+        })
       });
       
       console.log('Edge function response:', { data, error });
 
       if (error) {
         console.error('Error from Edge Function:', error);
+        setDiagnosticInfo({
+          errorType: 'edge_function',
+          error: error
+        });
         throw new Error(error.message || 'Failed to send email');
       }
 
       if (!data) {
+        setDiagnosticInfo({
+          errorType: 'no_response',
+        });
         throw new Error('No response data returned from edge function');
       }
       
       if (!data.success) {
         const errorMessage = data.error || 'Unknown error occurred';
-        const errorDetails = data.details ? JSON.stringify(data.details) : '';
+        const errorDetails = data.details || {};
         console.error('Email sending failed:', { error: errorMessage, details: errorDetails });
-        throw new Error(`${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}`);
+        
+        setDiagnosticInfo({
+          errorType: 'send_failure',
+          error: errorMessage,
+          details: errorDetails
+        });
+        
+        // Check if we need to refresh OAuth2 authentication
+        if (errorMessage.includes('OAuth2') || 
+            errorMessage.includes('authentication') || 
+            errorMessage.includes('auth') ||
+            errorMessage.includes('token')) {
+          setHasValidOAuth(false);
+        }
+        
+        throw new Error(`${errorMessage}`);
       }
 
       toast({
         title: "Email sent",
         description: `Email successfully sent to ${recipientEmail}`,
       });
+      
+      setDiagnosticInfo({
+        success: true,
+        timestamp: new Date().toISOString()
+      });
     } catch (error: any) {
       console.error('Error sending email:', error);
       const errorMsg = error.message || "There was a problem sending your email. Please try again.";
       setLastError(errorMsg);
+      
+      // Enrich diagnostic info if not already set
+      if (!diagnosticInfo) {
+        setDiagnosticInfo({
+          errorType: 'exception',
+          error: error.message,
+          stack: error.stack
+        });
+      }
+      
       toast({
         title: "Error sending email",
         description: errorMsg,
@@ -199,38 +284,99 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     }).join('');
   };
 
+  const handleReauthenticate = () => {
+    window.location.href = '/settings';
+  };
+
   return (
-    <TooltipProvider>
-      <Tooltip open={!!lastError}>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={sendEmail}
-            disabled={disabled || isSending}
-            variant="secondary"
-            size="sm"
-            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/50 dark:border-blue-800"
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              <>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Email
-              </>
-            )}
-            {lastError && <AlertCircle className="ml-2 h-4 w-4 text-red-500" />}
-          </Button>
-        </TooltipTrigger>
-        {lastError && (
-          <TooltipContent className="max-w-sm">
-            <p className="text-sm text-red-500">{lastError}</p>
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
+    <>
+      <TooltipProvider>
+        <Tooltip open={!!lastError}>
+          <TooltipTrigger asChild>
+            <div>
+              <Button
+                onClick={sendEmail}
+                disabled={disabled || isSending || !hasValidOAuth}
+                variant="secondary"
+                size="sm"
+                className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/50 dark:border-blue-800"
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send Email
+                  </>
+                )}
+                {lastError && <AlertCircle className="ml-2 h-4 w-4 text-red-500" onClick={() => setShowDiagnostics(true)} />}
+              </Button>
+              
+              {!hasValidOAuth && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReauthenticate}
+                  className="ml-2 text-xs"
+                >
+                  <ExternalLink className="mr-1 h-3 w-3" />
+                  Authenticate
+                </Button>
+              )}
+            </div>
+          </TooltipTrigger>
+          {lastError && (
+            <TooltipContent className="max-w-sm">
+              <p className="text-sm text-red-500">{lastError}</p>
+              <button
+                onClick={() => setShowDiagnostics(true)}
+                className="text-xs text-blue-500 hover:underline mt-1"
+              >
+                View Diagnostics
+              </button>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+      
+      <Dialog open={showDiagnostics} onOpenChange={setShowDiagnostics}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Email Sending Diagnostics</DialogTitle>
+            <DialogDescription>
+              Technical information about the email sending attempt
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4 border rounded-md p-4 bg-gray-50 dark:bg-gray-900 overflow-auto max-h-96">
+            <pre className="text-xs whitespace-pre-wrap">
+              {JSON.stringify(diagnosticInfo, null, 2)}
+            </pre>
+          </div>
+          
+          <DialogFooter className="flex justify-between items-center">
+            <div>
+              {!hasValidOAuth && (
+                <div className="text-sm text-red-500 mb-2">
+                  OAuth2 authentication appears to be invalid or expired.
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {!hasValidOAuth && (
+                <Button variant="outline" onClick={handleReauthenticate}>
+                  Reauthenticate with Office 365
+                </Button>
+              )}
+              <Button onClick={() => setShowDiagnostics(false)}>Close</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

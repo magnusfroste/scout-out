@@ -72,6 +72,8 @@ const EmailSettings = () => {
     fetchEmailSettings,
     resetForm,
     validateForm,
+    checkOAuthStatus,
+    setHasValidOAuth
   } = useEmailSettings();
   
   const { user } = useAuth();
@@ -80,6 +82,7 @@ const EmailSettings = () => {
   useEffect(() => {
     checkMigrationStatus();
     fetchEmailSettings();
+    checkOAuthStatus();
   }, []);
 
   useEffect(() => {
@@ -324,6 +327,7 @@ const EmailSettings = () => {
         }
         
         await handleSaveSettings(data.refreshToken);
+        setHasValidOAuth(true);
         
         toast({
           title: "Success",

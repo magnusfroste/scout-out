@@ -1,79 +1,33 @@
+import nodemailer from 'nodemailer';
 
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
-
-export interface SMTPConfig {
-  host: string;
-  port: number;
-  email: string;
-  password?: string;
-  oauth2?: OAuth2Config;
-  provider: string;
-}
-
-export interface OAuth2Config {
-  user: string;
-  clientId: string;
-  clientSecret: string;
-  refreshToken: string;
-}
-
-export interface EmailParams {
-  from: string;
-  to: string;
-  subject: string;
-  html: string;
-}
-
-export interface EmailResult {
-  success: boolean;
-  error?: string;
-  details?: any;
-}
-
-/**
- * Creates and configures an SMTP client with deliverability-optimized settings
- */
-export function createSMTPClient(config: SMTPConfig): SMTPClient {
-  // For gmail with port 587, we need to explicitly set secure to false and use STARTTLS
-  const secure = config.port === 465;
-  
+export function createSMTPClient(config: any) {
   try {
-    console.log(`Creating SMTP client for host: ${config.host}, port: ${config.port}, email: ${config.email}, secure: ${secure}, provider: ${config.provider}`);
-    
-    // Log if using OAuth2 (without credentials)
-    if (config.oauth2) {
-      console.log(`Using OAuth2 authentication for user: ${config.oauth2.user}`);
-      
-      // Debug: log OAuth2 structure (without exposing actual secrets)
-      console.log('OAuth2 config structure:', {
-        hasUser: !!config.oauth2.user,
-        hasClientId: !!config.oauth2.clientId,
-        hasClientSecret: !!config.oauth2.clientSecret,
-        hasRefreshToken: !!config.oauth2.refreshToken,
-        refreshTokenLength: config.oauth2.refreshToken ? config.oauth2.refreshToken.length : 0
-      });
-    }
-    
-    if (config.provider === 'office365' && !config.oauth2) {
-      throw new Error("OAuth2 configuration is required for Office365");
-    }
-    
-    if (!config.host || !config.port || !config.email) {
-      throw new Error("Missing required SMTP configuration parameters");
-    }
-    
-    // Log password length but not the actual password (if using password auth)
-    if (config.password) {
-      console.log(`Password provided with length: ${config.password.length}`);
-    }
-    
-    // Create the connection config object
-    const connectionConfig: any = {
-      hostname: config.host,
+    console.log('Creating SMTP client with config:', {
+      host: config.host,
       port: config.port,
-      tls: secure,
-      // For Office365 and Gmail port 587, need to use STARTTLS
-      starttls: config.port === 587,
+      email: config.email,
+      provider: config.provider,
+      hasPassword: !!config.password,
+      hasOAuth2: !!config.oauth2
+    });
+    
+    const connectionConfig: any = {
+      host: config.host,
+      port: config.port,
+      secure: false,
+      // Always require TLS for security
+      requireTLS: true,
+      // Increase timeouts to avoid connection errors
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      // Debug flag for more logging
+      debug: true,
+      // IMPORTANT: Verify server certificate to prevent MITM attacks
+      tls: {
+        rejectUnauthorized: true
+      },
+      // Add logging for better diagnostics
+      logger: true
     };
     
     // Add appropriate authentication based on provider
@@ -92,19 +46,15 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
       
       // Using OAuth2 authentication (primarily for Office365)
       connectionConfig.auth = {
-        username: config.oauth2.user,
-        // For Office365, use XOAUTH2 authentication method
-        method: "XOAUTH2",
-        // OAuth2 authentication setup
-        oauth2: {
-          user: config.oauth2.user,
-          clientId: config.oauth2.clientId,
-          clientSecret: config.oauth2.clientSecret,
-          refreshToken: config.oauth2.refreshToken,
-          // Add Office365 specific OAuth2 parameters
-          accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-          scope: "https://outlook.office.com/SMTP.Send",
-        }
+        user: config.oauth2.user,
+        type: "OAuth2",
+        clientId: config.oauth2.clientId,
+        clientSecret: config.oauth2.clientSecret,
+        refreshToken: config.oauth2.refreshToken,
+        // Microsoft OAuth token endpoint
+        accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        // Required scope for sending email
+        scope: "https://outlook.office.com/SMTP.Send",
       };
       
       console.log("OAuth2 configuration for SMTP:", {
@@ -117,130 +67,82 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
           config.oauth2.refreshToken
         ),
         accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        scope: "https://outlook.office.com/SMTP.Send"
+        scope: "https://outlook.office.com/SMTP.Send",
+        refreshTokenLength: config.oauth2.refreshToken ? config.oauth2.refreshToken.length : 0
       });
     } else if (config.password) {
       // Traditional password authentication
       connectionConfig.auth = {
-        username: config.email,
-        password: config.password,
+        user: config.email,
+        pass: config.password
       };
+      console.log("Password authentication configured for SMTP");
     } else {
-      throw new Error("Either password or OAuth2 configuration is required");
+      console.error("No authentication method provided for SMTP client");
+      throw new Error("No authentication method provided (password or OAuth2)");
     }
     
-    // Log the actual configuration being used (without sensitive data)
-    console.log(`SMTP Configuration: ${JSON.stringify({
-      hostname: config.host,
-      port: config.port,
-      tls: secure,
-      starttls: config.port === 587,
-      username: config.email,
-      authMethod: config.oauth2 ? 'XOAUTH2' : 'LOGIN',
-      oauth2Configured: config.oauth2 ? {
-        hasUser: !!config.oauth2?.user,
-        hasClientId: !!config.oauth2?.clientId, 
-        hasScope: true
-      } : false
-    }, null, 2)}`);
-    
-    return new SMTPClient({
-      connection: connectionConfig,
-      // Set pool to false to create a new connection each time for better error handling
-      pool: false,
-      client: {
-        // Add proper identification for better deliverability
-        name: "Master Business Agent",
-        version: "1.0.0",
-        // Using a static valid domain instead of trying to parse the host
-        hostname: "localhost",
-      },
-    });
+    return nodemailer.createTransport(connectionConfig);
   } catch (error) {
     console.error("Error creating SMTP client:", error);
-    throw new Error(`Failed to create SMTP client: ${error.message}`);
+    throw error;
   }
 }
 
-/**
- * Sends an email using the provided SMTP client and email parameters
- * Optimized for deliverability with proper headers and configuration
- */
-export async function sendEmail(client: SMTPClient, params: EmailParams): Promise<EmailResult> {
+export async function sendEmail(client: any, params: any) {
   try {
-    console.log("Starting email sending process with parameters:", {
+    console.log("Sending email with params:", {
       from: params.from,
       to: params.to,
       subject: params.subject,
     });
     
-    // Add proper email headers and structure for improved deliverability
-    const result = await client.send({
-      from: params.from,
-      to: params.to,
-      subject: params.subject,
-      html: params.html,
-      headers: {
-        // Add proper headers to reduce spam scoring
-        "X-Mailer": "Master Business Agent",
-        "X-Priority": "3", // Normal priority
-        "Precedence": "Bulk",
-        "List-Unsubscribe": `<mailto:${params.from}?subject=Unsubscribe>`,
-      },
-      // Important: Add plain text alternative to improve deliverability
-      text: htmlToPlainText(params.html),
-    });
+    // Verify SMTP connection before sending
+    console.log("Verifying SMTP connection...");
+    await client.verify();
+    console.log("SMTP connection verified successfully");
     
-    console.log("Email sent successfully with transaction ID:", result?.id || "unknown");
-    await client.close();
-    return { success: true };
+    // Send the email
+    console.log("Sending email...");
+    const info = await client.sendMail(params);
+    console.log("Email sent successfully:", info);
+    
+    return {
+      success: true,
+      messageId: info.messageId,
+      response: info.response
+    };
   } catch (error: any) {
-    // Log detailed error information to help diagnose the issue
-    console.error("Error sending email:", {
-      message: error.message,
+    console.error("Error sending email:", error);
+    
+    // Analyze the error to provide better diagnostics
+    const details: any = {
       name: error.name,
       code: error.code,
-      stack: error.stack,
-      response: error.response || "No response info",
-      commandQueue: error.commandQueue || "No command queue info",
-      lastCommand: error.lastCommand || "No last command info"
-    });
+      command: error.command,
+    };
     
-    try {
-      await client.close();
-    } catch (closeError) {
-      console.error("Error closing SMTP client:", closeError);
+    // OAuth2 related errors
+    if (error.message.includes('OAuth2') || 
+        error.message.includes('auth') || 
+        error.message.includes('authentication') ||
+        error.code === 'EAUTH') {
+      details.authProblem = true;
+      details.suggestion = 'The OAuth2 token might be invalid or expired. Try re-authenticating with Microsoft.';
     }
     
-    return { 
-      success: false, 
+    // Connection errors
+    if (error.code === 'ECONNECTION' || 
+        error.code === 'ETIMEDOUT' || 
+        error.code === 'ESOCKET') {
+      details.connectionProblem = true;
+      details.suggestion = 'There was a problem connecting to the mail server. Check server settings and network connectivity.';
+    }
+    
+    return {
+      success: false,
       error: error.message,
-      details: {
-        name: error.name,
-        code: error.code,
-        info: error.response || error.info || "No additional information"
-      }
+      details: details
     };
   }
-}
-
-/**
- * Convert HTML content to plain text for improved deliverability
- * Having both HTML and plain text versions significantly improves spam scores
- */
-function htmlToPlainText(html: string): string {
-  // Basic conversion of HTML to plain text
-  return html
-    .replace(/<style[^>]*>.*?<\/style>/gs, '') // Remove style tags and their content
-    .replace(/<script[^>]*>.*?<\/script>/gs, '') // Remove script tags and their content
-    .replace(/<[^>]*>/g, '') // Remove all remaining HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces with regular spaces
-    .replace(/&amp;/g, '&') // Replace HTML entities
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n\s*\n/g, '\n\n') // Remove extra blank lines
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .trim(); // Trim leading/trailing whitespace
 }
