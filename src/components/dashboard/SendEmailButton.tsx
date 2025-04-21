@@ -285,6 +285,24 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       }
       
+      let hubspotBccAddress = null;
+      try {
+        const { data: emailSettings, error } = await supabase
+          .from('user_email_settings')
+          .select('hubspot_bcc_address')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+        if (error) throw error;
+
+        if (emailSettings?.hubspot_bcc_address) {
+          hubspotBccAddress = emailSettings.hubspot_bcc_address;
+        }
+      } catch (error) {
+        console.error('Error fetching Hubspot BCC address:', error);
+      }
+
       const emailData: any = {
         to: recipientEmail,
         to_name: recipientName,
@@ -294,7 +312,8 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           email: settings.email_address,
           host: settings.smtp_host,
           port: settings.smtp_port,
-          provider: settings.email_provider
+          provider: settings.email_provider,
+          bcc: hubspotBccAddress
         }
       };
       

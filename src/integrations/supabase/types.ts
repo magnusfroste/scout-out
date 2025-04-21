@@ -240,6 +240,7 @@ export type Database = {
           created_at: string | null
           email_address: string
           email_provider: string
+          hubspot_bcc_address: string | null
           id: string
           is_active: boolean | null
           oauth2_client_id: string | null
@@ -255,6 +256,7 @@ export type Database = {
           created_at?: string | null
           email_address: string
           email_provider: string
+          hubspot_bcc_address?: string | null
           id?: string
           is_active?: boolean | null
           oauth2_client_id?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           created_at?: string | null
           email_address?: string
           email_provider?: string
+          hubspot_bcc_address?: string | null
           id?: string
           is_active?: boolean | null
           oauth2_client_id?: string | null
@@ -331,6 +334,7 @@ export type Database = {
           created_at: string | null
           email_address: string
           email_provider: string
+          hubspot_bcc_address: string | null
           id: string
           is_active: boolean | null
           oauth2_client_id: string | null
