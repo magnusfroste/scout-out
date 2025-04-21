@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { 
   Card, 
   CardHeader, 
@@ -7,26 +7,18 @@ import {
   CardContent,
   CardFooter 
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Mail,
-  Server, 
-  Key,
   Save,
   Trash2,
-  Settings as SettingsIcon,
   Plus,
   Loader2,
   CheckCircle2,
-  ExternalLink,
   AlertCircle
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -38,50 +30,48 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { EmailSettings as EmailSettingsType } from '@/types/email';
-import { initiateO365Auth, handleO365AuthCallback, checkOAuthColumnsExist } from '@/services/o365AuthService';
-
-interface CompleteEmailSettings extends EmailSettingsType {
-  oauth2_client_id?: string | null;
-  oauth2_client_secret?: string | null;
-  oauth2_refresh_token?: string | null;
-}
+import { useEmailSettings } from '@/hooks/useEmailSettings';
+import { initiateO365Auth, handleO365AuthCallback } from '@/services/o365AuthService';
+import { BasicSettings } from './email-settings/BasicSettings';
+import { ServerSettings } from './email-settings/ServerSettings';
+import { AuthenticationFields } from './email-settings/AuthenticationFields';
 
 const EmailSettings = () => {
-  const [emailAddress, setEmailAddress] = useState('');
-  const [emailPassword, setEmailPassword] = useState('');
-  const [emailProvider, setEmailProvider] = useState('');
-  const [smtpHost, setSmtpHost] = useState('');
-  const [smtpPort, setSmtpPort] = useState('');
-  const [authType, setAuthType] = useState<'password' | 'oauth2'>('password');
-  
-  const [oauth2ClientId, setOauth2ClientId] = useState('');
-  const [oauth2ClientSecret, setOauth2ClientSecret] = useState('');
-  
-  const [existingSettings, setExistingSettings] = useState<CompleteEmailSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [oauthColumnsExist, setOauthColumnsExist] = useState(true);
-  
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const {
+    emailAddress,
+    setEmailAddress,
+    emailPassword,
+    setEmailPassword,
+    emailProvider,
+    setEmailProvider,
+    smtpHost,
+    setSmtpHost,
+    smtpPort,
+    setSmtpPort,
+    authType,
+    setAuthType,
+    oauth2ClientId,
+    setOauth2ClientId,
+    oauth2ClientSecret,
+    setOauth2ClientSecret,
+    existingSettings,
+    isLoading,
+    isSaving,
+    setIsSaving,
+    isDeleting,
+    setIsDeleting,
+    isAuthenticating,
+    setIsAuthenticating,
+    oauthColumnsExist,
+    checkMigrationStatus,
+    fetchEmailSettings,
+    validateForm,
+  } = useEmailSettings();
 
   useEffect(() => {
-    if (user) {
-      checkMigrationStatus();
-      fetchEmailSettings();
-    }
-  }, [user]);
-
-  const checkMigrationStatus = async () => {
-    const columnsExist = await checkOAuthColumnsExist();
-    console.log('OAuth columns exist:', columnsExist);
-    setOauthColumnsExist(columnsExist);
-  };
+    checkMigrationStatus();
+    fetchEmailSettings();
+  }, []);
 
   useEffect(() => {
     if (emailProvider === 'gmail') {
@@ -103,93 +93,6 @@ const EmailSettings = () => {
     }
   }, [emailProvider]);
 
-  const fetchEmailSettings = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('get_user_email_settings');
-      
-      if (error) throw error;
-      
-      console.log('Fetched email settings:', data);
-      
-      if (data && data.length > 0) {
-        const settings = data[0] as CompleteEmailSettings;
-        setExistingSettings(settings);
-        setEmailAddress(settings.email_address);
-        setEmailProvider(settings.email_provider);
-        setSmtpHost(settings.smtp_host);
-        setSmtpPort(settings.smtp_port.toString());
-        
-        if (settings.oauth2_client_id) {
-          setOauth2ClientId(settings.oauth2_client_id);
-          setAuthType('oauth2');
-        }
-        
-        if (settings.oauth2_client_secret) {
-          setOauth2ClientSecret(settings.oauth2_client_secret);
-        }
-      } else {
-        setExistingSettings(null);
-        resetForm();
-      }
-    } catch (error: any) {
-      console.error('Error fetching email settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load email settings: ' + error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setEmailAddress('');
-    setEmailPassword('');
-    setEmailProvider('');
-    setSmtpHost('');
-    setSmtpPort('');
-    setOauth2ClientId('');
-    setOauth2ClientSecret('');
-    setAuthType('password');
-  };
-
-  const validateForm = () => {
-    if (!emailAddress || !emailProvider || !smtpHost || !smtpPort) {
-      toast({
-        title: 'Missing Fields',
-        description: 'Please fill in all required fields',
-        variant: 'destructive',
-      });
-      return false;
-    }
-    
-    if (authType === 'password') {
-      if (!existingSettings && !emailPassword) {
-        toast({
-          title: 'Missing Password',
-          description: 'Please provide an app password',
-          variant: 'destructive',
-        });
-        return false;
-      }
-    } else if (authType === 'oauth2' && oauthColumnsExist) {
-      if (!oauth2ClientId || !oauth2ClientSecret) {
-        toast({
-          title: 'Missing OAuth2 Credentials',
-          description: 'Please provide all OAuth2 credentials',
-          variant: 'destructive',
-        });
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
   const handleSaveSettings = async (refreshToken?: string) => {
     if (!user) return;
     
@@ -206,7 +109,6 @@ const EmailSettings = () => {
         user_id: user.id
       };
       
-      // Improved handling of OAuth2 and password-based authentication
       if (authType === 'password') {
         if (emailPassword) {
           settingsData.app_password = emailPassword;
@@ -214,12 +116,10 @@ const EmailSettings = () => {
           throw new Error('App password is required for new email settings');
         }
         
-        // Ensure OAuth2 fields are cleared when using password auth
         settingsData.oauth2_client_id = null;
         settingsData.oauth2_client_secret = null;
         settingsData.oauth2_refresh_token = null;
       } else if (authType === 'oauth2') {
-        // Validate OAuth2 credentials
         if (!oauth2ClientId || !oauth2ClientSecret) {
           throw new Error('OAuth2 client ID and client secret are required');
         }
@@ -227,19 +127,15 @@ const EmailSettings = () => {
         settingsData.oauth2_client_id = oauth2ClientId;
         settingsData.oauth2_client_secret = oauth2ClientSecret;
         
-        // Only set refresh token if provided (during initial OAuth2 setup)
         if (refreshToken) {
           settingsData.oauth2_refresh_token = refreshToken;
         } else if (existingSettings?.oauth2_refresh_token) {
-          // Preserve existing refresh token if not getting a new one
           settingsData.oauth2_refresh_token = existingSettings.oauth2_refresh_token;
         }
         
-        // Fallback for app_password when using OAuth2
         settingsData.app_password = 'oauth2_not_used';
       }
       
-      // Existing save logic with improved error handling
       let result;
       if (existingSettings) {
         result = await supabase
@@ -260,7 +156,6 @@ const EmailSettings = () => {
         description: `Email settings ${existingSettings ? 'updated' : 'saved'} successfully`,
       });
       
-      // Refresh settings after successful save
       fetchEmailSettings();
       setEmailPassword('');
     } catch (error: any) {
@@ -332,80 +227,7 @@ const EmailSettings = () => {
     }
   };
 
-  const handleAuthCallback = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
-
-    if (code || error) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    if (error) {
-      toast({
-        title: "Authentication Error",
-        description: `Failed to authenticate: ${error}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (code) {
-      setIsAuthenticating(true);
-      try {
-        console.log('Processing authentication callback with code');
-        // Get the stored client ID and redirect URI
-        const storedClientId = sessionStorage.getItem('emailSettings_clientId') || oauth2ClientId;
-        const storedRedirectUri = sessionStorage.getItem('emailSettings_redirectUri') || `${window.location.origin}/settings`;
-        
-        console.log('Using stored values:', { storedClientId, storedRedirectUri });
-        
-        if (!storedClientId || !oauth2ClientSecret) {
-          throw new Error('Missing required OAuth2 credentials');
-        }
-        
-        const result = await handleO365AuthCallback(
-          code,
-          storedClientId,
-          oauth2ClientSecret,
-          storedRedirectUri
-        );
-
-        // Clean up session storage
-        sessionStorage.removeItem('emailSettings_redirecting');
-        sessionStorage.removeItem('emailSettings_clientId');
-        sessionStorage.removeItem('emailSettings_redirectUri');
-
-        if (result && result.refresh_token) {
-          console.log('Successfully obtained refresh token, saving settings');
-          await handleSaveSettings(result.refresh_token);
-          toast({
-            title: "Success",
-            description: "Successfully authenticated with Office 365",
-          });
-        } else {
-          console.error('Missing refresh token in response', result);
-          toast({
-            title: "Authentication Error",
-            description: "Failed to obtain refresh token from Microsoft",
-            variant: "destructive",
-          });
-        }
-      } catch (error: any) {
-        console.error('Error handling auth callback:', error);
-        toast({
-          title: "Authentication Error",
-          description: `Failed to complete authentication: ${error.message || 'Unknown error'}`,
-          variant: "destructive",
-        });
-      } finally {
-        setIsAuthenticating(false);
-      }
-    }
-  };
-
   useEffect(() => {
-    // Check if we're returning from an OAuth redirect
     const isRedirecting = sessionStorage.getItem('emailSettings_redirecting') === 'true';
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -416,132 +238,13 @@ const EmailSettings = () => {
     }
   }, [oauth2ClientId, oauth2ClientSecret]);
 
-  const renderAuthFields = () => {
-    if (authType === 'password') {
-      return (
-        <div className="space-y-2">
-          <Label htmlFor="emailPassword">
-            App Password {existingSettings ? '(Leave blank to keep current password)' : ''}
-          </Label>
-          <div className="relative">
-            <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="emailPassword"
-              type="password"
-              placeholder="App password (not your regular email password)"
-              value={emailPassword}
-              onChange={(e) => setEmailPassword(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Use an app-specific password, not your main account password. 
-            <a 
-              href="https://support.google.com/mail/answer/185833" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline ml-1"
-            >
-              How to generate an app password
-            </a>
-          </p>
-        </div>
-      );
-    } else {
-      return (
-        <div className="space-y-4 border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
-          {!oauthColumnsExist && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Migration Required</AlertTitle>
-              <AlertDescription>
-                The OAuth2 columns have not been added to the database yet. 
-                Please run the SQL migration script first.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <h3 className="font-medium flex items-center">
-            OAuth2 Configuration 
-            <a 
-              href="https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="ml-2 text-blue-600 hover:underline text-sm inline-flex items-center"
-            >
-              <span>Microsoft Azure App Registration Guide</span>
-              <ExternalLink className="h-3 w-3 ml-1" />
-            </a>
-          </h3>
-          
-          <div className="space-y-2">
-            <Label htmlFor="oauth2ClientId">Client ID</Label>
-            <Input
-              id="oauth2ClientId"
-              placeholder="Enter your Microsoft Azure app Client ID"
-              value={oauth2ClientId}
-              onChange={(e) => setOauth2ClientId(e.target.value)}
-              disabled={!oauthColumnsExist}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="oauth2ClientSecret">Client Secret</Label>
-            <Input
-              id="oauth2ClientSecret"
-              type="password"
-              placeholder="Enter your Microsoft Azure app Client Secret"
-              value={oauth2ClientSecret}
-              onChange={(e) => setOauth2ClientSecret(e.target.value)}
-              disabled={!oauthColumnsExist}
-            />
-          </div>
-
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              <strong>Redirect URIs to configure in Azure:</strong><br />
-              • {window.location.origin}/settings<br />
-              • {window.location.origin}/auth/callback
-            </p>
-          </div>
-
-          {(!existingSettings?.oauth2_refresh_token || !oauthColumnsExist) && (
-            <Button 
-              type="button" 
-              onClick={() => initiateOAuth2()}
-              disabled={isAuthenticating || !oauthColumnsExist}
-              className="w-full"
-            >
-              {isAuthenticating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Authenticating...
-                </>
-              ) : (
-                <>
-                  <Key className="mr-2 h-4 w-4" />
-                  Connect to Office 365
-                </>
-              )}
-            </Button>
-          )}
-          
-          <p className="text-sm text-muted-foreground">
-            You need to register an application in the Microsoft Azure portal and obtain these credentials.
-            The app must have the SMTP.Send permission.
-          </p>
-        </div>
-      );
-    }
-  };
-
-  const handleSaveButtonClick = () => {
-    handleSaveSettings();
-  };
-
-  const handleDeleteButtonClick = () => {
-    handleDeleteSettings();
-  };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full shadow-md">
@@ -554,6 +257,7 @@ const EmailSettings = () => {
           Configure your email account to send emails directly from the app
         </CardDescription>
       </CardHeader>
+      
       <CardContent className="space-y-4">
         {!oauthColumnsExist && (
           <Alert variant="destructive" className="mb-4">
@@ -565,113 +269,73 @@ const EmailSettings = () => {
             </AlertDescription>
           </Alert>
         )}
+
+        <BasicSettings
+          emailAddress={emailAddress}
+          emailProvider={emailProvider}
+          onEmailAddressChange={setEmailAddress}
+          onEmailProviderChange={setEmailProvider}
+        />
         
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        {emailProvider && (
+          <div>
+            {emailProvider === 'office365' ? (
+              <div className="flex justify-between items-center mb-2">
+                <Label>Authentication Method</Label>
+                <div className="text-xs text-blue-600">
+                  Office 365 requires OAuth2 authentication
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center mb-2">
+                <Label>Authentication Method</Label>
+                <div>
+                  <Tabs value={authType} onValueChange={(value) => setAuthType(value as 'password' | 'oauth2')}>
+                    <TabsList className="grid w-[200px] grid-cols-2">
+                      <TabsTrigger value="password">Password</TabsTrigger>
+                      <TabsTrigger value="oauth2">OAuth2</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              </div>
+            )}
+            
+            <AuthenticationFields
+              authType={authType}
+              emailPassword={emailPassword}
+              existingSettings={existingSettings}
+              oauth2ClientId={oauth2ClientId}
+              oauth2ClientSecret={oauth2ClientSecret}
+              oauthColumnsExist={oauthColumnsExist}
+              isAuthenticating={isAuthenticating}
+              onEmailPasswordChange={setEmailPassword}
+              onOauth2ClientIdChange={setOauth2ClientId}
+              onOauth2ClientSecretChange={setOauth2ClientSecret}
+              onInitiateOAuth2={initiateOAuth2}
+            />
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="emailAddress">Email Address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="emailAddress"
-                    placeholder="your-email@example.com"
-                    value={emailAddress}
-                    onChange={(e) => setEmailAddress(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="emailProvider">Email Provider</Label>
-                <Select value={emailProvider} onValueChange={setEmailProvider}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select email provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gmail">Gmail</SelectItem>
-                    <SelectItem value="outlook">Outlook</SelectItem>
-                    <SelectItem value="office365">Office 365</SelectItem>
-                    <SelectItem value="yahoo">Yahoo Mail</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        )}
+        
+        <ServerSettings
+          smtpHost={smtpHost}
+          smtpPort={smtpPort}
+          onSmtpHostChange={setSmtpHost}
+          onSmtpPortChange={setSmtpPort}
+        />
+        
+        {existingSettings && (
+          <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-900">
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">Email settings configured</span>
             </div>
-            
-            {emailProvider && (
-              <div>
-                {emailProvider === 'office365' ? (
-                  <div className="flex justify-between items-center mb-2">
-                    <Label>Authentication Method</Label>
-                    <div className="text-xs text-blue-600">
-                      Office 365 requires OAuth2 authentication
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center mb-2">
-                    <Label>Authentication Method</Label>
-                    <div>
-                      <Tabs value={authType} onValueChange={(value) => setAuthType(value as 'password' | 'oauth2')}>
-                        <TabsList className="grid w-[200px] grid-cols-2">
-                          <TabsTrigger value="password">Password</TabsTrigger>
-                          <TabsTrigger value="oauth2">OAuth2</TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                    </div>
-                  </div>
-                )}
-                
-                {renderAuthFields()}
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="smtpHost">SMTP Host</Label>
-                <div className="relative">
-                  <Server className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="smtpHost"
-                    placeholder="smtp.example.com"
-                    value={smtpHost}
-                    onChange={(e) => setSmtpHost(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="smtpPort">SMTP Port</Label>
-                <Input
-                  id="smtpPort"
-                  placeholder="587"
-                  value={smtpPort}
-                  onChange={(e) => setSmtpPort(e.target.value.replace(/\D/g, ''))}
-                  type="number"
-                />
-              </div>
-            </div>
-            
-            {existingSettings && (
-              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-900">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span className="font-medium">Email settings configured</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  You can now send emails directly from the app using {existingSettings.email_address}
-                </p>
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground mt-1">
+              You can now send emails directly from the app using {existingSettings.email_address}
+            </p>
           </div>
         )}
       </CardContent>
+
       <CardFooter className="flex justify-between">
         {existingSettings ? (
           <>
@@ -700,14 +364,14 @@ const EmailSettings = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteButtonClick} className="bg-red-600 hover:bg-red-700">
+                  <AlertDialogAction onClick={handleDeleteSettings} className="bg-red-600 hover:bg-red-700">
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             
-            <Button onClick={handleSaveButtonClick} disabled={isSaving || isDeleting}>
+            <Button onClick={() => handleSaveSettings()} disabled={isSaving || isDeleting}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -722,7 +386,7 @@ const EmailSettings = () => {
             </Button>
           </>
         ) : (
-          <Button onClick={handleSaveButtonClick} disabled={isSaving} className="ml-auto">
+          <Button onClick={() => handleSaveSettings()} disabled={isSaving} className="ml-auto">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
