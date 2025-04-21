@@ -1,9 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ElevatorPitch } from '@/utils/webhookResponseParser';
 import { ContactInfo } from '@/types/company';
-import { fetchWebhookSettings } from './webhookService';
 
 export interface UserProfile {
   id: string;
@@ -23,12 +21,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
   try {
     console.log('Fetching profile for user:', userId);
     
-    // Get default credits from webhook settings
-    const webhookSettings = await fetchWebhookSettings();
-    const defaultCredits = webhookSettings?.default_signup_credits;
-    
-    console.log('Default signup credits from webhook settings:', defaultCredits);
-    
     // Try to get the existing profile
     const { data, error } = await supabase
       .from('profiles')
@@ -43,27 +35,20 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         return null;
       }
       
-      // Profile doesn't exist, create one
+      // Profile doesn't exist, create one with database defaults
       console.log('Profile not found, creating new profile for user:', userId);
-      
-      const insertData: Record<string, any> = {
-        id: userId,
-        first_name: null,
-        last_name: null,
-        avatar_url: null,
-        is_admin: false,
-        website_url: null,
-        business_data: null
-      };
-
-      // Only add credits if webhook settings provide a value
-      if (defaultCredits !== undefined && defaultCredits !== null) {
-        insertData.credits = defaultCredits;
-      }
       
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
-        .insert(insertData)
+        .insert({
+          id: userId,
+          first_name: null,
+          last_name: null,
+          avatar_url: null,
+          is_admin: false,
+          website_url: null,
+          business_data: null
+        })
         .select('*')
         .single();
         
@@ -73,30 +58,12 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       }
       
       console.log('New profile created:', newProfile);
-      return {
-        id: newProfile.id,
-        credits: newProfile.credits,
-        first_name: newProfile.first_name,
-        last_name: newProfile.last_name,
-        avatar_url: newProfile.avatar_url,
-        is_admin: newProfile.is_admin,
-        website_url: newProfile.website_url,
-        business_data: newProfile.business_data
-      } as UserProfile;
+      return newProfile as UserProfile;
     }
     
     // Profile exists, return it
     console.log('Profile found:', data);
-    return {
-      id: data.id,
-      credits: data.credits,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      avatar_url: data.avatar_url,
-      is_admin: data.is_admin,
-      website_url: data.website_url,
-      business_data: data.business_data
-    } as UserProfile;
+    return data as UserProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
     return null;
