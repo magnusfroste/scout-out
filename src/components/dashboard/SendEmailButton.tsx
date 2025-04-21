@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Mail, Loader2, AlertCircle, ExternalLink, InfoIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,6 +48,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
   const [hasValidOAuth, setHasValidOAuth] = useState(true);
+  const [isO365SmtpDisabled, setIsO365SmtpDisabled] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -89,6 +90,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     setIsSending(true);
     setLastError(null);
     setDiagnosticInfo(null);
+    setIsO365SmtpDisabled(false);
     
     try {
       console.log('Starting email sending process...');
@@ -227,6 +229,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           details: errorDetails
         });
         
+        // Check for Office 365 SMTP authentication disabled error
+        if (errorMessage.includes('SmtpClientAuthentication is disabled') || 
+            errorMessage.includes('smtp_auth_disabled')) {
+          setIsO365SmtpDisabled(true);
+          throw new Error('Microsoft has disabled SMTP Authentication for your tenant. Please visit https://aka.ms/smtp_auth_disabled for more information.');
+        }
+        
         // Check if we need to refresh OAuth2 authentication
         if (errorMessage.includes('OAuth2') || 
             errorMessage.includes('authentication') || 
@@ -288,6 +297,10 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     window.location.href = '/settings';
   };
 
+  const handleO365SmtpLearnMore = () => {
+    window.open('https://aka.ms/smtp_auth_disabled', '_blank');
+  };
+
   return (
     <>
       <TooltipProvider>
@@ -296,7 +309,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
             <div>
               <Button
                 onClick={sendEmail}
-                disabled={disabled || isSending || !hasValidOAuth}
+                disabled={disabled || isSending || !hasValidOAuth || isO365SmtpDisabled}
                 variant="secondary"
                 size="sm"
                 className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/50 dark:border-blue-800"
@@ -324,6 +337,18 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
                 >
                   <ExternalLink className="mr-1 h-3 w-3" />
                   Authenticate
+                </Button>
+              )}
+              
+              {isO365SmtpDisabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleO365SmtpLearnMore}
+                  className="ml-2 text-xs text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800"
+                >
+                  <InfoIcon className="mr-1 h-3 w-3" />
+                  Microsoft SMTP Auth Disabled
                 </Button>
               )}
             </div>
@@ -362,6 +387,20 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
               {!hasValidOAuth && (
                 <div className="text-sm text-red-500 mb-2">
                   OAuth2 authentication appears to be invalid or expired.
+                </div>
+              )}
+              
+              {isO365SmtpDisabled && (
+                <div className="text-sm text-amber-600 mb-2">
+                  Microsoft has disabled SMTP Authentication for your tenant. This is a security measure by Microsoft.
+                  <a 
+                    href="https://aka.ms/smtp_auth_disabled"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-blue-500 hover:underline mt-1"
+                  >
+                    Learn more about Microsoft SMTP Authentication Policies
+                  </a>
                 </div>
               )}
             </div>

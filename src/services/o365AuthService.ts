@@ -88,6 +88,14 @@ export const handleO365AuthCallback = async (
     console.log('Access token length:', data.access_token?.length || 0);
     console.log('Refresh token length:', data.refresh_token?.length || 0);
     
+    if (data.error) {
+      console.error('Error in OAuth token response:', data.error);
+      if (data.error_description && data.error_description.includes('SMTP')) {
+        throw new Error(`Microsoft SMTP issue: ${data.error_description}`);
+      }
+      throw new Error(data.error_description || 'Authentication failed');
+    }
+    
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
@@ -104,18 +112,29 @@ export const verifyO365Auth = async (userId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
       .from('user_email_settings')
-      .select('oauth2_refresh_token')
+      .select('oauth2_refresh_token, updated_at')
       .eq('user_id', userId)
       .eq('is_active', true)
       .eq('email_provider', 'office365')
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error('Error verifying OAuth2 credentials:', error);
       return false;
     }
     
-    return !!data?.oauth2_refresh_token;
+    // No data means no valid OAuth settings
+    if (!data) {
+      return false;
+    }
+    
+    // Check if refresh token exists
+    if (!data.oauth2_refresh_token) {
+      return false;
+    }
+    
+    // Consider the token valid if it exists
+    return true;
   } catch (error) {
     console.error('Exception verifying OAuth2 credentials:', error);
     return false;
@@ -148,7 +167,8 @@ export const saveOAuth2Tokens = async (
     const settingsData = {
       oauth2_refresh_token: refreshToken,
       oauth2_client_id: clientId,
-      oauth2_client_secret: clientSecret
+      oauth2_client_secret: clientSecret,
+      updated_at: new Date().toISOString()
     };
     
     let result;
