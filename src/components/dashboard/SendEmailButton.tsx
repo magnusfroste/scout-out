@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2, AlertCircle, ExternalLink, InfoIcon, RefreshCw } from 'lucide-react';
@@ -432,7 +433,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   return (
     <>
       {needsConsent && (
-        <Alert variant="warning" className="mb-4">
+        <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Microsoft Consent Required</AlertTitle>
           <AlertDescription>
