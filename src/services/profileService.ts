@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ElevatorPitch } from '@/utils/webhookResponseParser';
@@ -25,7 +24,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     
     // Get default credits from webhook settings
     const webhookSettings = await fetchWebhookSettings();
-    const defaultCredits = webhookSettings?.default_signup_credits || 5; // Ensure fallback is 5
+    const defaultCredits = webhookSettings?.default_signup_credits;
     
     console.log('Default signup credits:', defaultCredits);
     
@@ -40,7 +39,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       console.error('Error fetching user profile:', error);
       // If it's not a "not found" error, return null
       if (error.code !== 'PGRST116') {
-        // Only show toast for non-initialization errors
         return null;
       }
       
@@ -51,7 +49,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         .from('profiles')
         .insert({
           id: userId,
-          credits: defaultCredits, // Use the defaultCredits here
+          // No need to specify credits, it will use database default
           first_name: null,
           last_name: null,
           avatar_url: null,
