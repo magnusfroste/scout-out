@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mail } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -13,6 +14,10 @@ import { MigrationAlert } from './MigrationAlert';
 import { useEmailSettingsForm } from '@/hooks/useEmailSettingsForm';
 import { OAuth2Settings } from './OAuth2Settings';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { handleO365AuthCallback } from '@/services/oauth/oauthFlowService';
+import { saveOAuth2Tokens } from '@/services/oauth/tokenService';
 
 const EmailSettingsContainer = () => {
   const {
@@ -48,13 +53,101 @@ const EmailSettingsContainer = () => {
     isDeleting,
     handleSaveSettings,
     handleDeleteSettings,
-  } = useEmailSettingsForm(existingSettings, hasValidOAuth, setHasValidOAuth, fetchEmailSettings);
+  } = useEmailSettingsForm(
+    emailAddress,
+    emailPassword,
+    emailProvider,
+    smtpHost,
+    smtpPort,
+    authType,
+    oauth2ClientId,
+    oauth2ClientSecret,
+    existingSettings,
+    hasValidOAuth,
+    setHasValidOAuth,
+    fetchEmailSettings,
+    validateForm
+  );
 
   const { handleInitiateOAuth } = OAuth2Settings({
     oauth2ClientId,
     emailAddress,
     validateForm,
   });
+
+  const { toast } = useToast();
+  
+  // Define handleAuthCallback function to process OAuth callbacks
+  const handleAuthCallback = async () => {
+    console.log('Handling OAuth callback');
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (!code) {
+      console.error('No authorization code found in URL');
+      sessionStorage.removeItem('emailSettings_redirecting');
+      return;
+    }
+    
+    try {
+      // Get stored values from session storage
+      const clientId = sessionStorage.getItem('emailSettings_clientId');
+      const redirectUri = sessionStorage.getItem('emailSettings_redirectUri');
+      const userEmail = sessionStorage.getItem('emailSettings_userEmail');
+      
+      if (!clientId || !redirectUri) {
+        throw new Error('Missing OAuth configuration. Please try again.');
+      }
+
+      // Use existing client secret if available, otherwise prompt user
+      let clientSecret = oauth2ClientSecret;
+      if (!clientSecret && existingSettings?.oauth2_client_secret) {
+        clientSecret = existingSettings.oauth2_client_secret;
+      }
+      
+      if (!clientSecret) {
+        throw new Error('Client secret is required to complete authentication');
+      }
+
+      // Exchange authorization code for tokens
+      const tokens = await handleO365AuthCallback(code, clientId, clientSecret, redirectUri);
+      console.log('Received tokens from authorization code exchange');
+      
+      // Save the tokens to the database
+      if (tokens.refreshToken) {
+        console.log('Saving refresh token to database');
+        await handleSaveSettings(tokens.refreshToken);
+        toast({
+          title: 'Authentication Successful',
+          description: 'Successfully authenticated with Microsoft 365',
+        });
+      }
+      
+      // Clean up session storage
+      sessionStorage.removeItem('emailSettings_redirecting');
+      sessionStorage.removeItem('emailSettings_clientId');
+      sessionStorage.removeItem('emailSettings_redirectUri');
+      sessionStorage.removeItem('emailSettings_userEmail');
+      
+      // Remove code from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Check OAuth status
+      checkOAuthStatus();
+    } catch (error: any) {
+      console.error('Error handling OAuth callback:', error);
+      toast({
+        title: 'Authentication Error',
+        description: error.message || 'Failed to complete authentication process',
+        variant: 'destructive',
+      });
+      
+      // Clean up session storage
+      sessionStorage.removeItem('emailSettings_redirecting');
+      sessionStorage.removeItem('emailSettings_clientId');
+      sessionStorage.removeItem('emailSettings_redirectUri');
+    }
+  };
 
   if (isLoading) {
     return (
