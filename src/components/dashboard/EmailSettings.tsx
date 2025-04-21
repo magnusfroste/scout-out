@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -380,6 +381,17 @@ const EmailSettings = () => {
                 </>
               )}
             </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="oauth2RefreshToken">Refresh Token</Label>
+            <Input
+              id="oauth2RefreshToken"
+              type="password"
+              placeholder="Enter the OAuth2 Refresh Token"
+              value={oauth2RefreshToken}
+              onChange={(e) => setOauth2RefreshToken(e.target.value)}
+            />
           </div>
           
           <p className="text-sm text-muted-foreground">
