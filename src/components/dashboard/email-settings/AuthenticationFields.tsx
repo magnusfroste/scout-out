@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -120,6 +121,12 @@ export const AuthenticationFields = ({
               <div key={index} className="flex items-center text-sm">
                 <span className="text-blue-600 mr-2">•</span>
                 {permission}
+                {permission === 'Mail.Send' && (
+                  <span className="ml-2 text-gray-500 text-xs">(required for sending emails)</span>
+                )}
+                {permission === 'User.Read' && (
+                  <span className="ml-2 text-gray-500 text-xs">(basic profile access)</span>
+                )}
               </div>
             ))}
           </div>

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   initiateO365Auth, 
@@ -63,9 +62,6 @@ export const getGraphApiRequirements = () => {
   return {
     requiredPermissions: [
       'Mail.Send',
-      'Mail.ReadWrite',
-      'Mail.ReadWrite.Shared',
-      'Mail.Send.Shared',
       'User.Read'
     ],
     redirectUris: [
@@ -79,8 +75,8 @@ export const getGraphApiRequirements = () => {
     },
     setupSteps: [
       'Register a new application in Azure Active Directory',
-      'Add required API permissions under "API Permissions"',
-      'Grant admin consent for your organization',
+      'Add the required permission "Mail.Send" under "API Permissions"',
+      'Grant admin consent for your organization if required',
       'Create a client secret under "Certificates & secrets"',
       'Configure redirect URIs under "Authentication"',
       'Use the standard Microsoft OAuth endpoints provided'
