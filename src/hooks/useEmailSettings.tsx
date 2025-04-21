@@ -105,8 +105,9 @@ export const useEmailSettings = () => {
         }
 
         // Check if we have a valid OAuth2 refresh token
-        setHasValidOAuth(!!settings.oauth2_refresh_token && settings.email_provider === 'office365');
-        console.log('Has valid OAuth2 token:', !!settings.oauth2_refresh_token);
+        const hasValid = !!settings.oauth2_refresh_token && settings.email_provider === 'office365';
+        setHasValidOAuth(hasValid);
+        console.log('Has valid OAuth2 token:', hasValid);
       } else {
         setExistingSettings(null);
         resetForm();

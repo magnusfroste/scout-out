@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -127,10 +128,10 @@ export const AuthenticationFields = ({
         </div>
         <Input
           id="oauth2ClientId"
-          placeholder={hasStoredCredentials ? "Using stored Client ID (change only if needed)" : "Enter your Microsoft Azure app Client ID"}
+          placeholder={hasStoredCredentials && !oauth2ClientId ? "Using stored Client ID (change only if needed)" : "Enter your Microsoft Azure app Client ID"}
           value={oauth2ClientId}
           onChange={(e) => onOauth2ClientIdChange(e.target.value)}
-          disabled={!oauthColumnsExist}
+          disabled={!oauthColumnsExist || isAuthenticating}
         />
       </div>
       
@@ -153,10 +154,10 @@ export const AuthenticationFields = ({
         <Input
           id="oauth2ClientSecret"
           type="password"
-          placeholder={hasStoredCredentials ? "Using stored Client Secret (change only if needed)" : "Enter your Microsoft Azure app Client Secret"}
+          placeholder={hasStoredCredentials && !oauth2ClientSecret ? "Using stored Client Secret (change only if needed)" : "Enter your Microsoft Azure app Client Secret"}
           value={oauth2ClientSecret}
           onChange={(e) => onOauth2ClientSecretChange(e.target.value)}
-          disabled={!oauthColumnsExist}
+          disabled={!oauthColumnsExist || isAuthenticating}
         />
       </div>
 

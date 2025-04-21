@@ -121,3 +121,72 @@ export const verifyO365Auth = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Save OAuth tokens to the database
+export const saveOAuth2Tokens = async (
+  userId: string, 
+  refreshToken: string, 
+  clientId: string, 
+  clientSecret: string,
+  emailAddress: string
+): Promise<boolean> => {
+  console.log('Saving OAuth2 tokens to database for user:', userId);
+  try {
+    // First check if the user already has email settings
+    const { data: existingSettings, error: fetchError } = await supabase
+      .from('user_email_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+      
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching existing settings:', fetchError);
+      return false;
+    }
+    
+    const settingsData = {
+      oauth2_refresh_token: refreshToken,
+      oauth2_client_id: clientId,
+      oauth2_client_secret: clientSecret
+    };
+    
+    let result;
+    
+    if (existingSettings) {
+      // Update existing settings
+      console.log('Updating existing email settings with OAuth2 tokens');
+      result = await supabase
+        .from('user_email_settings')
+        .update(settingsData)
+        .eq('id', existingSettings.id)
+        .eq('user_id', userId);
+    } else {
+      // Create new settings
+      console.log('Creating new email settings with OAuth2 tokens');
+      result = await supabase
+        .from('user_email_settings')
+        .insert({
+          user_id: userId,
+          email_address: emailAddress || 'office365@example.com', // Fallback value
+          email_provider: 'office365',
+          smtp_host: 'smtp.office365.com',
+          smtp_port: 587,
+          is_active: true,
+          app_password: 'oauth2_not_used', // Placeholder since we're using OAuth
+          ...settingsData
+        });
+    }
+    
+    if (result.error) {
+      console.error('Error saving OAuth2 tokens:', result.error);
+      return false;
+    }
+    
+    console.log('Successfully saved OAuth2 tokens to database');
+    return true;
+  } catch (error) {
+    console.error('Exception saving OAuth2 tokens:', error);
+    return false;
+  }
+};
