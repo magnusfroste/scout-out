@@ -1,8 +1,18 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { initiateO365Auth, handleO365AuthCallback } from './oauth/oauthFlowService';
+import { 
+  initiateO365Auth, 
+  handleO365AuthCallback 
+} from './oauth/oauthFlowService';
 import { saveOAuth2Tokens } from './oauth/tokenService';
 import { sendEmailViaGraphAPI } from './email/graphEmailService';
+
+// Standard Microsoft OAuth Endpoints
+export const MICROSOFT_OAUTH_ENDPOINTS = {
+  AUTHORIZATION_URL: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+  TOKEN_URL: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  REDIRECT_URL: `${window.location.origin}/settings`
+};
 
 export const checkOAuthColumnsExist = async (): Promise<boolean> => {
   try {
@@ -62,12 +72,18 @@ export const getGraphApiRequirements = () => {
       `${window.location.origin}/settings`,
       `${window.location.origin}/auth/callback`
     ],
+    microsoftOAuthUrls: {
+      authorizationUrl: MICROSOFT_OAUTH_ENDPOINTS.AUTHORIZATION_URL,
+      tokenUrl: MICROSOFT_OAUTH_ENDPOINTS.TOKEN_URL,
+      redirectUrl: MICROSOFT_OAUTH_ENDPOINTS.REDIRECT_URL
+    },
     setupSteps: [
       'Register a new application in Azure Active Directory',
       'Add required API permissions under "API Permissions"',
       'Grant admin consent for your organization',
       'Create a client secret under "Certificates & secrets"',
-      'Configure redirect URIs under "Authentication"'
+      'Configure redirect URIs under "Authentication"',
+      'Use the standard Microsoft OAuth endpoints provided'
     ]
   };
 };
