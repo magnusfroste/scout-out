@@ -104,9 +104,20 @@ const EmailSettings = () => {
   }, [emailProvider]);
 
   const handleSaveSettings = async (refreshToken?: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user found, cannot save settings');
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to save email settings',
+        variant: 'destructive',
+      });
+      return;
+    }
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.error('Form validation failed');
+      return;
+    }
     
     setIsSaving(true);
     try {
@@ -162,13 +173,16 @@ const EmailSettings = () => {
         console.log('Creating new email settings');
         result = await supabase
           .from('user_email_settings')
-          .insert(settingsData);
+          .insert(settingsData)
+          .select();
       }
       
       if (result.error) {
         console.error('Error from Supabase:', result.error);
         throw result.error;
       }
+      
+      console.log('Save result:', result);
       
       toast({
         title: 'Success',
@@ -284,6 +298,11 @@ const EmailSettings = () => {
         sessionStorage.removeItem('emailSettings_redirecting');
         sessionStorage.removeItem('emailSettings_clientId');
         sessionStorage.removeItem('emailSettings_redirectUri');
+        
+        // Update the OAuth client ID in state if it came from sessionStorage
+        if (clientId !== oauth2ClientId) {
+          setOauth2ClientId(clientId);
+        }
         
         // Save the settings with the new refresh token
         await handleSaveSettings(data.refreshToken);

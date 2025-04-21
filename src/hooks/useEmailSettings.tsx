@@ -32,9 +32,14 @@ export const useEmailSettings = () => {
   const { user } = useAuth();
 
   const checkMigrationStatus = async () => {
-    const columnsExist = await checkOAuthColumnsExist();
-    console.log('OAuth columns exist:', columnsExist);
-    setOauthColumnsExist(columnsExist);
+    try {
+      const columnsExist = await checkOAuthColumnsExist();
+      console.log('OAuth columns exist:', columnsExist);
+      setOauthColumnsExist(columnsExist);
+    } catch (error) {
+      console.error('Error checking OAuth columns:', error);
+      setOauthColumnsExist(false);
+    }
   };
 
   const fetchEmailSettings = async () => {
@@ -42,14 +47,21 @@ export const useEmailSettings = () => {
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_user_email_settings');
+      const { data, error } = await supabase
+        .from('user_email_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
       
       if (error) throw error;
       
       console.log('Fetched email settings:', data);
       
-      if (data && data.length > 0) {
-        const settings = data[0] as CompleteEmailSettings;
+      if (data) {
+        const settings = data as CompleteEmailSettings;
         setExistingSettings(settings);
         setEmailAddress(settings.email_address);
         setEmailProvider(settings.email_provider);
@@ -59,6 +71,8 @@ export const useEmailSettings = () => {
         if (settings.oauth2_client_id) {
           setOauth2ClientId(settings.oauth2_client_id);
           setAuthType('oauth2');
+        } else {
+          setAuthType('password');
         }
         
         if (settings.oauth2_client_secret) {

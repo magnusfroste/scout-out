@@ -74,6 +74,7 @@ export const handleO365AuthCallback = async (
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Token exchange failed:', errorData);
+      console.error('Status:', response.status);
       throw new Error(errorData.error_description || 'Failed to get token');
     }
     
