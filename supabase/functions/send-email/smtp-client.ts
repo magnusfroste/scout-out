@@ -59,18 +59,19 @@ export function createSMTPClient(config: any) {
         scope: "https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send",
       };
       
-      console.log("OAuth2 configuration for SMTP:", {
+      // Log full OAuth2 configuration for detailed comparison with n8n
+      console.log("OAuth2 SMTP configuration details:", {
         method: "XOAUTH2",
         user: config.oauth2.user,
-        hasRequiredFields: !!(
-          config.oauth2.user && 
-          config.oauth2.clientId && 
-          config.oauth2.clientSecret && 
-          config.oauth2.refreshToken
-        ),
+        clientId_prefix: config.oauth2.clientId.substring(0, 6) + '...',
         accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
         scope: "https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send",
-        refreshTokenLength: config.oauth2.refreshToken ? config.oauth2.refreshToken.length : 0
+        refreshTokenLength: config.oauth2.refreshToken ? config.oauth2.refreshToken.length : 0,
+        // Add nodemailer specific settings
+        host: config.host,
+        port: config.port,
+        secure: false,
+        requireTLS: true
       });
     } else if (config.password) {
       // Traditional password authentication
@@ -84,7 +85,19 @@ export function createSMTPClient(config: any) {
       throw new Error("No authentication method provided (password or OAuth2)");
     }
     
-    return nodemailer.createTransport(connectionConfig);
+    // Create a test nodemailer transport to verify server identity and configuration
+    try {
+      console.log("Creating nodemailer transport with OAuth2 configuration");
+      const transport = nodemailer.createTransport(connectionConfig);
+      
+      // Log the transport capabilities - this helps identify what auth methods are supported
+      console.log("SMTP Transport capabilities:", transport.transporter?.mailClient?.SMTPClient?.capabilities || 'No capabilities detected');
+      
+      return transport;
+    } catch (createError) {
+      console.error("Error creating nodemailer transport:", createError);
+      throw createError;
+    }
   } catch (error) {
     console.error("Error creating SMTP client:", error);
     throw error;
@@ -102,11 +115,24 @@ export async function sendEmail(client: any, params: any) {
     // Verify SMTP connection before sending
     console.log("Verifying SMTP connection...");
     try {
+      // Log the auth mechanism that will be used (PLAIN, LOGIN, XOAUTH2, etc)
+      console.log("Auth mechanisms available:", client.transporter?.mailClient?.SMTPClient?.authMechanisms || 'Unknown auth mechanisms');
+      
       await client.verify();
       console.log("SMTP connection verified successfully");
     } catch (verifyError: any) {
       console.error("SMTP connection verification failed:", verifyError);
       console.error("Full error details:", JSON.stringify(verifyError, null, 2));
+      
+      // Inspect the entire error object for clues
+      console.error("SMTP Error inspection:", {
+        message: verifyError.message,
+        code: verifyError.code,
+        command: verifyError.command,
+        responseCode: verifyError.responseCode,
+        response: verifyError.response,
+        source: 'SMTP verification'
+      });
       
       // Enhanced Office 365 SMTP authentication disabled detection
       if (verifyError.message && (

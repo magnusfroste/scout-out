@@ -49,6 +49,27 @@ serve(async (req) => {
       - Redirect URI: ${redirectUri}
       - Token endpoint: ${MICROSOFT_OAUTH_URL}/token
     `);
+    
+    // Log the exact token request we're making for comparison with n8n
+    const tokenRequestParams = new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      code: code,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+      // Match the scope used by n8n - using combined Mail.Send and SMTP.Send for maximum compatibility
+      scope: 'https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send offline_access',
+    });
+    
+    console.log('Making token request with these parameters:', {
+      endpoint: `${MICROSOFT_OAUTH_URL}/token`,
+      grant_type: 'authorization_code',
+      client_id_prefix: clientId.substring(0, 6) + '...',
+      redirect_uri: redirectUri,
+      scope: 'https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send offline_access',
+      has_code: !!code,
+      has_client_secret: !!clientSecret,
+    });
 
     // Exchange authorization code for tokens
     // Using the same token endpoint as n8n: https://login.microsoftonline.com/common/oauth2/v2.0/token
@@ -57,15 +78,7 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code: code,
-        redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-        // Match the scope used by n8n - using combined Mail.Send and SMTP.Send for maximum compatibility
-        scope: 'https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send offline_access',
-      }),
+      body: tokenRequestParams,
     });
 
     const responseStatus = tokenResponse.status;
@@ -110,6 +123,16 @@ serve(async (req) => {
     console.log('Access token length:', tokens.access_token?.length || 0);
     console.log('Refresh token length:', tokens.refresh_token?.length || 0);
     console.log('Token expires in:', tokens.expires_in);
+    console.log('Token type:', tokens.token_type);
+    
+    // Log the token structure (without revealing actual token)
+    console.log('Token structure analysis:', {
+      access_token_length: tokens.access_token?.length || 0,
+      access_token_prefix: tokens.access_token ? tokens.access_token.substring(0, 10) + '...' : 'none',
+      refresh_token_length: tokens.refresh_token?.length || 0,
+      token_type: tokens.token_type,
+      expires_in: tokens.expires_in,
+    });
 
     if (!tokens.refresh_token) {
       console.error('No refresh token received!');
