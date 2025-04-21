@@ -145,6 +145,53 @@ serve(async (req) => {
           );
         }
         
+        // Additional check for resource access validation errors
+        if (responseText.includes('ResourceNotFound') || 
+            responseText.includes('MailboxNotEnabledForRESTAPI')) {
+              
+          console.error('Resource access issue detected with Graph API');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Microsoft Graph API cannot access mailbox resources', 
+              details: {
+                error: errorDetails,
+                message: 'The mailbox may not be accessible via Microsoft Graph API',
+                raw: responseText,
+                status: graphResponse.status
+              }
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 404, // Use 404 to indicate resource not found issues
+            }
+          );
+        }
+        
+        // Check for throttling or service limits
+        if (responseText.includes('throttle') || 
+            responseText.includes('TooManyRequests') ||
+            responseText.includes('429')) {
+              
+          console.error('Throttling detected with Graph API');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Microsoft Graph API request is being throttled', 
+              details: {
+                error: errorDetails,
+                message: 'Too many requests sent to Microsoft Graph API. Please try again later.',
+                raw: responseText,
+                status: graphResponse.status
+              }
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 429, // Use 429 to indicate rate limiting issues
+            }
+          );
+        }
+        
         throw new Error(`Failed to send email via Graph API: ${responseText}`);
       }
 

@@ -9,6 +9,22 @@ const corsHeaders = {
 const MICROSOFT_GRAPH_URL = "https://graph.microsoft.com/v1.0";
 const MICROSOFT_AUTH_URL = "https://login.microsoftonline.com/common/oauth2/v2.0";
 
+// Updated scopes to match n8n implementation
+const OUTLOOK_SCOPES = [
+  'openid',
+  'offline_access',
+  'Contacts.Read',
+  'Contacts.ReadWrite', 
+  'Calendars.Read',
+  'Calendars.Read.Shared',
+  'Calendars.ReadWrite',
+  'Mail.ReadWrite',
+  'Mail.ReadWrite.Shared',
+  'Mail.Send',
+  'Mail.Send.Shared',
+  'MailboxSettings.Read',
+];
+
 interface TokenResponse {
   access_token: string;
   refresh_token: string;
@@ -36,9 +52,10 @@ serve(async (req) => {
       code: code,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
-      // Include both SMTP and Graph Mail.Send scopes - Graph API is preferred
-      scope: 'offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read'
+      scope: OUTLOOK_SCOPES.join(' ')
     });
+    
+    console.log('Requesting token with scopes:', OUTLOOK_SCOPES.join(' '));
     
     const tokenResponse = await fetch(`${MICROSOFT_AUTH_URL}/token`, {
       method: 'POST',
