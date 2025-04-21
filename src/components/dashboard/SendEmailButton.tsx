@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2, AlertCircle, ExternalLink, InfoIcon, RefreshCw } from 'lucide-react';
@@ -156,8 +155,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     try {
       console.log('Starting email sending process...');
       
-      // Fetch user's email settings
-      console.log('Fetching email settings for user:', user.id);
       const { data: emailSettings, error: settingsError } = await supabase
         .from('user_email_settings')
         .select('*')
@@ -186,7 +183,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         hasOAuth2: !!(settings.oauth2_client_id && settings.oauth2_client_secret && settings.oauth2_refresh_token)
       });
       
-      // Update validation to make sure Office 365 has valid OAuth2 credentials
       if (settings.email_provider === 'office365') {
         if (!settings.oauth2_client_id || !settings.oauth2_client_secret || !settings.oauth2_refresh_token) {
           console.error('Missing OAuth2 credentials for Office 365');
@@ -202,7 +198,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       
       const htmlContent = formatEmailContent(content);
       
-      // First, try to use Graph API for Office 365
       if (settings.email_provider === 'office365' && 
           settings.oauth2_client_id && 
           settings.oauth2_client_secret && 
@@ -212,10 +207,9 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           console.log('Attempting to send email via Microsoft Graph API');
           setUseGraphAPI(true);
           
-          // Get a fresh access token using the refresh token
           const accessToken = await getGraphAccessToken(settings);
           
-          // Send the email via Graph API
+          console.log('Access token obtained, calling Graph API with token length:', accessToken.length);
           const graphResult = await sendEmailViaGraphAPI(
             accessToken,
             recipientEmail,
@@ -234,12 +228,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           setDiagnosticInfo({
             success: true,
             method: 'graph_api',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            result: graphResult
           });
           
           setIsSending(false);
           return;
-        } catch (graphError) {
+        } catch (graphError: any) {
           console.error('Error sending email via Graph API:', graphError);
           
           if (graphError && graphError.message && graphError.message.includes('AADSTS65001')) {
@@ -265,15 +260,31 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
             throw new Error('Microsoft requires you to grant consent for this application. Please reconnect in Settings.');
           }
           
+          if (graphError && graphError.message && (
+              graphError.message.includes('authentication') || 
+              graphError.message.includes('token') ||
+              graphError.message.includes('Authorization') ||
+              graphError.message.includes('401')
+            )) {
+            setHasValidOAuth(false);
+            setDiagnosticInfo({
+              authError: true,
+              errorMessage: graphError.message,
+              suggestion: "Your authentication credentials appear to be invalid. Please reconnect with Microsoft."
+            });
+            
+            throw new Error('Authentication failed. Please reconnect your Microsoft account in Settings.');
+          }
+          
           console.log('Graph API failed, falling back to SMTP if possible');
           setDiagnosticInfo({
             graphApiError: graphError.message,
-            fallbackToSMTP: true
+            fallbackToSMTP: true,
+            rawError: graphError
           });
         }
       }
       
-      // If Graph API failed or wasn't used, try SMTP
       const emailData: any = {
         to: recipientEmail,
         to_name: recipientName,
@@ -287,7 +298,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       };
       
-      // Setup authentication based on provider
       if (settings.email_provider === 'office365') {
         if (settings.oauth2_client_id && 
             settings.oauth2_client_secret && 
@@ -391,6 +401,14 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       
       if (error.message && error.message.includes('AADSTS65001')) {
         setNeedsConsent(true);
+      }
+      
+      if (error.message && (
+          error.message.includes('authentication') || 
+          error.message.includes('token') ||
+          error.message.includes('login')
+        )) {
+        setHasValidOAuth(false);
       }
       
       setDiagnosticInfo({

@@ -67,64 +67,101 @@ serve(async (req) => {
       console.log('Sending email payload to Graph API:', JSON.stringify(emailPayload, null, 2));
     }
 
-    const graphResponse = await fetch(`${MICROSOFT_GRAPH_URL}/me/sendMail`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(emailPayload)
-    });
+    // Make the Graph API request with detailed error handling
+    try {
+      const graphResponse = await fetch(`${MICROSOFT_GRAPH_URL}/me/sendMail`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(emailPayload)
+      });
 
-    if (!graphResponse.ok) {
-      const errorText = await graphResponse.text();
-      console.error('Graph API email send error:', errorText);
+      // Get the full response text for debugging
+      const responseText = await graphResponse.text();
       
-      // Try to extract detailed error information
-      let errorDetails = {};
-      try {
-        errorDetails = JSON.parse(errorText);
-      } catch (e) {
-        errorDetails = { raw: errorText };
-      }
-      
-      // Check for insufficient permissions or consent errors
-      if (errorText.includes('Insufficient privileges') || 
-          errorText.includes('Access denied') ||
-          errorText.includes('Authorization_RequestDenied') ||
-          errorText.includes('consent')) {
-            
-        console.error('Permission or consent issue detected with Graph API');
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Insufficient permissions or consent to send email via Graph API', 
-            details: {
-              error: errorDetails,
-              message: 'The application may need additional permissions or consent from the user',
-              raw: errorText
+      // Log the full response for debugging
+      console.log(`Graph API response status: ${graphResponse.status}, headers:`, 
+                  Object.fromEntries(graphResponse.headers.entries()));
+      console.log('Graph API response body:', responseText);
+
+      if (!graphResponse.ok) {
+        // Try to parse the error as JSON
+        let errorDetails = {};
+        try {
+          errorDetails = JSON.parse(responseText);
+        } catch (e) {
+          errorDetails = { raw: responseText };
+        }
+        
+        // Check for specific error types
+        if (responseText.includes('Insufficient privileges') || 
+            responseText.includes('Access denied') ||
+            responseText.includes('Authorization_RequestDenied') ||
+            responseText.includes('consent')) {
+              
+          console.error('Permission or consent issue detected with Graph API');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Insufficient permissions or consent to send email via Graph API', 
+              details: {
+                error: errorDetails,
+                message: 'The application may need additional permissions or consent from the user',
+                raw: responseText,
+                status: graphResponse.status
+              }
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 403, // Use 403 to indicate permission/consent issues
             }
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 403, // Use 403 to indicate permission/consent issues
-          }
-        );
+          );
+        }
+        
+        // Check if authentication token is invalid
+        if (responseText.includes('InvalidAuthenticationToken') || 
+            responseText.includes('ExpiredAuthenticationToken') ||
+            responseText.includes('AuthenticationFailed')) {
+              
+          console.error('Authentication token issue detected with Graph API');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Authentication token is invalid or expired', 
+              details: {
+                error: errorDetails,
+                message: 'Please re-authenticate with Microsoft',
+                raw: responseText,
+                status: graphResponse.status
+              }
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 401, // Use 401 to indicate authentication issues
+            }
+          );
+        }
+        
+        throw new Error(`Failed to send email via Graph API: ${responseText}`);
       }
-      
-      throw new Error(`Failed to send email via Graph API: ${errorText}`);
-    }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Email sent successfully via Microsoft Graph API' 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Email sent successfully via Microsoft Graph API' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    } catch (fetchError) {
+      console.error('Error making Graph API request:', fetchError);
+      throw fetchError;
+    }
   } catch (error) {
     console.error('Error in send-graph-email function:', error);
     return new Response(

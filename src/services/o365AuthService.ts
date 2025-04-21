@@ -36,12 +36,13 @@ export const initiateO365Auth = async (clientId: string, redirectUri: string) =>
   // This matches what n8n is likely using
   const scope = encodeURIComponent('https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send offline_access');
   
-  const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query`;
+  const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query&prompt=consent`;
   
   console.log('Redirecting to Microsoft auth page:', authUrl);
   console.log('Client ID being used:', clientId);
   console.log('Redirect URI being used:', redirectUri);
   console.log('Scope being used:', scope);
+  console.log('Adding prompt=consent to force consent dialog');
   
   try {
     // Redirect to Microsoft auth page
@@ -255,7 +256,8 @@ export const sendEmailViaGraphAPI = async (
   senderEmail: string
 ) => {
   try {
-    const { data, error } = await supabase.functions.invoke('send-graph-email', {
+    console.log('Calling send-graph-email with token length:', accessToken.length);
+    const response = await supabase.functions.invoke('send-graph-email', {
       body: JSON.stringify({
         accessToken,
         to,
@@ -266,12 +268,19 @@ export const sendEmailViaGraphAPI = async (
       })
     });
 
-    if (error) {
-      console.error('Graph API email send error:', error);
-      throw new Error(error.message || 'Failed to send email via Graph API');
+    console.log('Graph API response:', response);
+    
+    if (response.error) {
+      console.error('Graph API email send error:', response.error);
+      throw new Error(response.error.message || 'Failed to send email via Graph API');
     }
 
-    return data;
+    if (!response.data || !response.data.success) {
+      console.error('Graph API unsuccessful response:', response.data);
+      throw new Error(response.data?.error || 'Unknown error sending email via Graph API');
+    }
+
+    return response.data;
   } catch (error) {
     console.error('Error sending email via Graph API:', error);
     throw error;
