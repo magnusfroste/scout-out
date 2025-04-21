@@ -103,6 +103,14 @@ const EmailSettings = () => {
   }, [emailProvider]);
 
   const handleSaveSettings = async (refreshToken?: string) => {
+    console.group('Save Email Settings');
+    console.log('User:', user ? user.id : 'No user');
+    console.log('Auth Type:', authType);
+    console.log('Email Provider:', emailProvider);
+    console.log('SMTP Host:', smtpHost);
+    console.log('SMTP Port:', smtpPort);
+    console.log('OAuth Columns Exist:', oauthColumnsExist);
+
     if (!user) {
       console.error('No user found, cannot save settings');
       toast({
@@ -110,11 +118,13 @@ const EmailSettings = () => {
         description: 'You must be logged in to save email settings',
         variant: 'destructive',
       });
+      console.groupEnd();
       return;
     }
     
     if (!validateForm()) {
       console.error('Form validation failed');
+      console.groupEnd();
       return;
     }
     
@@ -130,18 +140,21 @@ const EmailSettings = () => {
       };
       
       if (authType === 'password') {
+        console.log('Using Password Authentication');
         if (emailPassword) {
           settingsData.app_password = emailPassword;
         } else if (!existingSettings) {
+          console.error('App password required for new settings');
           throw new Error('App password is required for new email settings');
         }
         
-        // Clear OAuth fields when using password auth
         settingsData.oauth2_client_id = null;
         settingsData.oauth2_client_secret = null;
         settingsData.oauth2_refresh_token = null;
       } else if (authType === 'oauth2') {
+        console.log('Using OAuth2 Authentication');
         if (!oauth2ClientId || !oauth2ClientSecret) {
+          console.error('Missing OAuth2 credentials');
           throw new Error('OAuth2 client ID and client secret are required');
         }
         
@@ -149,23 +162,21 @@ const EmailSettings = () => {
         settingsData.oauth2_client_secret = oauth2ClientSecret;
         
         if (refreshToken) {
+          console.log('Adding Refresh Token');
           settingsData.oauth2_refresh_token = refreshToken;
         } else if (existingSettings?.oauth2_refresh_token) {
+          console.log('Using Existing Refresh Token');
           settingsData.oauth2_refresh_token = existingSettings.oauth2_refresh_token;
         }
         
-        // Set dummy password for OAuth2 auth
         settingsData.app_password = 'oauth2_not_used';
       }
       
-      console.log('Saving email settings:', settingsData);
-      
-      // Debug the RLS policies
-      console.log('Current user ID:', user.id);
+      console.log('Prepared Settings Data:', settingsData);
       
       let result;
       if (existingSettings) {
-        console.log('Updating existing settings with ID:', existingSettings.id);
+        console.log('Updating Existing Settings');
         result = await supabase
           .from('user_email_settings')
           .update(settingsData)
@@ -173,39 +184,25 @@ const EmailSettings = () => {
           .eq('user_id', user.id)
           .select('*');
       } else {
-        console.log('Creating new email settings');
-        // Debug the insert operation 
-        try {
-          result = await supabase
-            .from('user_email_settings')
-            .insert(settingsData)
-            .select('*');
-          
-          console.log('Insert operation result:', result);
-        } catch (insertError) {
-          console.error('Error during insert operation:', insertError);
-          throw insertError;
-        }
+        console.log('Creating New Email Settings');
+        result = await supabase
+          .from('user_email_settings')
+          .insert(settingsData)
+          .select('*');
       }
       
       if (result.error) {
-        console.error('Error from Supabase:', result.error);
+        console.error('Supabase Error:', result.error);
         throw result.error;
       }
       
-      console.log('Save result:', result);
-      
-      // Check if we got data back
-      if (!result.data || result.data.length === 0) {
-        console.warn('No data returned from Supabase after save operation');
-      }
+      console.log('Save Result:', result.data);
       
       toast({
         title: 'Success',
         description: `Email settings ${existingSettings ? 'updated' : 'saved'} successfully`,
       });
       
-      // Refresh settings from the database
       fetchEmailSettings();
       setEmailPassword('');
     } catch (error: any) {
@@ -217,6 +214,7 @@ const EmailSettings = () => {
       });
     } finally {
       setIsSaving(false);
+      console.groupEnd();
     }
   };
 
@@ -316,19 +314,15 @@ const EmailSettings = () => {
       
       if (data.refreshToken) {
         console.log('Received refresh token, saving settings');
-        // Clear the URL parameters
         window.history.replaceState({}, document.title, window.location.pathname);
-        // Clear the session storage flags
         sessionStorage.removeItem('emailSettings_redirecting');
         sessionStorage.removeItem('emailSettings_clientId');
         sessionStorage.removeItem('emailSettings_redirectUri');
         
-        // Update the OAuth client ID in state if it came from sessionStorage
         if (clientId !== oauth2ClientId) {
           setOauth2ClientId(clientId);
         }
         
-        // Save the settings with the new refresh token
         await handleSaveSettings(data.refreshToken);
         
         toast({
