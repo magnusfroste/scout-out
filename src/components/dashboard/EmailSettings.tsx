@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   Card, 
@@ -41,6 +40,7 @@ import { initiateO365Auth, handleO365AuthCallback, saveOAuth2Tokens } from '@/se
 import { BasicSettings } from './email-settings/BasicSettings';
 import { ServerSettings } from './email-settings/ServerSettings';
 import { AuthenticationFields } from './email-settings/AuthenticationFields';
+import { HubspotLogging } from './email-settings/HubspotLogging';
 
 const EmailSettings = () => {
   const {
@@ -457,159 +457,175 @@ const EmailSettings = () => {
   }
 
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <Mail className="h-5 w-5 text-muted-foreground" />
-          Email Settings
-        </CardTitle>
-        <CardDescription>
-          Configure your email account to send emails directly from the app
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {!oauthColumnsExist && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Database Migration Required</AlertTitle>
-            <AlertDescription>
-              The OAuth2 columns have not been added to the database yet. 
-              Please ensure you've run the SQL migration scripts for OAuth2 support.
-            </AlertDescription>
-          </Alert>
-        )}
+    <div className="space-y-6">
+      <Card className="w-full shadow-md">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Mail className="h-5 w-5 text-muted-foreground" />
+            Email Settings
+          </CardTitle>
+          <CardDescription>
+            Configure your email account to send emails directly from the app
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {!oauthColumnsExist && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Database Migration Required</AlertTitle>
+              <AlertDescription>
+                The OAuth2 columns have not been added to the database yet. 
+                Please ensure you've run the SQL migration scripts for OAuth2 support.
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <BasicSettings
-          emailAddress={emailAddress}
-          emailProvider={emailProvider}
-          onEmailAddressChange={setEmailAddress}
-          onEmailProviderChange={setEmailProvider}
-        />
-        
-        {emailProvider && (
-          <div>
-            {emailProvider === 'office365' ? (
-              <div className="flex justify-between items-center mb-2">
-                <Label>Authentication Method</Label>
-                <div className="text-xs text-blue-600">
-                  Office 365 requires OAuth2 authentication
+          <BasicSettings
+            emailAddress={emailAddress}
+            emailProvider={emailProvider}
+            onEmailAddressChange={setEmailAddress}
+            onEmailProviderChange={setEmailProvider}
+          />
+          
+          {emailProvider && (
+            <div>
+              {emailProvider === 'office365' ? (
+                <div className="flex justify-between items-center mb-2">
+                  <Label>Authentication Method</Label>
+                  <div className="text-xs text-blue-600">
+                    Office 365 requires OAuth2 authentication
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex justify-between items-center mb-2">
-                <Label>Authentication Method</Label>
-                <div>
-                  <Tabs value={authType} onValueChange={(value) => setAuthType(value as 'password' | 'oauth2')}>
-                    <TabsList className="grid w-[200px] grid-cols-2">
-                      <TabsTrigger value="password">Password</TabsTrigger>
-                      <TabsTrigger value="oauth2">OAuth2</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+              ) : (
+                <div className="flex justify-between items-center mb-2">
+                  <Label>Authentication Method</Label>
+                  <div>
+                    <Tabs value={authType} onValueChange={(value) => setAuthType(value as 'password' | 'oauth2')}>
+                      <TabsList className="grid w-[200px] grid-cols-2">
+                        <TabsTrigger value="password">Password</TabsTrigger>
+                        <TabsTrigger value="oauth2">OAuth2</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            <AuthenticationFields
-              authType={authType}
-              emailPassword={emailPassword}
-              existingSettings={existingSettings}
-              oauth2ClientId={oauth2ClientId}
-              oauth2ClientSecret={oauth2ClientSecret}
-              oauthColumnsExist={oauthColumnsExist}
-              isAuthenticating={isAuthenticating}
-              onEmailPasswordChange={setEmailPassword}
-              onOauth2ClientIdChange={setOauth2ClientId}
-              onOauth2ClientSecretChange={setOauth2ClientSecret}
-              onInitiateOAuth2={initiateOAuth2}
-            />
-          </div>
-        )}
-        
-        <ServerSettings
-          smtpHost={smtpHost}
-          smtpPort={smtpPort}
-          onSmtpHostChange={setSmtpHost}
-          onSmtpPortChange={setSmtpPort}
-        />
-        
-        {existingSettings && (
-          <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-900">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">Email settings configured</span>
+              )}
+              
+              <AuthenticationFields
+                authType={authType}
+                emailPassword={emailPassword}
+                existingSettings={existingSettings}
+                oauth2ClientId={oauth2ClientId}
+                oauth2ClientSecret={oauth2ClientSecret}
+                oauthColumnsExist={oauthColumnsExist}
+                isAuthenticating={isAuthenticating}
+                onEmailPasswordChange={setEmailPassword}
+                onOauth2ClientIdChange={setOauth2ClientId}
+                onOauth2ClientSecretChange={setOauth2ClientSecret}
+                onInitiateOAuth2={initiateOAuth2}
+              />
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              You can now send emails directly from the app using {existingSettings.email_address}
-            </p>
-            {emailProvider === 'office365' && (
-              <div className="mt-2 text-sm">
-                <div className="flex items-center">
-                  <strong className="mr-2">OAuth status:</strong> 
-                  {hasValidOAuth ? (
-                    <span className="text-green-600 flex items-center">
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Valid token
-                    </span>
-                  ) : (
-                    <span className="text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      Missing or invalid token
-                    </span>
-                  )}
-                </div>
+          )}
+          
+          <ServerSettings
+            smtpHost={smtpHost}
+            smtpPort={smtpPort}
+            onSmtpHostChange={setSmtpHost}
+            onSmtpPortChange={setSmtpPort}
+          />
+          
+          {existingSettings && (
+            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-900">
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">Email settings configured</span>
               </div>
-            )}
-          </div>
-        )}
-        
-        {debugInfo && (
-          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md">
-            <div className="flex items-center text-muted-foreground mb-2">
-              <InfoIcon className="h-4 w-4 mr-2" />
-              <span className="text-sm font-medium">Debug Information</span>
+              <p className="text-sm text-muted-foreground mt-1">
+                You can now send emails directly from the app using {existingSettings.email_address}
+              </p>
+              {emailProvider === 'office365' && (
+                <div className="mt-2 text-sm">
+                  <div className="flex items-center">
+                    <strong className="mr-2">OAuth status:</strong> 
+                    {hasValidOAuth ? (
+                      <span className="text-green-600 flex items-center">
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Valid token
+                      </span>
+                    ) : (
+                      <span className="text-red-600 flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Missing or invalid token
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <pre className="text-xs overflow-auto max-h-32">{debugInfo}</pre>
-          </div>
-        )}
-      </CardContent>
+          )}
+          
+          {debugInfo && (
+            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md">
+              <div className="flex items-center text-muted-foreground mb-2">
+                <InfoIcon className="h-4 w-4 mr-2" />
+                <span className="text-sm font-medium">Debug Information</span>
+              </div>
+              <pre className="text-xs overflow-auto max-h-32">{debugInfo}</pre>
+            </div>
+          )}
+        </CardContent>
 
-      <CardFooter className="flex justify-between">
-        {existingSettings ? (
-          <>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isDeleting || isSaving}>
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Settings
-                    </>
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Email Settings</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete your email settings? You won't be able to send emails until you configure new settings.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteSettings} className="bg-red-600 hover:bg-red-700">
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            
-            <Button onClick={() => handleSaveSettings()} disabled={isSaving || isDeleting}>
+        <CardFooter className="flex justify-between">
+          {existingSettings ? (
+            <>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isDeleting || isSaving}>
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Settings
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Email Settings</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete your email settings? You won't be able to send emails until you configure new settings.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSettings} className="bg-red-600 hover:bg-red-700">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              
+              <Button onClick={() => handleSaveSettings()} disabled={isSaving || isDeleting}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Update Settings
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => handleSaveSettings()} disabled={isSaving} className="ml-auto">
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -617,29 +633,17 @@ const EmailSettings = () => {
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Update Settings
+                  <Plus className="mr-2 h-4 w-4" />
+                  Save Settings
                 </>
               )}
             </Button>
-          </>
-        ) : (
-          <Button onClick={() => handleSaveSettings()} disabled={isSaving} className="ml-auto">
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Plus className="mr-2 h-4 w-4" />
-                Save Settings
-              </>
-            )}
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+          )}
+        </CardFooter>
+      </Card>
+      
+      <HubspotLogging />
+    </div>
   );
 };
 
