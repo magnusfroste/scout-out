@@ -326,6 +326,10 @@ const EmailSettings = () => {
     const code = urlParams.get('code');
     const error = urlParams.get('error');
 
+    if (code || error) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     if (error) {
       toast({
         title: "Authentication Error",
@@ -338,6 +342,7 @@ const EmailSettings = () => {
     if (code && oauth2ClientId && oauth2ClientSecret) {
       setIsAuthenticating(true);
       try {
+        console.log('Processing authentication callback with code');
         const redirectUri = `${window.location.origin}/settings`;
         const result = await handleO365AuthCallback(
           code,
@@ -346,18 +351,26 @@ const EmailSettings = () => {
           redirectUri
         );
 
-        if (result.refresh_token) {
+        if (result && result.refresh_token) {
+          console.log('Successfully obtained refresh token, saving settings');
           await handleSaveSettings(result.refresh_token);
           toast({
             title: "Success",
             description: "Successfully authenticated with Office 365",
           });
+        } else {
+          console.error('Missing refresh token in response', result);
+          toast({
+            title: "Authentication Error",
+            description: "Failed to obtain refresh token from Microsoft",
+            variant: "destructive",
+          });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error handling auth callback:', error);
         toast({
           title: "Authentication Error",
-          description: "Failed to complete authentication",
+          description: `Failed to complete authentication: ${error.message || 'Unknown error'}`,
           variant: "destructive",
         });
       } finally {
@@ -367,8 +380,16 @@ const EmailSettings = () => {
   };
 
   useEffect(() => {
-    handleAuthCallback();
-  }, [oauth2ClientId, oauth2ClientSecret]);
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+      if (!isLoading && oauth2ClientId && oauth2ClientSecret) {
+        console.log('Authorization code detected in URL, handling callback');
+        handleAuthCallback();
+      }
+    }
+  }, [isLoading, oauth2ClientId, oauth2ClientSecret]);
 
   const renderAuthFields = () => {
     if (authType === 'password') {
@@ -478,6 +499,10 @@ const EmailSettings = () => {
 
   const handleSaveButtonClick = () => {
     handleSaveSettings();
+  };
+
+  const handleDeleteButtonClick = () => {
+    handleDeleteSettings();
   };
 
   return (
@@ -626,7 +651,7 @@ const EmailSettings = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteSettings} className="bg-red-600 hover:bg-red-700">
+                  <AlertDialogAction onClick={handleDeleteButtonClick} className="bg-red-600 hover:bg-red-700">
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>

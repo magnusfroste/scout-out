@@ -12,6 +12,10 @@ export async function initiateO365Auth(clientId: string, redirectUri: string) {
     `&scope=${scope}` +
     `&response_mode=query`;
 
+  // Save the current state before redirecting
+  sessionStorage.setItem('emailSettings_redirecting', 'true');
+
+  // Redirect to Microsoft OAuth login
   window.location.href = authUrl;
 }
 
@@ -22,6 +26,8 @@ export async function handleO365AuthCallback(
   redirectUri: string
 ) {
   try {
+    console.log('Exchanging code for tokens...');
+    
     const { data, error } = await supabase.functions.invoke('o365-auth', {
       body: JSON.stringify({
         code,
@@ -31,7 +37,12 @@ export async function handleO365AuthCallback(
       }),
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Edge function error:', error);
+      throw error;
+    }
+    
+    console.log('Token exchange successful:', data);
     return data;
   } catch (error) {
     console.error('Error handling O365 auth callback:', error);

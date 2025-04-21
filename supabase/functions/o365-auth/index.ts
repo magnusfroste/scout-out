@@ -16,6 +16,7 @@ interface TokenResponse {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -24,8 +25,11 @@ serve(async (req) => {
     const { code, clientId, clientSecret, redirectUri } = await req.json();
 
     if (!code || !clientId || !clientSecret || !redirectUri) {
+      console.error('Missing required parameters', { code: !!code, clientId: !!clientId, clientSecret: !!clientSecret, redirectUri: !!redirectUri });
       throw new Error("Missing required parameters");
     }
+
+    console.log(`Exchanging code for tokens with redirect URI: ${redirectUri}`);
 
     // Exchange authorization code for tokens
     const tokenResponse = await fetch(`${MICROSOFT_OAUTH_URL}/token`, {
@@ -46,12 +50,14 @@ serve(async (req) => {
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
       console.error('Token exchange error:', error);
+      console.error('Status:', tokenResponse.status);
       throw new Error(`Failed to exchange code for tokens: ${error}`);
     }
 
     const tokens: TokenResponse = await tokenResponse.json();
     console.log('Successfully obtained tokens');
 
+    // Return only what's needed in the frontend
     return new Response(
       JSON.stringify({
         access_token: tokens.access_token,
