@@ -22,10 +22,16 @@ serve(async (req) => {
   }
 
   try {
-    const { code, clientId, clientSecret, redirectUri } = await req.json();
+    const requestBody = await req.json();
+    const { code, clientId, clientSecret, redirectUri } = requestBody;
 
     if (!code || !clientId || !clientSecret || !redirectUri) {
-      console.error('Missing required parameters', { code: !!code, clientId: !!clientId, clientSecret: !!clientSecret, redirectUri: !!redirectUri });
+      console.error('Missing required parameters', { 
+        code: !!code, 
+        clientId: !!clientId, 
+        clientSecret: !!clientSecret, 
+        redirectUri: !!redirectUri 
+      });
       throw new Error("Missing required parameters");
     }
 
@@ -48,10 +54,10 @@ serve(async (req) => {
     });
 
     if (!tokenResponse.ok) {
-      const error = await tokenResponse.text();
-      console.error('Token exchange error:', error);
+      const errorText = await tokenResponse.text();
+      console.error('Token exchange error:', errorText);
       console.error('Status:', tokenResponse.status);
-      throw new Error(`Failed to exchange code for tokens: ${error}`);
+      throw new Error(`Failed to exchange code for tokens: ${errorText}`);
     }
 
     const tokens: TokenResponse = await tokenResponse.json();

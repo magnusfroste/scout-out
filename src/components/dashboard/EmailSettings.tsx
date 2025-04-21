@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -21,7 +22,8 @@ import {
   Plus,
   Loader2,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,8 +40,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { EmailSettings as EmailSettingsType } from '@/types/email';
-import { initiateO365Auth, handleO365AuthCallback } from '@/services/o365AuthService';
+import { initiateO365Auth, handleO365AuthCallback, checkOAuthColumnsExist } from '@/services/o365AuthService';
 
 interface CompleteEmailSettings extends EmailSettingsType {
   oauth2_client_id?: string | null;
@@ -63,15 +66,23 @@ const EmailSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [oauthColumnsExist, setOauthColumnsExist] = useState(true);
   
   const { toast } = useToast();
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
+      checkMigrationStatus();
       fetchEmailSettings();
     }
   }, [user]);
+
+  const checkMigrationStatus = async () => {
+    const columnsExist = await checkOAuthColumnsExist();
+    console.log('OAuth columns exist:', columnsExist);
+    setOauthColumnsExist(columnsExist);
+  };
 
   useEffect(() => {
     if (emailProvider === 'gmail') {
@@ -166,7 +177,7 @@ const EmailSettings = () => {
         });
         return false;
       }
-    } else if (authType === 'oauth2') {
+    } else if (authType === 'oauth2' && oauthColumnsExist) {
       if (!oauth2ClientId || !oauth2ClientSecret) {
         toast({
           title: 'Missing OAuth2 Credentials',
@@ -203,10 +214,13 @@ const EmailSettings = () => {
           throw new Error('App password is required for new email settings');
         }
         
-        settingsData.oauth2_client_id = null;
-        settingsData.oauth2_client_secret = null;
-        settingsData.oauth2_refresh_token = null;
-      } else if (authType === 'oauth2') {
+        // Only set OAuth fields to null if the columns exist
+        if (oauthColumnsExist) {
+          settingsData.oauth2_client_id = null;
+          settingsData.oauth2_client_secret = null;
+          settingsData.oauth2_refresh_token = null;
+        }
+      } else if (authType === 'oauth2' && oauthColumnsExist) {
         settingsData.oauth2_client_id = oauth2ClientId;
         settingsData.oauth2_client_secret = oauth2ClientSecret;
         if (refreshToken) {
@@ -309,6 +323,7 @@ const EmailSettings = () => {
     }
 
     try {
+      setIsAuthenticating(true);
       const redirectUri = `${window.location.origin}/settings`;
       await initiateO365Auth(oauth2ClientId, redirectUri);
     } catch (error) {
@@ -318,6 +333,7 @@ const EmailSettings = () => {
         description: "Failed to start authentication process",
         variant: "destructive",
       });
+      setIsAuthenticating(false);
     }
   };
 
@@ -339,17 +355,31 @@ const EmailSettings = () => {
       return;
     }
 
-    if (code && oauth2ClientId && oauth2ClientSecret) {
+    if (code) {
       setIsAuthenticating(true);
       try {
         console.log('Processing authentication callback with code');
-        const redirectUri = `${window.location.origin}/settings`;
+        // Get the stored client ID and redirect URI
+        const storedClientId = sessionStorage.getItem('emailSettings_clientId') || oauth2ClientId;
+        const storedRedirectUri = sessionStorage.getItem('emailSettings_redirectUri') || `${window.location.origin}/settings`;
+        
+        console.log('Using stored values:', { storedClientId, storedRedirectUri });
+        
+        if (!storedClientId || !oauth2ClientSecret) {
+          throw new Error('Missing required OAuth2 credentials');
+        }
+        
         const result = await handleO365AuthCallback(
           code,
-          oauth2ClientId,
+          storedClientId,
           oauth2ClientSecret,
-          redirectUri
+          storedRedirectUri
         );
+
+        // Clean up session storage
+        sessionStorage.removeItem('emailSettings_redirecting');
+        sessionStorage.removeItem('emailSettings_clientId');
+        sessionStorage.removeItem('emailSettings_redirectUri');
 
         if (result && result.refresh_token) {
           console.log('Successfully obtained refresh token, saving settings');
@@ -380,16 +410,16 @@ const EmailSettings = () => {
   };
 
   useEffect(() => {
+    // Check if we're returning from an OAuth redirect
+    const isRedirecting = sessionStorage.getItem('emailSettings_redirecting') === 'true';
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     
-    if (code) {
-      if (!isLoading && oauth2ClientId && oauth2ClientSecret) {
-        console.log('Authorization code detected in URL, handling callback');
-        handleAuthCallback();
-      }
+    if ((code && isRedirecting) || code) {
+      console.log('Authorization code detected in URL, handling callback');
+      handleAuthCallback();
     }
-  }, [isLoading, oauth2ClientId, oauth2ClientSecret]);
+  }, [oauth2ClientId, oauth2ClientSecret]);
 
   const renderAuthFields = () => {
     if (authType === 'password') {
@@ -425,6 +455,17 @@ const EmailSettings = () => {
     } else {
       return (
         <div className="space-y-4 border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+          {!oauthColumnsExist && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Migration Required</AlertTitle>
+              <AlertDescription>
+                The OAuth2 columns have not been added to the database yet. 
+                Please run the SQL migration script first.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <h3 className="font-medium flex items-center">
             OAuth2 Configuration 
             <a 
@@ -445,6 +486,7 @@ const EmailSettings = () => {
               placeholder="Enter your Microsoft Azure app Client ID"
               value={oauth2ClientId}
               onChange={(e) => setOauth2ClientId(e.target.value)}
+              disabled={!oauthColumnsExist}
             />
           </div>
           
@@ -456,6 +498,7 @@ const EmailSettings = () => {
               placeholder="Enter your Microsoft Azure app Client Secret"
               value={oauth2ClientSecret}
               onChange={(e) => setOauth2ClientSecret(e.target.value)}
+              disabled={!oauthColumnsExist}
             />
           </div>
 
@@ -467,11 +510,11 @@ const EmailSettings = () => {
             </p>
           </div>
 
-          {!existingSettings?.oauth2_refresh_token && (
+          {(!existingSettings?.oauth2_refresh_token || !oauthColumnsExist) && (
             <Button 
               type="button" 
-              onClick={initiateOAuth2}
-              disabled={isAuthenticating}
+              onClick={() => initiateOAuth2()}
+              disabled={isAuthenticating || !oauthColumnsExist}
               className="w-full"
             >
               {isAuthenticating ? (
@@ -517,6 +560,17 @@ const EmailSettings = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!oauthColumnsExist && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Database Migration Required</AlertTitle>
+            <AlertDescription>
+              The OAuth2 columns have not been added to the database yet. 
+              Please ensure you've run the SQL migration scripts for OAuth2 support.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
