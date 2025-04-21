@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Mail } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Mail, Loader2, AlertTriangle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { useEmailSettings } from '@/hooks/useEmailSettings';
 import { BasicSettings } from './BasicSettings';
@@ -13,13 +13,13 @@ import { OAuth2Handler } from './OAuth2Handler';
 import { MigrationAlert } from './MigrationAlert';
 import { useEmailSettingsForm } from '@/hooks/useEmailSettingsForm';
 import { OAuth2Settings } from './OAuth2Settings';
-import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { handleO365AuthCallback } from '@/services/oauth/oauthFlowService';
-import { saveOAuth2Tokens } from '@/services/oauth/tokenService';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const EmailSettingsContainer = () => {
+  const [error, setError] = useState<string | null>(null);
   const {
     emailAddress,
     setEmailAddress,
@@ -136,6 +136,8 @@ const EmailSettingsContainer = () => {
       checkOAuthStatus();
     } catch (error: any) {
       console.error('Error handling OAuth callback:', error);
+      setError(error.message || 'Failed to complete authentication process');
+      
       toast({
         title: 'Authentication Error',
         description: error.message || 'Failed to complete authentication process',
@@ -170,6 +172,13 @@ const EmailSettingsContainer = () => {
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         {!oauthColumnsExist && <MigrationAlert />}
 
         <BasicSettings

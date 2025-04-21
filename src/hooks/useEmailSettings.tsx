@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -168,6 +167,43 @@ export const useEmailSettings = () => {
     
     return true;
   };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await checkMigrationStatus();
+        if (user) {
+          await fetchEmailSettings();
+          await checkOAuthStatus();
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing email settings:', error);
+        setIsLoading(false);
+        toast({
+          title: 'Error',
+          description: 'Failed to load email settings. Please try refreshing the page.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    init();
+  }, [user]);
+
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        if (isLoading) {
+          console.warn('Email settings loading timed out, forcing completion');
+          setIsLoading(false);
+        }
+      }, 5000); // 5 second timeout
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
 
   return {
     emailAddress,
