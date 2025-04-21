@@ -29,11 +29,12 @@ export const initiateO365Auth = async (clientId: string, redirectUri: string) =>
   sessionStorage.setItem('emailSettings_clientId', clientId);
   sessionStorage.setItem('emailSettings_redirectUri', redirectUri);
   
-  // Create Microsoft OAuth URL
+  // Create Microsoft OAuth URL - match what n8n uses
   const authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
   const responseType = 'code';
-  // Important: include the SMTP.Send scope for email sending permission
-  const scope = encodeURIComponent('https://outlook.office.com/SMTP.Send offline_access');
+  // Include both SMTP.Send and Mail.Send scopes for maximum compatibility
+  // This matches what n8n is likely using
+  const scope = encodeURIComponent('https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send offline_access');
   
   const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query`;
   

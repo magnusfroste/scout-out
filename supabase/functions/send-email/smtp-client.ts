@@ -45,17 +45,18 @@ export function createSMTPClient(config: any) {
         throw new Error("Incomplete OAuth2 configuration for Office365");
       }
       
-      // Using OAuth2 authentication (primarily for Office365)
+      // Using OAuth2 authentication for Office365
+      // This closely aligns with n8n's implementation
       connectionConfig.auth = {
-        user: config.oauth2.user,
         type: "OAuth2",
+        user: config.oauth2.user,
         clientId: config.oauth2.clientId,
         clientSecret: config.oauth2.clientSecret,
         refreshToken: config.oauth2.refreshToken,
-        // Microsoft OAuth token endpoint
+        // Microsoft OAuth token endpoint - same as used by n8n
         accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        // Required scope for sending email
-        scope: "https://outlook.office.com/SMTP.Send",
+        // Using combined scopes for maximum compatibility
+        scope: "https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send",
       };
       
       console.log("OAuth2 configuration for SMTP:", {
@@ -68,7 +69,7 @@ export function createSMTPClient(config: any) {
           config.oauth2.refreshToken
         ),
         accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        scope: "https://outlook.office.com/SMTP.Send",
+        scope: "https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send",
         refreshTokenLength: config.oauth2.refreshToken ? config.oauth2.refreshToken.length : 0
       });
     } else if (config.password) {
@@ -120,7 +121,8 @@ export async function sendEmail(client: any, params: any) {
           details: {
             errorCode: "SMTP_AUTH_DISABLED",
             microsoftError: verifyError.message,
-            microsoftDocs: "https://aka.ms/smtp_auth_disabled"
+            microsoftDocs: "https://aka.ms/smtp_auth_disabled",
+            suggestion: "Consider using Microsoft Graph API instead of SMTP"
           }
         };
       }
@@ -173,7 +175,8 @@ export async function sendEmail(client: any, params: any) {
         details: {
           errorCode: "SMTP_AUTH_DISABLED",
           microsoftError: error.message,
-          microsoftDocs: "https://aka.ms/smtp_auth_disabled"
+          microsoftDocs: "https://aka.ms/smtp_auth_disabled",
+          suggestion: "Try using Microsoft Graph API for sending emails"
         }
       };
     }

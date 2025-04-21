@@ -6,6 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Consistent with n8n: https://login.microsoftonline.com/common/oauth2/v2.0/token
 const MICROSOFT_OAUTH_URL = "https://login.microsoftonline.com/common/oauth2/v2.0";
 
 interface TokenResponse {
@@ -40,7 +41,17 @@ serve(async (req) => {
     console.log('Client ID length:', clientId?.length || 0);
     console.log('Client Secret length:', clientSecret?.length || 0);
 
+    // Enhanced logging
+    console.log(`Full client request details:
+      - OAuth flow: Microsoft Office 365
+      - Code provided: ${code ? 'Yes' : 'No'}
+      - Client ID: ${clientId.substring(0, 6)}...
+      - Redirect URI: ${redirectUri}
+      - Token endpoint: ${MICROSOFT_OAUTH_URL}/token
+    `);
+
     // Exchange authorization code for tokens
+    // Using the same token endpoint as n8n: https://login.microsoftonline.com/common/oauth2/v2.0/token
     const tokenResponse = await fetch(`${MICROSOFT_OAUTH_URL}/token`, {
       method: 'POST',
       headers: {
@@ -52,7 +63,8 @@ serve(async (req) => {
         code: code,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
-        scope: 'https://outlook.office.com/SMTP.Send offline_access',
+        // Match the scope used by n8n - using combined Mail.Send and SMTP.Send for maximum compatibility
+        scope: 'https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send offline_access',
       }),
     });
 
@@ -71,6 +83,15 @@ serve(async (req) => {
       } catch {
         errorDetails = { error: 'unknown', error_description: errorText };
       }
+      
+      // Enhanced error diagnostics
+      console.error('Detailed OAuth error:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        errorType: errorDetails.error,
+        errorDescription: errorDetails.error_description,
+        redirectUri: redirectUri
+      });
       
       // Check for specific error conditions
       if (errorDetails.error === 'invalid_client') {
@@ -116,7 +137,7 @@ serve(async (req) => {
           stack: error.stack,
           name: error.name,
           // Additional context to help troubleshoot
-          note: "If this is an OAuth error, please verify your Application (Client) ID, Client Secret, and Redirect URI in Azure Portal. Make sure the app has the SMTP.Send permission."
+          note: "If this is an OAuth error, please verify your Application (Client) ID, Client Secret, and Redirect URI in Azure Portal. Make sure the app has the SMTP.Send and Mail.Send permissions."
         }
       }),
       {

@@ -51,6 +51,19 @@ Deno.serve(async (req) => {
       hasOauth2: !!emailRequest.sender_settings?.oauth2,
     });
     
+    // Enhanced logging for OAuth2 settings
+    if (emailRequest.sender_settings?.oauth2) {
+      console.log("OAuth2 settings details:", {
+        provider: emailRequest.sender_settings.provider,
+        user: emailRequest.sender_settings.oauth2.user,
+        clientIdLength: emailRequest.sender_settings.oauth2.clientId?.length || 0,
+        clientSecretLength: emailRequest.sender_settings.oauth2.clientSecret?.length || 0,
+        refreshTokenLength: emailRequest.sender_settings.oauth2.refreshToken?.length || 0,
+        accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        scope: "https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send"
+      });
+    }
+    
     // Validate input
     const validation = validateEmailRequest(emailRequest);
     if (!validation.isValid) {
@@ -123,7 +136,7 @@ Deno.serve(async (req) => {
           clientId: smtpConfig.oauth2.clientId?.substring(0, 8) + '...',
           user: smtpConfig.oauth2.user,
           accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-          scope: "https://outlook.office.com/SMTP.Send",
+          scope: "https://outlook.office.com/SMTP.Send https://graph.microsoft.com/Mail.Send",
           hasClientSecret: !!smtpConfig.oauth2.clientSecret,
           hasRefreshToken: !!smtpConfig.oauth2.refreshToken,
         });
