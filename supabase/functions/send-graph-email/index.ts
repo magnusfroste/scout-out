@@ -69,6 +69,8 @@ serve(async (req) => {
 
     // Make the Graph API request with detailed error handling
     try {
+      console.log(`Making request to ${MICROSOFT_GRAPH_URL}/me/sendMail with token starting with: ${accessToken.substring(0, 15)}...`);
+      
       const graphResponse = await fetch(`${MICROSOFT_GRAPH_URL}/me/sendMail`, {
         method: 'POST',
         headers: {
@@ -83,8 +85,8 @@ serve(async (req) => {
       const responseText = await graphResponse.text();
       
       // Log the full response for debugging
-      console.log(`Graph API response status: ${graphResponse.status}, headers:`, 
-                  Object.fromEntries(graphResponse.headers.entries()));
+      console.log(`Graph API response status: ${graphResponse.status}`);
+      console.log('Graph API response headers:', Object.fromEntries(graphResponse.headers.entries()));
       console.log('Graph API response body:', responseText);
 
       if (!graphResponse.ok) {
@@ -96,103 +98,109 @@ serve(async (req) => {
           errorDetails = { raw: responseText };
         }
         
-        // Check for specific error types
-        if (responseText.includes('Insufficient privileges') || 
-            responseText.includes('Access denied') ||
-            responseText.includes('Authorization_RequestDenied') ||
-            responseText.includes('consent')) {
-              
-          console.error('Permission or consent issue detected with Graph API');
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Insufficient permissions or consent to send email via Graph API', 
-              details: {
-                error: errorDetails,
-                message: 'The application may need additional permissions or consent from the user',
-                raw: responseText,
-                status: graphResponse.status
-              }
-            }),
-            {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 403, // Use 403 to indicate permission/consent issues
-            }
-          );
-        }
+        // Get the error details from the response
+        const errorCode = errorDetails.error?.code || '';
+        const errorMessage = errorDetails.error?.message || '';
         
-        // Check if authentication token is invalid
+        console.error('Graph API error:', { 
+          status: graphResponse.status, 
+          code: errorCode, 
+          message: errorMessage 
+        });
+        
+        // Handle common error scenarios with more specific responses
+        
+        // Permissions and consent issues
         if (responseText.includes('InvalidAuthenticationToken') || 
             responseText.includes('ExpiredAuthenticationToken') ||
-            responseText.includes('AuthenticationFailed')) {
+            responseText.includes('AuthenticationFailed') ||
+            responseText.includes('TokenExpired') ||
+            graphResponse.status === 401) {
               
           console.error('Authentication token issue detected with Graph API');
+          
+          // Return helpful information about the token expiry
           return new Response(
             JSON.stringify({ 
               success: false, 
               error: 'Authentication token is invalid or expired', 
+              errorCode: 'INVALID_TOKEN',
               details: {
-                error: errorDetails,
+                status: graphResponse.status,
                 message: 'Please re-authenticate with Microsoft',
-                raw: responseText,
-                status: graphResponse.status
+                rawError: errorDetails
               }
             }),
             {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 401, // Use 401 to indicate authentication issues
+              status: 401
             }
           );
         }
         
-        // Additional check for resource access validation errors
-        if (responseText.includes('ResourceNotFound') || 
-            responseText.includes('MailboxNotEnabledForRESTAPI')) {
+        // Permission issues
+        if (responseText.includes('Insufficient privileges') || 
+            responseText.includes('Access denied') ||
+            responseText.includes('Authorization_RequestDenied') ||
+            responseText.includes('consent') ||
+            graphResponse.status === 403) {
               
-          console.error('Resource access issue detected with Graph API');
+          console.error('Permission issue detected with Graph API');
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: 'Microsoft Graph API cannot access mailbox resources', 
+              error: 'Insufficient permissions to send email via Graph API', 
+              errorCode: 'INSUFFICIENT_PERMISSIONS',
               details: {
-                error: errorDetails,
-                message: 'The mailbox may not be accessible via Microsoft Graph API',
-                raw: responseText,
-                status: graphResponse.status
+                status: graphResponse.status,
+                message: 'Your application needs additional permissions. Please reconnect your Microsoft account.',
+                rawError: errorDetails
               }
             }),
             {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 404, // Use 404 to indicate resource not found issues
+              status: 403
             }
           );
         }
         
-        // Check for throttling or service limits
-        if (responseText.includes('throttle') || 
-            responseText.includes('TooManyRequests') ||
-            responseText.includes('429')) {
-              
-          console.error('Throttling detected with Graph API');
+        // Service errors
+        if (graphResponse.status >= 500) {
+          console.error('Microsoft service error detected');
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: 'Microsoft Graph API request is being throttled', 
+              error: 'Microsoft Graph API service error', 
+              errorCode: 'SERVICE_ERROR',
               details: {
-                error: errorDetails,
-                message: 'Too many requests sent to Microsoft Graph API. Please try again later.',
-                raw: responseText,
-                status: graphResponse.status
+                status: graphResponse.status,
+                message: 'Microsoft is experiencing service issues. Please try again later.',
+                rawError: errorDetails
               }
             }),
             {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 429, // Use 429 to indicate rate limiting issues
+              status: graphResponse.status
             }
           );
         }
         
-        throw new Error(`Failed to send email via Graph API: ${responseText}`);
+        // Generic error fallback
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Failed to send email: ${errorMessage || 'Unknown error'}`, 
+            errorCode: errorCode || 'UNKNOWN_ERROR',
+            details: {
+              status: graphResponse.status,
+              rawError: errorDetails
+            }
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: graphResponse.status || 500
+          }
+        );
       }
 
       return new Response(
@@ -207,7 +215,21 @@ serve(async (req) => {
       );
     } catch (fetchError) {
       console.error('Error making Graph API request:', fetchError);
-      throw fetchError;
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Network error when calling Microsoft Graph API', 
+          errorCode: 'NETWORK_ERROR',
+          details: {
+            message: fetchError.message,
+            name: fetchError.name
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
     }
   } catch (error) {
     console.error('Error in send-graph-email function:', error);
@@ -215,6 +237,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: false,
         error: error.message,
+        errorCode: 'FUNCTION_ERROR',
         details: {
           stack: error.stack,
           name: error.name

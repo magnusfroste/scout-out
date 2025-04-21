@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -67,6 +66,7 @@ serve(async (req) => {
       scope: OUTLOOK_SCOPES.join(' ')
     });
     
+    console.log(`Making token refresh request to ${MICROSOFT_AUTH_URL}/token`);
     const tokenResponse = await fetch(`${MICROSOFT_AUTH_URL}/token`, {
       method: 'POST',
       headers: {
@@ -75,6 +75,8 @@ serve(async (req) => {
       body: tokenRequestParams,
     });
 
+    console.log(`Token refresh response status: ${tokenResponse.status}`);
+    
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('Token refresh error:', errorText);
@@ -82,21 +84,23 @@ serve(async (req) => {
       let errorDetails: ErrorResponse;
       try {
         errorDetails = JSON.parse(errorText);
+        console.error('Parsed error details:', errorDetails);
       } catch {
         errorDetails = { error: 'unknown', error_description: errorText };
+        console.error('Could not parse error as JSON:', errorText);
       }
       
       // Check for admin consent required error
       if (errorDetails.error === 'invalid_grant' && 
-          errorDetails.error_description.includes('AADSTS65001')) {
+          (errorDetails.error_description.includes('AADSTS65001') || 
+           errorDetails.error_description.includes('consent'))) {
         console.error('Consent required for the application');
         // Return a specific error for consent required
         return new Response(
           JSON.stringify({ 
-            error: errorDetails.error_description,
+            error: 'consent_required',
+            error_description: errorDetails.error_description,
             details: {
-              error: 'consent_required',
-              error_description: errorDetails.error_description,
               correlation_id: errorDetails.correlation_id,
               trace_id: errorDetails.trace_id,
               error_codes: errorDetails.error_codes,
@@ -110,7 +114,64 @@ serve(async (req) => {
         );
       }
       
-      throw new Error(`Failed to refresh token: ${errorDetails.error_description || errorText}`);
+      // Other errors related to invalid refresh token
+      if (errorDetails.error === 'invalid_grant') {
+        console.error('Invalid refresh token detected');
+        return new Response(
+          JSON.stringify({ 
+            error: 'invalid_grant',
+            error_description: errorDetails.error_description,
+            details: {
+              correlation_id: errorDetails.correlation_id,
+              trace_id: errorDetails.trace_id,
+              error_codes: errorDetails.error_codes,
+              note: "The refresh token is invalid or has expired. User needs to re-authenticate."
+            }
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 401, // Use 401 to indicate authentication issue
+          }
+        );
+      }
+      
+      // Handle invalid client credentials
+      if (errorDetails.error === 'invalid_client') {
+        console.error('Invalid client credentials');
+        return new Response(
+          JSON.stringify({ 
+            error: 'invalid_client',
+            error_description: errorDetails.error_description,
+            details: {
+              correlation_id: errorDetails.correlation_id,
+              trace_id: errorDetails.trace_id,
+              error_codes: errorDetails.error_codes,
+              note: "The client ID or client secret is incorrect. Please check your Azure app registration."
+            }
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 401, // Use 401 to indicate authentication issue
+          }
+        );
+      }
+      
+      // Generic error fallback
+      return new Response(
+        JSON.stringify({ 
+          error: errorDetails.error || 'unknown_error',
+          error_description: errorDetails.error_description || 'An unknown error occurred',
+          details: {
+            correlation_id: errorDetails.correlation_id,
+            trace_id: errorDetails.trace_id,
+            error_codes: errorDetails.error_codes
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
 
     const tokens: TokenResponse = await tokenResponse.json();
@@ -122,7 +183,6 @@ serve(async (req) => {
     // Store the new refresh token if provided
     if (tokens.refresh_token && tokens.refresh_token !== refreshToken) {
       console.log('New refresh token received, should be stored');
-      // In a production environment, you might want to store this new refresh token
     }
 
     return new Response(
