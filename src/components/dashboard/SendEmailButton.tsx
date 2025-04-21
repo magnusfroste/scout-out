@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, Loader2, AlertCircle, ExternalLink, InfoIcon } from 'lucide-react';
+import { Mail, Loader2, AlertCircle, ExternalLink, InfoIcon, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +20,12 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import { 
+  Alert,
+  AlertTitle,
+  AlertDescription
+} from '@/components/ui/alert';
+import { Link } from 'react-router-dom';
 
 interface CompleteEmailSettings extends EmailSettings {
   oauth2_client_id?: string | null;
@@ -50,6 +55,9 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   const [hasValidOAuth, setHasValidOAuth] = useState(true);
   const [isO365SmtpDisabled, setIsO365SmtpDisabled] = useState(false);
   const [useGraphAPI, setUseGraphAPI] = useState(false);
+  const [needsConsent, setNeedsConsent] = useState(false);
+  const [appName, setAppName] = useState('');
+  const [appId, setAppId] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -86,6 +94,23 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
 
       if (error) {
         console.error('Error refreshing token:', error);
+        
+        if (error.message && error.message.includes('AADSTS65001')) {
+          const appIdMatch = error.message.match(/application with ID '([^']+)'/);
+          const appNameMatch = error.message.match(/named '([^']+)'/);
+          
+          if (appIdMatch && appIdMatch[1]) {
+            setAppId(appIdMatch[1]);
+          }
+          
+          if (appNameMatch && appNameMatch[1]) {
+            setAppName(appNameMatch[1]);
+          }
+          
+          setNeedsConsent(true);
+          throw new Error('Microsoft requires you to grant consent for this application. Please reconnect in Settings.');
+        }
+        
         throw new Error('Failed to refresh OAuth2 token. Please re-authenticate with Microsoft.');
       }
 
@@ -125,6 +150,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     setDiagnosticInfo(null);
     setIsO365SmtpDisabled(false);
     setUseGraphAPI(false);
+    setNeedsConsent(false);
     
     try {
       console.log('Starting email sending process...');
@@ -166,7 +192,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           throw new Error('OAuth2 credentials are required for Office 365. Please update your email settings.');
         }
         
-        // Double-check refresh token exists
         if (!settings.oauth2_refresh_token) {
           console.error('Missing OAuth2 refresh token for Office 365');
           setHasValidOAuth(false);
@@ -216,9 +241,27 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         } catch (graphError) {
           console.error('Error sending email via Graph API:', graphError);
           
-          // If we're explicitly trying to use Graph API, don't fall back
-          if (useGraphAPI) {
-            throw graphError;
+          if (graphError && graphError.message && graphError.message.includes('AADSTS65001')) {
+            const appIdMatch = graphError.message.match(/application with ID '([^']+)'/);
+            const appNameMatch = graphError.message.match(/named '([^']+)'/);
+            
+            if (appIdMatch && appIdMatch[1]) {
+              setAppId(appIdMatch[1]);
+            }
+            
+            if (appNameMatch && appNameMatch[1]) {
+              setAppName(appNameMatch[1]);
+            }
+            
+            setNeedsConsent(true);
+            setDiagnosticInfo({
+              consentRequired: true,
+              errorMessage: graphError.message,
+              appId: appIdMatch ? appIdMatch[1] : '',
+              appName: appNameMatch ? appNameMatch[1] : ''
+            });
+            
+            throw new Error('Microsoft requires you to grant consent for this application. Please reconnect in Settings.');
           }
           
           console.log('Graph API failed, falling back to SMTP if possible');
@@ -245,7 +288,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       
       // Setup authentication based on provider
       if (settings.email_provider === 'office365') {
-        // For Office 365, always check and require OAuth2 credentials
         if (settings.oauth2_client_id && 
             settings.oauth2_client_secret && 
             settings.oauth2_refresh_token) {
@@ -258,7 +300,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
             refreshToken: settings.oauth2_refresh_token
           };
           
-          // Remove password if it exists to ensure OAuth is used
           delete emailData.sender_settings.password;
         } else {
           throw new Error('OAuth2 credentials are required for Office 365. Please update your email settings.');
@@ -280,7 +321,6 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         hasPassword: !!emailData.sender_settings.password
       });
 
-      // Call the edge function with debug flag to get more info
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: JSON.stringify({
           ...emailData,
@@ -317,14 +357,12 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           details: errorDetails
         });
         
-        // Check for Office 365 SMTP authentication disabled error
         if (errorMessage.includes('SmtpClientAuthentication is disabled') || 
             errorMessage.includes('smtp_auth_disabled')) {
           setIsO365SmtpDisabled(true);
           throw new Error('Microsoft has disabled SMTP Authentication for your tenant. Try using Microsoft Graph API instead.');
         }
         
-        // Check if we need to refresh OAuth2 authentication
         if (errorMessage.includes('OAuth2') || 
             errorMessage.includes('authentication') || 
             errorMessage.includes('auth') ||
@@ -350,14 +388,15 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       const errorMsg = error.message || "There was a problem sending your email. Please try again.";
       setLastError(errorMsg);
       
-      // Enrich diagnostic info if not already set
-      if (!diagnosticInfo) {
-        setDiagnosticInfo({
-          errorType: 'exception',
-          error: error.message,
-          stack: error.stack
-        });
+      if (error.message && error.message.includes('AADSTS65001')) {
+        setNeedsConsent(true);
       }
+      
+      setDiagnosticInfo({
+        errorType: 'exception',
+        error: error.message,
+        stack: error.stack
+      });
       
       toast({
         title: "Error sending email",
@@ -392,13 +431,30 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
 
   return (
     <>
+      {needsConsent && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Microsoft Consent Required</AlertTitle>
+          <AlertDescription>
+            <p className="mb-2">
+              Microsoft requires you to approve the permissions for the app "{appName || 'Microsoft 365'}".
+              This is needed for sending emails via the Graph API.
+            </p>
+            <Link to="/settings" className="flex items-center text-blue-600 hover:underline font-medium">
+              <RefreshCw className="mr-1 h-4 w-4" />
+              Go to Settings to Reconnect
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <TooltipProvider>
         <Tooltip open={!!lastError}>
           <TooltipTrigger asChild>
             <div>
               <Button
                 onClick={sendEmail}
-                disabled={disabled || isSending || !hasValidOAuth || isO365SmtpDisabled}
+                disabled={disabled || isSending || !hasValidOAuth || isO365SmtpDisabled || needsConsent}
                 variant="secondary"
                 size="sm"
                 className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/50 dark:border-blue-800"
@@ -417,7 +473,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
                 {lastError && <AlertCircle className="ml-2 h-4 w-4 text-red-500" onClick={() => setShowDiagnostics(true)} />}
               </Button>
               
-              {!hasValidOAuth && (
+              {(!hasValidOAuth || needsConsent) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -425,7 +481,7 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
                   className="ml-2 text-xs"
                 >
                   <ExternalLink className="mr-1 h-3 w-3" />
-                  Authenticate
+                  Reconnect
                 </Button>
               )}
               
@@ -473,7 +529,15 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           
           <DialogFooter className="flex justify-between items-center">
             <div>
-              {!hasValidOAuth && (
+              {needsConsent && (
+                <div className="text-sm text-amber-600 mb-2">
+                  <p className="font-medium">Microsoft Consent Required</p>
+                  <p>Your Microsoft account needs to authorize the application "{appName || 'Microsoft 365'}" to send emails on your behalf.</p>
+                  <p className="mt-1">This is a one-time consent that requires administrator approval in your Microsoft tenant.</p>
+                </div>
+              )}
+              
+              {!hasValidOAuth && !needsConsent && (
                 <div className="text-sm text-red-500 mb-2">
                   OAuth2 authentication appears to be invalid or expired.
                 </div>
@@ -494,10 +558,12 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
               )}
             </div>
             <div className="flex gap-2">
-              {!hasValidOAuth && (
-                <Button variant="outline" onClick={handleReauthenticate}>
-                  Reauthenticate with Office 365
-                </Button>
+              {(needsConsent || !hasValidOAuth) && (
+                <Link to="/settings">
+                  <Button variant="outline">
+                    Go to Settings to Reconnect
+                  </Button>
+                </Link>
               )}
               <Button onClick={() => setShowDiagnostics(false)}>Close</Button>
             </div>

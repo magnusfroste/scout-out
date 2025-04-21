@@ -15,6 +15,16 @@ interface TokenResponse {
   token_type: string;
 }
 
+interface ErrorResponse {
+  error: string;
+  error_description: string;
+  error_codes?: number[];
+  timestamp?: string;
+  trace_id?: string;
+  correlation_id?: string;
+  suberror?: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -52,11 +62,35 @@ serve(async (req) => {
       const errorText = await tokenResponse.text();
       console.error('Token refresh error:', errorText);
       
-      let errorDetails;
+      let errorDetails: ErrorResponse;
       try {
         errorDetails = JSON.parse(errorText);
       } catch {
         errorDetails = { error: 'unknown', error_description: errorText };
+      }
+      
+      // Check for admin consent required error
+      if (errorDetails.error === 'invalid_grant' && 
+          errorDetails.error_description.includes('AADSTS65001')) {
+        console.error('Consent required for the application');
+        // Return a specific error for consent required
+        return new Response(
+          JSON.stringify({ 
+            error: errorDetails.error_description,
+            details: {
+              error: 'consent_required',
+              error_description: errorDetails.error_description,
+              correlation_id: errorDetails.correlation_id,
+              trace_id: errorDetails.trace_id,
+              error_codes: errorDetails.error_codes,
+              note: "User needs to go through interactive authentication"
+            }
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 403, // Use 403 to indicate permission issue
+          }
+        );
       }
       
       throw new Error(`Failed to refresh token: ${errorDetails.error_description || errorText}`);

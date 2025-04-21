@@ -88,6 +88,30 @@ serve(async (req) => {
         errorDetails = { raw: errorText };
       }
       
+      // Check for insufficient permissions or consent errors
+      if (errorText.includes('Insufficient privileges') || 
+          errorText.includes('Access denied') ||
+          errorText.includes('Authorization_RequestDenied') ||
+          errorText.includes('consent')) {
+            
+        console.error('Permission or consent issue detected with Graph API');
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Insufficient permissions or consent to send email via Graph API', 
+            details: {
+              error: errorDetails,
+              message: 'The application may need additional permissions or consent from the user',
+              raw: errorText
+            }
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 403, // Use 403 to indicate permission/consent issues
+          }
+        );
+      }
+      
       throw new Error(`Failed to send email via Graph API: ${errorText}`);
     }
 
