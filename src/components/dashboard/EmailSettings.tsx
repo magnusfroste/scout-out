@@ -476,6 +476,10 @@ const EmailSettings = () => {
     }
   };
 
+  const handleSaveButtonClick = () => {
+    handleSaveSettings();
+  };
+
   return (
     <Card className="w-full shadow-md">
       <CardHeader>
@@ -629,7 +633,7 @@ const EmailSettings = () => {
               </AlertDialogContent>
             </AlertDialog>
             
-            <Button onClick={handleSaveSettings} disabled={isSaving || isDeleting}>
+            <Button onClick={handleSaveButtonClick} disabled={isSaving || isDeleting}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -644,7 +648,7 @@ const EmailSettings = () => {
             </Button>
           </>
         ) : (
-          <Button onClick={handleSaveSettings} disabled={isSaving} className="ml-auto">
+          <Button onClick={handleSaveButtonClick} disabled={isSaving} className="ml-auto">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
