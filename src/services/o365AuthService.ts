@@ -36,6 +36,8 @@ export const initiateO365Auth = async (clientId: string, redirectUri: string) =>
   
   const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query`;
   
+  console.log('Redirecting to Microsoft auth page:', authUrl);
+  
   // Redirect to Microsoft auth page
   window.location.href = authUrl;
 };
@@ -58,6 +60,9 @@ export const handleO365AuthCallback = async (
 
   try {
     console.log('Exchanging auth code for tokens...');
+    console.log('Using client ID:', clientId);
+    console.log('Using redirect URI:', redirectUri);
+    
     const response = await fetch(tokenEndpoint, {
       method: 'POST',
       headers: {

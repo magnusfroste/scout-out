@@ -126,6 +126,7 @@ const EmailSettings = () => {
           throw new Error('App password is required for new email settings');
         }
         
+        // Clear OAuth fields when using password auth
         settingsData.oauth2_client_id = null;
         settingsData.oauth2_client_secret = null;
         settingsData.oauth2_refresh_token = null;
@@ -143,23 +144,31 @@ const EmailSettings = () => {
           settingsData.oauth2_refresh_token = existingSettings.oauth2_refresh_token;
         }
         
+        // Set dummy password for OAuth2 auth
         settingsData.app_password = 'oauth2_not_used';
       }
       
+      console.log('Saving email settings:', settingsData);
+      
       let result;
       if (existingSettings) {
+        console.log('Updating existing settings with ID:', existingSettings.id);
         result = await supabase
           .from('user_email_settings')
           .update(settingsData)
           .eq('id', existingSettings.id)
           .eq('user_id', user.id);
       } else {
+        console.log('Creating new email settings');
         result = await supabase
           .from('user_email_settings')
           .insert(settingsData);
       }
       
-      if (result.error) throw result.error;
+      if (result.error) {
+        console.error('Error from Supabase:', result.error);
+        throw result.error;
+      }
       
       toast({
         title: 'Success',
@@ -217,6 +226,15 @@ const EmailSettings = () => {
       toast({
         title: "Missing Client ID",
         description: "Please enter your Azure App Client ID first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!oauth2ClientSecret) {
+      toast({
+        title: "Missing Client Secret",
+        description: "Please enter your Azure App Client Secret first",
         variant: "destructive",
       });
       return;
@@ -296,7 +314,7 @@ const EmailSettings = () => {
       console.log('Authorization code detected in URL, handling callback');
       handleAuthCallback();
     }
-  }, [oauth2ClientId, oauth2ClientSecret]);
+  }, []);
 
   if (isLoading) {
     return (
