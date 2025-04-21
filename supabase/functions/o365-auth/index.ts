@@ -72,6 +72,15 @@ serve(async (req) => {
         errorDetails = { error: 'unknown', error_description: errorText };
       }
       
+      // Check for specific error conditions
+      if (errorDetails.error === 'invalid_client') {
+        throw new Error(`Invalid client credentials. Please verify your Client ID and Client Secret in Azure Portal.`);
+      } else if (errorDetails.error === 'invalid_grant') {
+        throw new Error(`Invalid or expired authorization code. Please try authenticating again.`);
+      } else if (errorDetails.error === 'unauthorized_client') {
+        throw new Error(`The application is not authorized to request an authorization code or token. Verify permissions in Azure Portal.`);
+      }
+      
       throw new Error(`Failed to exchange code for tokens: ${errorDetails.error_description || errorText}`);
     }
 
@@ -101,7 +110,15 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in o365-auth function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: {
+          stack: error.stack,
+          name: error.name,
+          // Additional context to help troubleshoot
+          note: "If this is an OAuth error, please verify your Application (Client) ID, Client Secret, and Redirect URI in Azure Portal. Make sure the app has the SMTP.Send permission."
+        }
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

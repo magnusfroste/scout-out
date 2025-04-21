@@ -76,11 +76,28 @@ export const handleO365AuthCallback = async (
     
     if (error) {
       console.error('Error from o365-auth edge function:', error);
+      
+      // Check for specific error messages
+      if (error.message && error.message.includes('invalid_client')) {
+        throw new Error('Invalid client ID or secret. Please check your Azure app credentials.');
+      } else if (error.message && error.message.includes('invalid_grant')) {
+        throw new Error('Authorization grant expired or already used. Please try authenticating again.');
+      } else if (error.message && error.message.includes('SMTP')) {
+        throw new Error('Your Microsoft account is missing SMTP.Send permission. Please update app permissions in Azure Portal.');
+      }
+      
       throw new Error(`Edge function error: ${error.message}`);
     }
     
     if (!data || !data.refresh_token) {
       console.error('No refresh_token received from token exchange:', data);
+      
+      // Special error case if we have an error in the data
+      if (data && data.error) {
+        console.error('Error in token exchange response:', data.error);
+        throw new Error(data.error);
+      }
+      
       throw new Error('Failed to get refresh token');
     }
     
@@ -103,7 +120,21 @@ export const handleO365AuthCallback = async (
     };
   } catch (error: any) {
     console.error('Error in handleO365AuthCallback:', error);
-    throw new Error(error.message || 'Failed to complete authentication');
+    
+    // Enhanced error message for debugging
+    let errorMessage = error.message || 'Failed to complete authentication';
+    if (error.response) {
+      try {
+        const responseData = error.response.data;
+        if (responseData && responseData.error_description) {
+          errorMessage = responseData.error_description;
+        }
+      } catch (parseError) {
+        console.error('Error parsing error response:', parseError);
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 };
 
@@ -181,6 +212,8 @@ export const saveOAuth2Tokens = async (
         .update(settingsData)
         .eq('id', existingSettings.id)
         .eq('user_id', userId);
+      
+      console.log('Update result:', result);
     } else {
       // Create new settings
       console.log('Creating new email settings with OAuth2 tokens');
@@ -196,6 +229,8 @@ export const saveOAuth2Tokens = async (
           app_password: 'oauth2_not_used', // Placeholder since we're using OAuth
           ...settingsData
         });
+      
+      console.log('Insert result:', result);
     }
     
     if (result.error) {

@@ -117,6 +117,16 @@ Deno.serve(async (req) => {
           clientSecretLength: smtpConfig.oauth2.clientSecret?.length || 0,
           refreshTokenLength: smtpConfig.oauth2.refreshToken?.length || 0
         });
+        
+        // Detailed logging for OAuth2 config to help diagnose issues
+        console.log("Office365 OAuth2 full config (redacted secrets):", {
+          clientId: smtpConfig.oauth2.clientId?.substring(0, 8) + '...',
+          user: smtpConfig.oauth2.user,
+          accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+          scope: "https://outlook.office.com/SMTP.Send",
+          hasClientSecret: !!smtpConfig.oauth2.clientSecret,
+          hasRefreshToken: !!smtpConfig.oauth2.refreshToken,
+        });
       } else if (emailRequest.sender_settings.password) {
         console.log("Setting up password authentication");
         smtpConfig.password = emailRequest.sender_settings.password;
@@ -162,6 +172,18 @@ Deno.serve(async (req) => {
       const result = await sendEmail(client, emailParams);
       if (!result.success) {
         console.error("Email sending failed with error:", result.error, "Details:", result.details);
+        
+        // Special handling for Office 365 SMTP authentication disabled error
+        if (result.details?.errorCode === "SMTP_AUTH_DISABLED") {
+          return createJsonResponse({ 
+            success: false, 
+            error: result.error,
+            details: result.details,
+            errorCode: "SMTP_AUTH_DISABLED",
+            microsoftDocs: "https://aka.ms/smtp_auth_disabled"
+          }, 403); // Using 403 for permission issues
+        }
+        
         return createJsonResponse({ 
           success: false, 
           error: result.error || "Unknown error sending email",
@@ -174,6 +196,19 @@ Deno.serve(async (req) => {
       return createJsonResponse({ success: true });
     } catch (smtpError: any) {
       console.error("SMTP error:", smtpError, "Stack:", smtpError.stack);
+      
+      // Check for common Office 365 errors
+      if (smtpError.message && smtpError.message.includes('SmtpClientAuthentication is disabled')) {
+        return createJsonResponse({ 
+          success: false, 
+          error: `Microsoft has disabled SMTP Authentication for your tenant. Please visit https://aka.ms/smtp_auth_disabled for more information.`,
+          details: {
+            errorCode: "SMTP_AUTH_DISABLED",
+            microsoftDocs: "https://aka.ms/smtp_auth_disabled"
+          }
+        }, 403);
+      }
+      
       return createJsonResponse({ 
         success: false, 
         error: `SMTP error: ${smtpError.message}`,
@@ -182,6 +217,7 @@ Deno.serve(async (req) => {
           port: emailRequest.sender_settings.port,
           provider: emailRequest.sender_settings.provider,
           errorType: smtpError.name,
+          errorCode: smtpError.code,
           stack: smtpError.stack
         }
       }, 500);

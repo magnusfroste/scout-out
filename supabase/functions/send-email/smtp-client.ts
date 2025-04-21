@@ -105,9 +105,15 @@ export async function sendEmail(client: any, params: any) {
       console.log("SMTP connection verified successfully");
     } catch (verifyError: any) {
       console.error("SMTP connection verification failed:", verifyError);
+      console.error("Full error details:", JSON.stringify(verifyError, null, 2));
       
-      // Special handling for Office 365 SMTP authentication disabled error
-      if (verifyError.message && verifyError.message.includes('SmtpClientAuthentication is disabled')) {
+      // Enhanced Office 365 SMTP authentication disabled detection
+      if (verifyError.message && (
+          verifyError.message.includes('SmtpClientAuthentication is disabled') ||
+          verifyError.message.includes('SMTP Auth is disabled') ||
+          verifyError.message.includes('SMTP-AUTH') ||
+          verifyError.message.includes('smtp_auth_disabled')
+      )) {
         return {
           success: false,
           error: "Microsoft has disabled SMTP Authentication for your tenant. Please visit https://aka.ms/smtp_auth_disabled for more information.",
@@ -118,7 +124,17 @@ export async function sendEmail(client: any, params: any) {
           }
         };
       }
-      throw verifyError;
+      
+      // Add detailed information about the error for better diagnostics
+      const errorDetails = {
+        code: verifyError.code,
+        command: verifyError.command,
+        responseCode: verifyError.responseCode,
+        response: verifyError.response,
+        source: 'SMTP verification'
+      };
+      
+      throw new Error(`SMTP verification failed: ${verifyError.message}. Details: ${JSON.stringify(errorDetails)}`);
     }
     
     // Send the email
@@ -133,16 +149,24 @@ export async function sendEmail(client: any, params: any) {
     };
   } catch (error: any) {
     console.error("Error sending email:", error);
+    console.error("Full error details:", JSON.stringify(error, null, 2));
     
     // Analyze the error to provide better diagnostics
     const details: any = {
       name: error.name,
       code: error.code,
       command: error.command,
+      responseCode: error.responseCode,
+      response: error.response,
     };
     
-    // Handle Office 365 SMTP authentication disabled error
-    if (error.message && error.message.includes('SmtpClientAuthentication is disabled')) {
+    // Enhanced Office 365 SMTP authentication disabled detection
+    if (error.message && (
+        error.message.includes('SmtpClientAuthentication is disabled') ||
+        error.message.includes('SMTP Auth is disabled') ||
+        error.message.includes('SMTP-AUTH') ||
+        error.message.includes('smtp_auth_disabled')
+    )) {
       return {
         success: false,
         error: "Microsoft has disabled SMTP Authentication for your tenant. Please visit https://aka.ms/smtp_auth_disabled for more information.",
@@ -155,10 +179,12 @@ export async function sendEmail(client: any, params: any) {
     }
     
     // OAuth2 related errors
-    if (error.message.includes('OAuth2') || 
+    if (error.message && (
+        error.message.includes('OAuth2') || 
         error.message.includes('auth') || 
         error.message.includes('authentication') ||
-        error.code === 'EAUTH') {
+        error.code === 'EAUTH'
+    )) {
       details.authProblem = true;
       details.suggestion = 'The OAuth2 token might be invalid or expired. Try re-authenticating with Microsoft.';
     }
