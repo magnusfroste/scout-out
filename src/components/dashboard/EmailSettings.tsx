@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardHeader, 
@@ -7,40 +7,17 @@ import {
   CardContent,
   CardFooter 
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { 
-  Mail,
-  Save,
-  Trash2,
-  Plus,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  InfoIcon
-} from 'lucide-react';
+import { Mail, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { useEmailSettings } from '@/hooks/useEmailSettings';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { initiateO365Auth, handleO365AuthCallback, saveOAuth2Tokens } from '@/services/o365AuthService';
 import { BasicSettings } from './email-settings/BasicSettings';
 import { ServerSettings } from './email-settings/ServerSettings';
 import { AuthenticationFields } from './email-settings/AuthenticationFields';
 import { HubspotLogging } from './email-settings/HubspotLogging';
+import { EmailSettingsDebug } from './email-settings/EmailSettingsDebug';
+import { EmailSettingsActions } from './email-settings/EmailSettingsActions';
+import { EmailSettingsStatus } from './email-settings/EmailSettingsStatus';
+import { OAuth2Handler } from './email-settings/OAuth2Handler';
 
 const EmailSettings = () => {
   const {
@@ -80,34 +57,6 @@ const EmailSettings = () => {
   } = useEmailSettings();
   
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    checkMigrationStatus();
-    fetchEmailSettings();
-    checkOAuthStatus();
-  }, []);
-
-  useEffect(() => {
-    if (emailProvider === 'gmail') {
-      setSmtpHost('smtp.gmail.com');
-      setSmtpPort('587');
-      setAuthType('password');
-    } else if (emailProvider === 'outlook') {
-      setSmtpHost('smtp-mail.outlook.com');
-      setSmtpPort('587');
-      setAuthType('password');
-    } else if (emailProvider === 'office365') {
-      setSmtpHost('smtp.office365.com');
-      setSmtpPort('587');
-      setAuthType('oauth2');
-    } else if (emailProvider === 'yahoo') {
-      setSmtpHost('smtp.mail.yahoo.com');
-      setSmtpPort('587');
-      setAuthType('password');
-    }
-  }, [emailProvider]);
 
   const handleSaveSettings = async (refreshToken?: string) => {
     console.group('Save Email Settings');
@@ -271,73 +220,6 @@ const EmailSettings = () => {
     }
   };
 
-  const initiateOAuth2 = async () => {
-    try {
-      setIsAuthenticating(true);
-      
-      let clientId = oauth2ClientId;
-      let clientSecret = oauth2ClientSecret;
-      
-      if (existingSettings?.oauth2_client_id && existingSettings?.oauth2_client_secret) {
-        console.log('Using existing OAuth2 credentials from database');
-        clientId = existingSettings.oauth2_client_id;
-        clientSecret = existingSettings.oauth2_client_secret;
-        
-        // Update the form fields to match the stored credentials
-        if (!oauth2ClientId) setOauth2ClientId(clientId);
-        if (!oauth2ClientSecret) setOauth2ClientSecret(clientSecret);
-      } else {
-        if (!clientId) {
-          toast({
-            title: "Missing Client ID",
-            description: "Please enter your Azure App Client ID first",
-            variant: "destructive",
-          });
-          setIsAuthenticating(false);
-          return;
-        }
-        
-        if (!clientSecret) {
-          toast({
-            title: "Missing Client Secret",
-            description: "Please enter your Azure App Client Secret first",
-            variant: "destructive",
-          });
-          setIsAuthenticating(false);
-          return;
-        }
-      }
-
-      const redirectUri = `${window.location.origin}/settings`;
-      console.log('Initiating OAuth2 with redirect URI:', redirectUri);
-      console.log('Client ID being used:', clientId);
-      console.log('Client Secret length:', clientSecret?.length || 0);
-      
-      // Clear any previous auth state
-      sessionStorage.removeItem('emailSettings_redirecting');
-      sessionStorage.removeItem('emailSettings_clientId');
-      sessionStorage.removeItem('emailSettings_clientSecret');
-      sessionStorage.removeItem('emailSettings_redirectUri');
-      
-      // Set fresh auth state
-      sessionStorage.setItem('emailSettings_redirecting', 'true');
-      sessionStorage.setItem('emailSettings_clientId', clientId);
-      sessionStorage.setItem('emailSettings_clientSecret', clientSecret);
-      sessionStorage.setItem('emailSettings_redirectUri', redirectUri);
-      sessionStorage.setItem('emailSettings_userEmail', emailAddress);
-      
-      await initiateO365Auth(clientId, redirectUri);
-    } catch (error) {
-      console.error('Error initiating OAuth2:', error);
-      toast({
-        title: "Authentication Error",
-        description: "Failed to start authentication process",
-        variant: "destructive",
-      });
-      setIsAuthenticating(false);
-    }
-  };
-
   const handleAuthCallback = async () => {
     const code = new URLSearchParams(window.location.search).get('code');
     if (!code) {
@@ -471,7 +353,7 @@ const EmailSettings = () => {
         
         <CardContent className="space-y-4">
           {!oauthColumnsExist && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Database Migration Required</AlertTitle>
               <AlertDescription>
@@ -489,28 +371,7 @@ const EmailSettings = () => {
           />
           
           {emailProvider && (
-            <div>
-              {emailProvider === 'office365' ? (
-                <div className="flex justify-between items-center mb-2">
-                  <Label>Authentication Method</Label>
-                  <div className="text-xs text-blue-600">
-                    Office 365 requires OAuth2 authentication
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center mb-2">
-                  <Label>Authentication Method</Label>
-                  <div>
-                    <Tabs value={authType} onValueChange={(value) => setAuthType(value as 'password' | 'oauth2')}>
-                      <TabsList className="grid w-[200px] grid-cols-2">
-                        <TabsTrigger value="password">Password</TabsTrigger>
-                        <TabsTrigger value="oauth2">OAuth2</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                </div>
-              )}
-              
+            <>
               <AuthenticationFields
                 authType={authType}
                 emailPassword={emailPassword}
@@ -524,124 +385,38 @@ const EmailSettings = () => {
                 onOauth2ClientSecretChange={setOauth2ClientSecret}
                 onInitiateOAuth2={initiateOAuth2}
               />
-            </div>
+              
+              <ServerSettings
+                smtpHost={smtpHost}
+                smtpPort={smtpPort}
+                onSmtpHostChange={setSmtpHost}
+                onSmtpPortChange={setSmtpPort}
+              />
+            </>
           )}
-          
-          <ServerSettings
-            smtpHost={smtpHost}
-            smtpPort={smtpPort}
-            onSmtpHostChange={setSmtpHost}
-            onSmtpPortChange={setSmtpPort}
-          />
           
           {existingSettings && (
-            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-900">
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-medium">Email settings configured</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                You can now send emails directly from the app using {existingSettings.email_address}
-              </p>
-              {emailProvider === 'office365' && (
-                <div className="mt-2 text-sm">
-                  <div className="flex items-center">
-                    <strong className="mr-2">OAuth status:</strong> 
-                    {hasValidOAuth ? (
-                      <span className="text-green-600 flex items-center">
-                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                        Valid token
-                      </span>
-                    ) : (
-                      <span className="text-red-600 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        Missing or invalid token
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <EmailSettingsStatus 
+              settings={existingSettings} 
+              hasValidOAuth={hasValidOAuth} 
+            />
           )}
           
-          {debugInfo && (
-            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md">
-              <div className="flex items-center text-muted-foreground mb-2">
-                <InfoIcon className="h-4 w-4 mr-2" />
-                <span className="text-sm font-medium">Debug Information</span>
-              </div>
-              <pre className="text-xs overflow-auto max-h-32">{debugInfo}</pre>
-            </div>
-          )}
+          <EmailSettingsDebug debugInfo={debugInfo} />
         </CardContent>
 
         <CardFooter className="flex justify-between">
-          {existingSettings ? (
-            <>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={isDeleting || isSaving}>
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Settings
-                      </>
-                    )}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Email Settings</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete your email settings? You won't be able to send emails until you configure new settings.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteSettings} className="bg-red-600 hover:bg-red-700">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              
-              <Button onClick={() => handleSaveSettings()} disabled={isSaving || isDeleting}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Update Settings
-                  </>
-                )}
-              </Button>
-            </>
-          ) : (
-            <Button onClick={() => handleSaveSettings()} disabled={isSaving} className="ml-auto">
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Save Settings
-                </>
-              )}
-            </Button>
-          )}
+          <EmailSettingsActions
+            existingSettings={existingSettings}
+            isDeleting={isDeleting}
+            isSaving={isSaving}
+            onDelete={handleDeleteSettings}
+            onSave={handleSaveSettings}
+          />
         </CardFooter>
       </Card>
       
+      <OAuth2Handler onAuthCallback={handleAuthCallback} />
       <HubspotLogging />
     </div>
   );
