@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer';
+
+import nodemailer from 'npm:nodemailer';
 
 export function createSMTPClient(config: any) {
   try {
