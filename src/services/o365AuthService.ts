@@ -1,79 +1,84 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export async function initiateO365Auth(clientId: string, redirectUri: string) {
-  const MICROSOFT_OAUTH_URL = "https://login.microsoftonline.com/common/oauth2/v2.0";
-  const scope = encodeURIComponent("https://outlook.office.com/SMTP.Send offline_access");
-  
-  const authUrl = `${MICROSOFT_OAUTH_URL}/authorize?` +
-    `client_id=${encodeURIComponent(clientId)}` +
-    `&response_type=code` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&scope=${scope}` +
-    `&response_mode=query`;
-
-  // Save the current state before redirecting
-  sessionStorage.setItem('emailSettings_redirecting', 'true');
-  sessionStorage.setItem('emailSettings_clientId', clientId);
-  sessionStorage.setItem('emailSettings_redirectUri', redirectUri);
-
-  // Redirect to Microsoft OAuth login
-  window.location.href = authUrl;
-}
-
-export async function handleO365AuthCallback(
-  code: string, 
-  clientId: string, 
-  clientSecret: string, 
-  redirectUri: string
-) {
+export const checkOAuthColumnsExist = async (): Promise<boolean> => {
   try {
-    console.log('Exchanging code for tokens...');
-    console.log('Parameters:', { code: !!code, clientId: !!clientId, clientSecret: !!clientSecret, redirectUri });
-    
-    const { data, error } = await supabase.functions.invoke('o365-auth', {
-      body: JSON.stringify({
-        code,
-        clientId,
-        clientSecret,
-        redirectUri,
-      }),
-    });
-
-    if (error) {
-      console.error('Edge function error:', error);
-      throw error;
-    }
-    
-    console.log('Token exchange successful:', data);
-    return data;
-  } catch (error) {
-    console.error('Error handling O365 auth callback:', error);
-    throw error;
-  }
-}
-
-// Check if the OAuth migration has been applied
-export async function checkOAuthColumnsExist() {
-  try {
-    // Try to query a user_email_settings record with a simple query
-    // If the columns exist, this will succeed, otherwise it will fail
+    // Try to query the table with a filter on one of the OAuth columns
     const { error } = await supabase
       .from('user_email_settings')
-      .select('oauth2_client_id')
+      .select('id')
+      .is('oauth2_client_id', null)
       .limit(1);
     
-    // If there's an error with a message about the column not existing, 
-    // then the migration hasn't been applied
-    if (error && error.message && error.message.includes("column")) {
-      console.error('OAuth2 columns not found in database:', error);
-      return false;
+    // If the query runs without error, the column exists
+    if (!error) {
+      return true;
     }
     
-    // No error means the columns exist
-    return true;
+    // Check if the error message indicates missing column
+    return !(error.message.includes('column') && error.message.includes('does not exist'));
   } catch (error) {
     console.error('Error checking OAuth columns:', error);
     return false;
   }
-}
+};
+
+export const initiateO365Auth = async (clientId: string, redirectUri: string) => {
+  // Store redirecting state and client ID in sessionStorage
+  sessionStorage.setItem('emailSettings_redirecting', 'true');
+  sessionStorage.setItem('emailSettings_clientId', clientId);
+  sessionStorage.setItem('emailSettings_redirectUri', redirectUri);
+  
+  // Create Microsoft OAuth URL
+  const authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
+  const responseType = 'code';
+  const scope = encodeURIComponent('https://outlook.office.com/SMTP.Send offline_access');
+  
+  const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query`;
+  
+  // Redirect to Microsoft auth page
+  window.location.href = authUrl;
+};
+
+export const handleO365AuthCallback = async (
+  code: string,
+  clientId: string,
+  clientSecret: string,
+  redirectUri: string
+) => {
+  // Call token endpoint to exchange code for tokens
+  const tokenEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+  
+  const params = new URLSearchParams();
+  params.append('client_id', clientId);
+  params.append('client_secret', clientSecret);
+  params.append('code', code);
+  params.append('redirect_uri', redirectUri);
+  params.append('grant_type', 'authorization_code');
+
+  try {
+    const response = await fetch(tokenEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error_description || 'Failed to get token');
+    }
+    
+    const data = await response.json();
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in,
+    };
+    
+  } catch (error: any) {
+    console.error('Error exchanging code for token:', error);
+    throw new Error(error.message || 'Failed to get token');
+  }
+};
