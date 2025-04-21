@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2, AlertCircle } from 'lucide-react';
@@ -63,6 +64,8 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
     try {
       console.log('Starting email sending process...');
       
+      // Fetch user's email settings
+      console.log('Fetching email settings for user:', user.id);
       const { data: emailSettings, error: settingsError } = await supabase
         .from('user_email_settings')
         .select('*')
@@ -83,12 +86,12 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       }
 
       const settings = emailSettings as CompleteEmailSettings;
-
       console.log('Email settings retrieved:', {
         provider: settings.email_provider,
         email: settings.email_address,
         host: settings.smtp_host,
         port: settings.smtp_port,
+        hasOAuth2: !!(settings.oauth2_client_id && settings.oauth2_client_secret && settings.oauth2_refresh_token)
       });
       
       const htmlContent = formatEmailContent(content);
@@ -106,11 +109,13 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
       };
       
+      // Setup authentication based on provider
       if (settings.email_provider === 'office365' && 
           settings.oauth2_client_id && 
           settings.oauth2_client_secret && 
           settings.oauth2_refresh_token) {
         
+        console.log('Using OAuth2 authentication for Office 365');
         emailData.sender_settings.oauth2 = {
           user: settings.email_address,
           clientId: settings.oauth2_client_id,
@@ -118,8 +123,10 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           refreshToken: settings.oauth2_refresh_token
         };
         
-        console.log('Using OAuth2 authentication for Office 365');
+        // Remove password if it exists to ensure OAuth is used
+        delete emailData.sender_settings.password;
       } else if (settings.app_password) {
+        console.log('Using password authentication');
         emailData.sender_settings.password = settings.app_password;
       } else {
         throw new Error('Authentication credentials are missing. Please update your email settings.');
@@ -131,7 +138,8 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         provider: emailData.sender_settings.provider,
         host: emailData.sender_settings.host,
         port: emailData.sender_settings.port,
-        hasOauth2: !!emailData.sender_settings.oauth2
+        hasOauth2: !!emailData.sender_settings.oauth2,
+        hasPassword: !!emailData.sender_settings.password
       });
 
       const { data, error } = await supabase.functions.invoke('send-email', {

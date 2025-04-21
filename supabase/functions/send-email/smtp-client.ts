@@ -43,6 +43,15 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
     // Log if using OAuth2 (without credentials)
     if (config.oauth2) {
       console.log(`Using OAuth2 authentication for user: ${config.oauth2.user}`);
+      
+      // Debug: log OAuth2 structure (without exposing actual secrets)
+      console.log('OAuth2 config structure:', {
+        hasUser: !!config.oauth2.user,
+        hasClientId: !!config.oauth2.clientId,
+        hasClientSecret: !!config.oauth2.clientSecret,
+        hasRefreshToken: !!config.oauth2.refreshToken,
+        refreshTokenLength: config.oauth2.refreshToken ? config.oauth2.refreshToken.length : 0
+      });
     }
     
     if (config.provider === 'office365' && !config.oauth2) {
@@ -58,16 +67,6 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
       console.log(`Password provided with length: ${config.password.length}`);
     }
     
-    // Log the actual configuration being used (without sensitive data)
-    console.log(`SMTP Configuration: ${JSON.stringify({
-      hostname: config.host,
-      port: config.port,
-      tls: secure,
-      starttls: config.port === 587,
-      username: config.email,
-      authMethod: config.oauth2 ? 'XOAUTH2' : 'LOGIN'
-    }, null, 2)}`);
-    
     // Create the connection config object
     const connectionConfig: any = {
       hostname: config.host,
@@ -82,6 +81,7 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
       // Using OAuth2 authentication (primarily for Office365)
       connectionConfig.auth = {
         username: config.oauth2.user,
+        // For Office365, use XOAUTH2 authentication method
         method: "XOAUTH2",
         // OAuth2 authentication setup
         oauth2: {
@@ -89,6 +89,9 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
           clientId: config.oauth2.clientId,
           clientSecret: config.oauth2.clientSecret,
           refreshToken: config.oauth2.refreshToken,
+          // Add Office365 specific OAuth2 parameters
+          accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+          scope: "https://outlook.office.com/SMTP.Send",
         }
       };
     } else if (config.password) {
@@ -100,6 +103,21 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
     } else {
       throw new Error("Either password or OAuth2 configuration is required");
     }
+    
+    // Log the actual configuration being used (without sensitive data)
+    console.log(`SMTP Configuration: ${JSON.stringify({
+      hostname: config.host,
+      port: config.port,
+      tls: secure,
+      starttls: config.port === 587,
+      username: config.email,
+      authMethod: config.oauth2 ? 'XOAUTH2' : 'LOGIN',
+      oauth2Configured: config.oauth2 ? {
+        hasUser: !!config.oauth2?.user,
+        hasClientId: !!config.oauth2?.clientId, 
+        hasScope: true
+      } : false
+    }, null, 2)}`);
     
     return new SMTPClient({
       connection: connectionConfig,

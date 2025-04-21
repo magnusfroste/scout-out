@@ -76,13 +76,26 @@ Deno.serve(async (req) => {
       
       // Add appropriate authentication based on provider
       if (emailRequest.sender_settings.provider === 'office365' && emailRequest.sender_settings.oauth2) {
+        console.log("Setting up Office365 OAuth2 authentication");
         smtpConfig.oauth2 = emailRequest.sender_settings.oauth2;
+        
+        // Make sure password is not set for OAuth2
+        delete smtpConfig.password;
+        
+        console.log("OAuth2 config prepared:", {
+          user: smtpConfig.oauth2.user,
+          clientIdLength: smtpConfig.oauth2.clientId?.length || 0,
+          clientSecretLength: smtpConfig.oauth2.clientSecret?.length || 0,
+          refreshTokenLength: smtpConfig.oauth2.refreshToken?.length || 0
+        });
       } else if (emailRequest.sender_settings.password) {
+        console.log("Setting up password authentication");
         smtpConfig.password = emailRequest.sender_settings.password;
       } else {
         throw new Error("Missing authentication credentials");
       }
       
+      console.log("Creating SMTP client");
       const client = createSMTPClient(smtpConfig);
       
       // Extract recipient name

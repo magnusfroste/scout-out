@@ -32,6 +32,7 @@ export const initiateO365Auth = async (clientId: string, redirectUri: string) =>
   // Create Microsoft OAuth URL
   const authEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
   const responseType = 'code';
+  // Important: include the SMTP.Send scope for email sending permission
   const scope = encodeURIComponent('https://outlook.office.com/SMTP.Send offline_access');
   
   const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query`;
@@ -39,6 +40,7 @@ export const initiateO365Auth = async (clientId: string, redirectUri: string) =>
   console.log('Redirecting to Microsoft auth page:', authUrl);
   console.log('Client ID being used:', clientId);
   console.log('Redirect URI being used:', redirectUri);
+  console.log('Scope being used:', scope);
   
   try {
     // Redirect to Microsoft auth page
@@ -64,6 +66,7 @@ export const handleO365AuthCallback = async (
   params.append('code', code);
   params.append('redirect_uri', redirectUri);
   params.append('grant_type', 'authorization_code');
+  params.append('scope', 'https://outlook.office.com/SMTP.Send offline_access');
 
   try {
     console.log('Exchanging auth code for tokens...');
@@ -83,7 +86,7 @@ export const handleO365AuthCallback = async (
     // Log the full response for debugging
     console.log('Token response status:', response.status);
     const responseText = await response.text();
-    console.log('Token response body:', responseText);
+    console.log('Token response body length:', responseText.length);
     
     if (!response.ok) {
       let errorData;
@@ -99,6 +102,10 @@ export const handleO365AuthCallback = async (
     
     const data = JSON.parse(responseText);
     console.log('Received tokens successfully');
+    console.log('Access token length:', data.access_token?.length || 0);
+    console.log('Refresh token length:', data.refresh_token?.length || 0);
+    console.log('Expires in:', data.expires_in);
+    
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
