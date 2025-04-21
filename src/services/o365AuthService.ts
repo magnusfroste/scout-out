@@ -35,14 +35,41 @@ export const verifyO365Auth = async (userId: string): Promise<boolean> => {
     
     if (error) {
       console.error('Error verifying OAuth2 credentials:', error);
-      return false;
+      throw new Error('Failed to verify OAuth credentials. Please ensure you have registered your application in Azure AD.');
     }
     
-    return !!(data?.oauth2_refresh_token);
+    if (!data?.oauth2_refresh_token) {
+      throw new Error('Missing OAuth2 refresh token. Please authenticate with Microsoft 365.');
+    }
+    
+    return true;
   } catch (error) {
     console.error('Exception verifying OAuth2 credentials:', error);
     return false;
   }
+};
+
+export const getGraphApiRequirements = () => {
+  return {
+    requiredPermissions: [
+      'Mail.Send',
+      'Mail.ReadWrite',
+      'Mail.ReadWrite.Shared',
+      'Mail.Send.Shared',
+      'User.Read'
+    ],
+    redirectUris: [
+      `${window.location.origin}/settings`,
+      `${window.location.origin}/auth/callback`
+    ],
+    setupSteps: [
+      'Register a new application in Azure Active Directory',
+      'Add required API permissions under "API Permissions"',
+      'Grant admin consent for your organization',
+      'Create a client secret under "Certificates & secrets"',
+      'Configure redirect URIs under "Authentication"'
+    ]
+  };
 };
 
 export { 
