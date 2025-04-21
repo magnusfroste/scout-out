@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailSettings } from '@/types/email';
+import { checkOAuthColumnsExist } from '@/services/o365AuthService';
 
 interface CompleteEmailSettings extends EmailSettings {
   oauth2_client_id?: string | null;

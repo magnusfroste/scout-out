@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { 
   Card, 
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { 
   Mail,
   Save,
@@ -31,6 +33,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useEmailSettings } from '@/hooks/useEmailSettings';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { initiateO365Auth, handleO365AuthCallback } from '@/services/o365AuthService';
 import { BasicSettings } from './email-settings/BasicSettings';
 import { ServerSettings } from './email-settings/ServerSettings';
@@ -55,6 +60,7 @@ const EmailSettings = () => {
     oauth2ClientSecret,
     setOauth2ClientSecret,
     existingSettings,
+    setExistingSettings,
     isLoading,
     isSaving,
     setIsSaving,
@@ -65,8 +71,12 @@ const EmailSettings = () => {
     oauthColumnsExist,
     checkMigrationStatus,
     fetchEmailSettings,
+    resetForm,
     validateForm,
   } = useEmailSettings();
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     checkMigrationStatus();
@@ -223,6 +233,56 @@ const EmailSettings = () => {
         description: "Failed to start authentication process",
         variant: "destructive",
       });
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleAuthCallback = async () => {
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (!code) return;
+
+    setIsAuthenticating(true);
+    try {
+      const redirectUri = sessionStorage.getItem('emailSettings_redirectUri') || `${window.location.origin}/settings`;
+      const clientId = sessionStorage.getItem('emailSettings_clientId') || oauth2ClientId;
+      
+      if (!clientId || !oauth2ClientSecret) {
+        throw new Error('OAuth2 client ID and client secret are required');
+      }
+      
+      console.log('Handling OAuth callback with code');
+      const data = await handleO365AuthCallback(
+        code, 
+        clientId, 
+        oauth2ClientSecret, 
+        redirectUri
+      );
+      
+      if (data.refreshToken) {
+        console.log('Received refresh token, saving settings');
+        // Clear the URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Clear the session storage flags
+        sessionStorage.removeItem('emailSettings_redirecting');
+        sessionStorage.removeItem('emailSettings_clientId');
+        sessionStorage.removeItem('emailSettings_redirectUri');
+        
+        // Save the settings with the new refresh token
+        await handleSaveSettings(data.refreshToken);
+        
+        toast({
+          title: "Success",
+          description: "Successfully authenticated with Office 365",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error handling OAuth callback:', error);
+      toast({
+        title: "Authentication Error",
+        description: error.message || "Failed to complete authentication process",
+        variant: "destructive",
+      });
+    } finally {
       setIsAuthenticating(false);
     }
   };
