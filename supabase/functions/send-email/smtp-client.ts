@@ -78,6 +78,18 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
     
     // Add appropriate authentication based on provider
     if (config.oauth2) {
+      if (config.provider === 'office365' && 
+          (!config.oauth2.user || !config.oauth2.clientId || 
+           !config.oauth2.clientSecret || !config.oauth2.refreshToken)) {
+        console.error("Invalid Office365 OAuth2 configuration:", {
+          hasUser: !!config.oauth2.user,
+          hasClientId: !!config.oauth2.clientId,
+          hasClientSecret: !!config.oauth2.clientSecret,
+          hasRefreshToken: !!config.oauth2.refreshToken
+        });
+        throw new Error("Incomplete OAuth2 configuration for Office365");
+      }
+      
       // Using OAuth2 authentication (primarily for Office365)
       connectionConfig.auth = {
         username: config.oauth2.user,
@@ -94,6 +106,19 @@ export function createSMTPClient(config: SMTPConfig): SMTPClient {
           scope: "https://outlook.office.com/SMTP.Send",
         }
       };
+      
+      console.log("OAuth2 configuration for SMTP:", {
+        method: "XOAUTH2",
+        user: config.oauth2.user,
+        hasRequiredFields: !!(
+          config.oauth2.user && 
+          config.oauth2.clientId && 
+          config.oauth2.clientSecret && 
+          config.oauth2.refreshToken
+        ),
+        accessUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        scope: "https://outlook.office.com/SMTP.Send"
+      });
     } else if (config.password) {
       // Traditional password authentication
       connectionConfig.auth = {

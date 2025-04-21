@@ -71,6 +71,26 @@ Deno.serve(async (req) => {
       }, 400);
     }
 
+    // For Office365, verify OAuth2 settings are complete
+    if (emailRequest.sender_settings.provider === 'office365' && emailRequest.sender_settings.oauth2) {
+      const oauth2 = emailRequest.sender_settings.oauth2;
+      if (!oauth2.user || !oauth2.clientId || !oauth2.clientSecret || !oauth2.refreshToken) {
+        const missingFields = [];
+        if (!oauth2.user) missingFields.push('user');
+        if (!oauth2.clientId) missingFields.push('clientId');
+        if (!oauth2.clientSecret) missingFields.push('clientSecret');
+        if (!oauth2.refreshToken) missingFields.push('refreshToken');
+        
+        console.error("Incomplete OAuth2 settings for Office365:", missingFields);
+        return createJsonResponse({ 
+          success: false, 
+          error: `Incomplete OAuth2 settings for Office365. Missing: ${missingFields.join(', ')}`,
+        }, 400);
+      }
+      
+      console.log("Office365 OAuth2 settings validated successfully");
+    }
+
     try {
       // Configure email client with deliverability settings
       console.log("Configuring email client with provider:", emailRequest.sender_settings.provider);

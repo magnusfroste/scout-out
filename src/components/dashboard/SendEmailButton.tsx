@@ -110,21 +110,25 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       };
       
       // Setup authentication based on provider
-      if (settings.email_provider === 'office365' && 
-          settings.oauth2_client_id && 
-          settings.oauth2_client_secret && 
-          settings.oauth2_refresh_token) {
-        
-        console.log('Using OAuth2 authentication for Office 365');
-        emailData.sender_settings.oauth2 = {
-          user: settings.email_address,
-          clientId: settings.oauth2_client_id,
-          clientSecret: settings.oauth2_client_secret,
-          refreshToken: settings.oauth2_refresh_token
-        };
-        
-        // Remove password if it exists to ensure OAuth is used
-        delete emailData.sender_settings.password;
+      if (settings.email_provider === 'office365') {
+        // For Office 365, always check and require OAuth2 credentials
+        if (settings.oauth2_client_id && 
+            settings.oauth2_client_secret && 
+            settings.oauth2_refresh_token) {
+          
+          console.log('Using OAuth2 authentication for Office 365');
+          emailData.sender_settings.oauth2 = {
+            user: settings.email_address,
+            clientId: settings.oauth2_client_id,
+            clientSecret: settings.oauth2_client_secret,
+            refreshToken: settings.oauth2_refresh_token
+          };
+          
+          // Remove password if it exists to ensure OAuth is used
+          delete emailData.sender_settings.password;
+        } else {
+          throw new Error('OAuth2 credentials are required for Office 365. Please update your email settings.');
+        }
       } else if (settings.app_password) {
         console.log('Using password authentication');
         emailData.sender_settings.password = settings.app_password;
