@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -117,6 +116,9 @@ export const AuthenticationFields = ({
         <AlertTitle>Required Microsoft Graph API Permissions</AlertTitle>
         <AlertDescription>
           <div className="mt-2 space-y-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              The following permissions will be requested when users connect their Microsoft account:
+            </p>
             {graphRequirements.requiredPermissions.map((permission, index) => (
               <div key={index} className="flex items-center text-sm">
                 <span className="text-blue-600 mr-2">•</span>
@@ -146,7 +148,7 @@ export const AuthenticationFields = ({
       <div className="space-y-4">
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Setup Instructions</AlertTitle>
+          <AlertTitle>Azure App Setup Instructions</AlertTitle>
           <AlertDescription>
             <ol className="list-decimal list-inside space-y-2 mt-2">
               {graphRequirements.setupSteps.map((step, index) => (

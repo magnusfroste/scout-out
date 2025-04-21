@@ -75,11 +75,9 @@ export const getGraphApiRequirements = () => {
     },
     setupSteps: [
       'Register a new application in Azure Active Directory',
-      'Add the required permission "Mail.Send" under "API Permissions"',
-      'Grant admin consent for your organization if required',
       'Create a client secret under "Certificates & secrets"',
       'Configure redirect URIs under "Authentication"',
-      'Use the standard Microsoft OAuth endpoints provided'
+      'When users connect, they will be asked to approve the required permissions'
     ]
   };
 };
