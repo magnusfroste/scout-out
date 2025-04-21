@@ -62,6 +62,15 @@ Deno.serve(async (req) => {
       }, 400);
     }
 
+    // Check for Office365 provider with no OAuth2
+    if (emailRequest.sender_settings.provider === 'office365' && !emailRequest.sender_settings.oauth2) {
+      console.error("OAuth2 settings are required for Office365");
+      return createJsonResponse({ 
+        success: false, 
+        error: 'OAuth2 settings are required for Office365', 
+      }, 400);
+    }
+
     try {
       // Configure email client with deliverability settings
       console.log("Configuring email client with provider:", emailRequest.sender_settings.provider);
