@@ -71,14 +71,24 @@ export const handleO365AuthCallback = async (
       body: params.toString(),
     });
     
+    // Log the full response for debugging
+    console.log('Token response status:', response.status);
+    const responseText = await response.text();
+    console.log('Token response body:', responseText);
+    
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        errorData = { error: 'Could not parse error response' };
+      }
       console.error('Token exchange failed:', errorData);
       console.error('Status:', response.status);
       throw new Error(errorData.error_description || 'Failed to get token');
     }
     
-    const data = await response.json();
+    const data = JSON.parse(responseText);
     console.log('Received tokens successfully');
     return {
       accessToken: data.access_token,

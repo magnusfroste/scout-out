@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { 
   Card, 
@@ -161,6 +160,9 @@ const EmailSettings = () => {
       
       console.log('Saving email settings:', settingsData);
       
+      // Debug the RLS policies
+      console.log('Current user ID:', user.id);
+      
       let result;
       if (existingSettings) {
         console.log('Updating existing settings with ID:', existingSettings.id);
@@ -168,13 +170,22 @@ const EmailSettings = () => {
           .from('user_email_settings')
           .update(settingsData)
           .eq('id', existingSettings.id)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .select('*');
       } else {
         console.log('Creating new email settings');
-        result = await supabase
-          .from('user_email_settings')
-          .insert(settingsData)
-          .select();
+        // Debug the insert operation 
+        try {
+          result = await supabase
+            .from('user_email_settings')
+            .insert(settingsData)
+            .select('*');
+          
+          console.log('Insert operation result:', result);
+        } catch (insertError) {
+          console.error('Error during insert operation:', insertError);
+          throw insertError;
+        }
       }
       
       if (result.error) {
@@ -184,11 +195,17 @@ const EmailSettings = () => {
       
       console.log('Save result:', result);
       
+      // Check if we got data back
+      if (!result.data || result.data.length === 0) {
+        console.warn('No data returned from Supabase after save operation');
+      }
+      
       toast({
         title: 'Success',
         description: `Email settings ${existingSettings ? 'updated' : 'saved'} successfully`,
       });
       
+      // Refresh settings from the database
       fetchEmailSettings();
       setEmailPassword('');
     } catch (error: any) {

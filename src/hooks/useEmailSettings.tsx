@@ -47,6 +47,8 @@ export const useEmailSettings = () => {
     
     setIsLoading(true);
     try {
+      console.log('Fetching email settings for user ID:', user.id);
+      
       const { data, error } = await supabase
         .from('user_email_settings')
         .select('*')
@@ -56,7 +58,10 @@ export const useEmailSettings = () => {
         .limit(1)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching email settings:', error);
+        throw error;
+      }
       
       console.log('Fetched email settings:', data);
       
