@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const checkOAuthColumnsExist = async (): Promise<boolean> => {
@@ -244,5 +243,35 @@ export const saveOAuth2Tokens = async (
   } catch (error) {
     console.error('Exception saving OAuth2 tokens:', error);
     return false;
+  }
+};
+
+export const sendEmailViaGraphAPI = async (
+  accessToken: string, 
+  to: string, 
+  subject: string, 
+  content: string,
+  senderEmail: string
+) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-graph-email', {
+      body: JSON.stringify({
+        accessToken,
+        to,
+        subject,
+        body: content,
+        senderEmail
+      })
+    });
+
+    if (error) {
+      console.error('Graph API email send error:', error);
+      throw new Error(error.message || 'Failed to send email via Graph API');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error sending email via Graph API:', error);
+    throw error;
   }
 };
