@@ -236,36 +236,45 @@ export type Database = {
       }
       user_email_settings: {
         Row: {
-          app_password: string
+          app_password: string | null
           created_at: string | null
           email_address: string
           email_provider: string
           id: string
           is_active: boolean | null
+          oauth2_client_id: string | null
+          oauth2_client_secret: string | null
+          oauth2_refresh_token: string | null
           smtp_host: string
           smtp_port: number
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          app_password: string
+          app_password?: string | null
           created_at?: string | null
           email_address: string
           email_provider: string
           id?: string
           is_active?: boolean | null
+          oauth2_client_id?: string | null
+          oauth2_client_secret?: string | null
+          oauth2_refresh_token?: string | null
           smtp_host: string
           smtp_port: number
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          app_password?: string
+          app_password?: string | null
           created_at?: string | null
           email_address?: string
           email_provider?: string
           id?: string
           is_active?: boolean | null
+          oauth2_client_id?: string | null
+          oauth2_client_secret?: string | null
+          oauth2_refresh_token?: string | null
           smtp_host?: string
           smtp_port?: number
           updated_at?: string | null
@@ -318,12 +327,15 @@ export type Database = {
       get_user_email_settings: {
         Args: Record<PropertyKey, never>
         Returns: {
-          app_password: string
+          app_password: string | null
           created_at: string | null
           email_address: string
           email_provider: string
           id: string
           is_active: boolean | null
+          oauth2_client_id: string | null
+          oauth2_client_secret: string | null
+          oauth2_refresh_token: string | null
           smtp_host: string
           smtp_port: number
           updated_at: string | null

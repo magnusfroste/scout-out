@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -207,6 +206,7 @@ const EmailSettings = () => {
         user_id: user.id
       };
       
+      // Improved handling of OAuth2 and password-based authentication
       if (authType === 'password') {
         if (emailPassword) {
           settingsData.app_password = emailPassword;
@@ -214,45 +214,39 @@ const EmailSettings = () => {
           throw new Error('App password is required for new email settings');
         }
         
-        // Only set OAuth fields to null if the columns exist
-        if (oauthColumnsExist) {
-          settingsData.oauth2_client_id = null;
-          settingsData.oauth2_client_secret = null;
-          settingsData.oauth2_refresh_token = null;
-        }
-      } else if (authType === 'oauth2' && oauthColumnsExist) {
-        settingsData.oauth2_client_id = oauth2ClientId;
-        settingsData.oauth2_client_secret = oauth2ClientSecret;
-        if (refreshToken) {
-          settingsData.oauth2_refresh_token = refreshToken;
+        // Ensure OAuth2 fields are cleared when using password auth
+        settingsData.oauth2_client_id = null;
+        settingsData.oauth2_client_secret = null;
+        settingsData.oauth2_refresh_token = null;
+      } else if (authType === 'oauth2') {
+        // Validate OAuth2 credentials
+        if (!oauth2ClientId || !oauth2ClientSecret) {
+          throw new Error('OAuth2 client ID and client secret are required');
         }
         
-        if (!existingSettings || !existingSettings.app_password) {
-          settingsData.app_password = 'oauth2_not_used';
+        settingsData.oauth2_client_id = oauth2ClientId;
+        settingsData.oauth2_client_secret = oauth2ClientSecret;
+        
+        // Only set refresh token if provided (during initial OAuth2 setup)
+        if (refreshToken) {
+          settingsData.oauth2_refresh_token = refreshToken;
+        } else if (existingSettings?.oauth2_refresh_token) {
+          // Preserve existing refresh token if not getting a new one
+          settingsData.oauth2_refresh_token = existingSettings.oauth2_refresh_token;
         }
+        
+        // Fallback for app_password when using OAuth2
+        settingsData.app_password = 'oauth2_not_used';
       }
       
+      // Existing save logic with improved error handling
       let result;
-      
       if (existingSettings) {
-        if (authType === 'password' && emailPassword) {
-          result = await supabase
-            .from('user_email_settings')
-            .update(settingsData)
-            .eq('id', existingSettings.id)
-            .eq('user_id', user.id);
-        } else {
-          const updateData = { ...settingsData };
-          if (authType === 'password' && !emailPassword) {
-            delete updateData.app_password;
-          }
-          
-          result = await supabase
-            .from('user_email_settings')
-            .update(updateData)
-            .eq('id', existingSettings.id)
-            .eq('user_id', user.id);
-        }
+        result = await supabase
+          .from('user_email_settings')
+          .update(settingsData)
+          .eq('id', existingSettings.id)
+          .eq('user_id', user.id);
       } else {
         result = await supabase
           .from('user_email_settings')
@@ -266,6 +260,7 @@ const EmailSettings = () => {
         description: `Email settings ${existingSettings ? 'updated' : 'saved'} successfully`,
       });
       
+      // Refresh settings after successful save
       fetchEmailSettings();
       setEmailPassword('');
     } catch (error: any) {
