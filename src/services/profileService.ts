@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ElevatorPitch } from '@/utils/webhookResponseParser';
@@ -26,7 +27,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     const webhookSettings = await fetchWebhookSettings();
     const defaultCredits = webhookSettings?.default_signup_credits;
     
-    console.log('Default signup credits:', defaultCredits);
+    console.log('Default signup credits from webhook settings:', defaultCredits);
     
     // Try to get the existing profile
     const { data, error } = await supabase
@@ -45,18 +46,24 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       // Profile doesn't exist, create one
       console.log('Profile not found, creating new profile for user:', userId);
       
+      const insertData: Record<string, any> = {
+        id: userId,
+        first_name: null,
+        last_name: null,
+        avatar_url: null,
+        is_admin: false,
+        website_url: null,
+        business_data: null
+      };
+
+      // Only add credits if webhook settings provide a value
+      if (defaultCredits !== undefined && defaultCredits !== null) {
+        insertData.credits = defaultCredits;
+      }
+      
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
-        .insert({
-          id: userId,
-          // No need to specify credits, it will use database default
-          first_name: null,
-          last_name: null,
-          avatar_url: null,
-          is_admin: false,
-          website_url: null,
-          business_data: null
-        })
+        .insert(insertData)
         .select('*')
         .single();
         
