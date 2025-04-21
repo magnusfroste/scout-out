@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   CardHeader, 
@@ -7,7 +8,7 @@ import {
   CardContent,
   CardFooter 
 } from '@/components/ui/card';
-import { Mail, AlertCircle } from 'lucide-react';
+import { Mail, AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useEmailSettings } from '@/hooks/useEmailSettings';
 import { BasicSettings } from './email-settings/BasicSettings';
@@ -18,6 +19,10 @@ import { EmailSettingsDebug } from './email-settings/EmailSettingsDebug';
 import { EmailSettingsActions } from './email-settings/EmailSettingsActions';
 import { EmailSettingsStatus } from './email-settings/EmailSettingsStatus';
 import { OAuth2Handler } from './email-settings/OAuth2Handler';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { handleO365AuthCallback, initiateO365Auth, saveOAuth2Tokens } from '@/services/o365AuthService';
 
 const EmailSettings = () => {
   const {
@@ -57,6 +62,8 @@ const EmailSettings = () => {
   } = useEmailSettings();
   
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSaveSettings = async (refreshToken?: string) => {
     console.group('Save Email Settings');
@@ -318,16 +325,9 @@ const EmailSettings = () => {
   };
 
   useEffect(() => {
-    const isRedirecting = sessionStorage.getItem('emailSettings_redirecting') === 'true';
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    
-    if ((code && isRedirecting) || code) {
-      console.log('Authorization code detected in URL, handling callback');
-      handleAuthCallback();
-    } else {
-      console.log('No authorization code in URL or not in redirecting state');
-    }
+    checkMigrationStatus();
+    checkOAuthStatus();
+    fetchEmailSettings();
   }, []);
 
   if (isLoading) {
@@ -337,6 +337,32 @@ const EmailSettings = () => {
       </div>
     );
   }
+
+  const initiateOAuth2 = async () => {
+    if (!oauth2ClientId || !validateForm()) {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem('emailSettings_redirecting', 'true');
+      sessionStorage.setItem('emailSettings_clientId', oauth2ClientId);
+      sessionStorage.setItem('emailSettings_clientSecret', oauth2ClientSecret);
+      sessionStorage.setItem('emailSettings_userEmail', emailAddress);
+      
+      const redirectUri = `${window.location.origin}/settings`;
+      sessionStorage.setItem('emailSettings_redirectUri', redirectUri);
+      
+      console.log('Initiating OAuth2 with redirect URI:', redirectUri);
+      await initiateO365Auth(oauth2ClientId, redirectUri);
+    } catch (error: any) {
+      console.error('Error initiating OAuth2:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to initiate authentication process",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
