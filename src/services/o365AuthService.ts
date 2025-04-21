@@ -57,6 +57,7 @@ export const handleO365AuthCallback = async (
   params.append('grant_type', 'authorization_code');
 
   try {
+    console.log('Exchanging auth code for tokens...');
     const response = await fetch(tokenEndpoint, {
       method: 'POST',
       headers: {
@@ -67,10 +68,12 @@ export const handleO365AuthCallback = async (
     
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Token exchange failed:', errorData);
       throw new Error(errorData.error_description || 'Failed to get token');
     }
     
     const data = await response.json();
+    console.log('Received tokens successfully');
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,

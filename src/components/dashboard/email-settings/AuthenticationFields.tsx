@@ -4,7 +4,13 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Key, Loader2, ExternalLink, AlertCircle } from 'lucide-react';
+import { Key, Loader2, ExternalLink, AlertCircle, HelpCircle } from 'lucide-react';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface AuthenticationFieldsProps {
   authType: 'password' | 'oauth2';
@@ -92,7 +98,21 @@ export const AuthenticationFields = ({
       </h3>
       
       <div className="space-y-2">
-        <Label htmlFor="oauth2ClientId">Client ID</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="oauth2ClientId">Client ID</Label>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-md">
+                <p>Find this in your Azure portal under App Registrations → Your App → Overview → Application (client) ID</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <Input
           id="oauth2ClientId"
           placeholder="Enter your Microsoft Azure app Client ID"
@@ -103,7 +123,21 @@ export const AuthenticationFields = ({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="oauth2ClientSecret">Client Secret</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="oauth2ClientSecret">Client Secret</Label>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-md">
+                <p>Find this in your Azure portal under App Registrations → Your App → Certificates & secrets → Client secrets</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <Input
           id="oauth2ClientSecret"
           type="password"
@@ -115,8 +149,8 @@ export const AuthenticationFields = ({
       </div>
 
       <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+        <p className="text-sm font-medium mb-2">Redirect URIs to configure in Azure:</p>
         <p className="text-sm text-muted-foreground">
-          <strong>Redirect URIs to configure in Azure:</strong><br />
           • {window.location.origin}/settings<br />
           • {window.location.origin}/auth/callback
         </p>
@@ -126,7 +160,7 @@ export const AuthenticationFields = ({
         <Button 
           type="button" 
           onClick={onInitiateOAuth2}
-          disabled={isAuthenticating || !oauthColumnsExist}
+          disabled={isAuthenticating || !oauthColumnsExist || !oauth2ClientId || !oauth2ClientSecret}
           className="w-full"
         >
           {isAuthenticating ? (
@@ -143,10 +177,14 @@ export const AuthenticationFields = ({
         </Button>
       )}
       
-      <p className="text-sm text-muted-foreground">
-        You need to register an application in the Microsoft Azure portal and obtain these credentials.
-        The app must have the SMTP.Send permission.
-      </p>
+      <Alert className="mt-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Important</AlertTitle>
+        <AlertDescription>
+          You must register an application in the Microsoft Azure portal and obtain Client ID and Client Secret.
+          The app must have the <strong>SMTP.Send</strong> permission.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };
