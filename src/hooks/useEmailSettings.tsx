@@ -43,11 +43,19 @@ export const useEmailSettings = () => {
   };
 
   const fetchEmailSettings = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user logged in, cannot fetch email settings');
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {
       console.log('Fetching email settings for user ID:', user.id);
+      
+      // First, check if RLS policies are properly set up
+      const rls = await supabase.rpc('get_user_email_settings');
+      console.log('RLS function result:', rls);
       
       const { data, error } = await supabase
         .from('user_email_settings')

@@ -37,9 +37,16 @@ export const initiateO365Auth = async (clientId: string, redirectUri: string) =>
   const authUrl = `${authEndpoint}?client_id=${clientId}&response_type=${responseType}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_mode=query`;
   
   console.log('Redirecting to Microsoft auth page:', authUrl);
+  console.log('Client ID being used:', clientId);
+  console.log('Redirect URI being used:', redirectUri);
   
-  // Redirect to Microsoft auth page
-  window.location.href = authUrl;
+  try {
+    // Redirect to Microsoft auth page
+    window.location.href = authUrl;
+  } catch (error) {
+    console.error('Error redirecting to Microsoft auth page:', error);
+    throw new Error('Failed to redirect to Microsoft login page');
+  }
 };
 
 export const handleO365AuthCallback = async (
@@ -61,7 +68,9 @@ export const handleO365AuthCallback = async (
   try {
     console.log('Exchanging auth code for tokens...');
     console.log('Using client ID:', clientId);
+    console.log('Using client secret:', clientSecret ? '[REDACTED]' : 'MISSING');
     console.log('Using redirect URI:', redirectUri);
+    console.log('Using auth code:', code ? '[REDACTED]' : 'MISSING');
     
     const response = await fetch(tokenEndpoint, {
       method: 'POST',

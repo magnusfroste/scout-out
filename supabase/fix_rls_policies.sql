@@ -1,3 +1,4 @@
+
 -- Check if RLS is enabled
 SELECT tablename, rowsecurity FROM pg_tables WHERE tablename = 'user_email_settings';
 

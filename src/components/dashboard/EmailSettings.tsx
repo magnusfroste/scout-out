@@ -274,6 +274,8 @@ const EmailSettings = () => {
     try {
       setIsAuthenticating(true);
       const redirectUri = `${window.location.origin}/settings`;
+      console.log('Initiating OAuth2 with redirect URI:', redirectUri);
+      console.log('Client ID:', oauth2ClientId);
       await initiateO365Auth(oauth2ClientId, redirectUri);
     } catch (error) {
       console.error('Error initiating OAuth2:', error);
@@ -288,14 +290,19 @@ const EmailSettings = () => {
 
   const handleAuthCallback = async () => {
     const code = new URLSearchParams(window.location.search).get('code');
-    if (!code) return;
+    if (!code) {
+      console.log('No auth code found in URL, skipping OAuth callback handling');
+      return;
+    }
 
+    console.log('Auth code detected, handling OAuth callback');
     setIsAuthenticating(true);
     try {
       const redirectUri = sessionStorage.getItem('emailSettings_redirectUri') || `${window.location.origin}/settings`;
       const clientId = sessionStorage.getItem('emailSettings_clientId') || oauth2ClientId;
       
       if (!clientId || !oauth2ClientSecret) {
+        console.error('Missing OAuth credentials:', { clientId: !!clientId, clientSecret: !!oauth2ClientSecret });
         throw new Error('OAuth2 client ID and client secret are required');
       }
       

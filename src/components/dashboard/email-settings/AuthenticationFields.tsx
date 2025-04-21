@@ -150,7 +150,7 @@ export const AuthenticationFields = ({
 
       <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
         <p className="text-sm font-medium mb-2">Redirect URIs to configure in Azure:</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground break-all">
           • {window.location.origin}/settings<br />
           • {window.location.origin}/auth/callback
         </p>
