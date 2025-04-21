@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -40,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmailSettings as EmailSettingsType } from '@/types/email';
+import { initiateO365Auth, handleO365AuthCallback } from '@/services/o365AuthService';
 
 interface CompleteEmailSettings extends EmailSettingsType {
   oauth2_client_id?: string | null;
@@ -57,12 +57,12 @@ const EmailSettings = () => {
   
   const [oauth2ClientId, setOauth2ClientId] = useState('');
   const [oauth2ClientSecret, setOauth2ClientSecret] = useState('');
-  const [oauth2RefreshToken, setOauth2RefreshToken] = useState('');
   
   const [existingSettings, setExistingSettings] = useState<CompleteEmailSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -120,10 +120,6 @@ const EmailSettings = () => {
         if (settings.oauth2_client_secret) {
           setOauth2ClientSecret(settings.oauth2_client_secret);
         }
-        
-        if (settings.oauth2_refresh_token) {
-          setOauth2RefreshToken(settings.oauth2_refresh_token);
-        }
       } else {
         setExistingSettings(null);
         resetForm();
@@ -148,7 +144,6 @@ const EmailSettings = () => {
     setSmtpPort('');
     setOauth2ClientId('');
     setOauth2ClientSecret('');
-    setOauth2RefreshToken('');
     setAuthType('password');
   };
 
@@ -172,7 +167,7 @@ const EmailSettings = () => {
         return false;
       }
     } else if (authType === 'oauth2') {
-      if (!oauth2ClientId || !oauth2ClientSecret || !oauth2RefreshToken) {
+      if (!oauth2ClientId || !oauth2ClientSecret) {
         toast({
           title: 'Missing OAuth2 Credentials',
           description: 'Please provide all OAuth2 credentials',
@@ -185,7 +180,7 @@ const EmailSettings = () => {
     return true;
   };
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = async (refreshToken?: string) => {
     if (!user) return;
     
     if (!validateForm()) return;
@@ -214,7 +209,9 @@ const EmailSettings = () => {
       } else if (authType === 'oauth2') {
         settingsData.oauth2_client_id = oauth2ClientId;
         settingsData.oauth2_client_secret = oauth2ClientSecret;
-        settingsData.oauth2_refresh_token = oauth2RefreshToken;
+        if (refreshToken) {
+          settingsData.oauth2_refresh_token = refreshToken;
+        }
         
         if (!existingSettings || !existingSettings.app_password) {
           settingsData.app_password = 'oauth2_not_used';
@@ -301,6 +298,78 @@ const EmailSettings = () => {
     }
   };
 
+  const initiateOAuth2 = async () => {
+    if (!oauth2ClientId) {
+      toast({
+        title: "Missing Client ID",
+        description: "Please enter your Azure App Client ID first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const redirectUri = `${window.location.origin}/settings`;
+      await initiateO365Auth(oauth2ClientId, redirectUri);
+    } catch (error) {
+      console.error('Error initiating OAuth2:', error);
+      toast({
+        title: "Authentication Error",
+        description: "Failed to start authentication process",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAuthCallback = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+
+    if (error) {
+      toast({
+        title: "Authentication Error",
+        description: `Failed to authenticate: ${error}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (code && oauth2ClientId && oauth2ClientSecret) {
+      setIsAuthenticating(true);
+      try {
+        const redirectUri = `${window.location.origin}/settings`;
+        const result = await handleO365AuthCallback(
+          code,
+          oauth2ClientId,
+          oauth2ClientSecret,
+          redirectUri
+        );
+
+        if (result.refresh_token) {
+          await handleSaveSettings(result.refresh_token);
+          toast({
+            title: "Success",
+            description: "Successfully authenticated with Office 365",
+          });
+        }
+      } catch (error) {
+        console.error('Error handling auth callback:', error);
+        toast({
+          title: "Authentication Error",
+          description: "Failed to complete authentication",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAuthenticating(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    handleAuthCallback();
+  }, [oauth2ClientId, oauth2ClientSecret]);
+
   const renderAuthFields = () => {
     if (authType === 'password') {
       return (
@@ -368,31 +437,35 @@ const EmailSettings = () => {
               onChange={(e) => setOauth2ClientSecret(e.target.value)}
             />
           </div>
-          
+
           <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
             <p className="text-sm text-muted-foreground">
               <strong>Redirect URIs to configure in Azure:</strong><br />
-              • https://mba.froste.eu/settings<br />
-              • https://mba.froste.eu/auth/callback<br />
-              {import.meta.env.DEV && (
-                <>
-                  • http://localhost:5173/settings<br />
-                  • http://localhost:5173/auth/callback
-                </>
-              )}
+              • {window.location.origin}/settings<br />
+              • {window.location.origin}/auth/callback
             </p>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="oauth2RefreshToken">Refresh Token</Label>
-            <Input
-              id="oauth2RefreshToken"
-              type="password"
-              placeholder="Enter the OAuth2 Refresh Token"
-              value={oauth2RefreshToken}
-              onChange={(e) => setOauth2RefreshToken(e.target.value)}
-            />
-          </div>
+
+          {!existingSettings?.oauth2_refresh_token && (
+            <Button 
+              type="button" 
+              onClick={initiateOAuth2}
+              disabled={isAuthenticating}
+              className="w-full"
+            >
+              {isAuthenticating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  <Key className="mr-2 h-4 w-4" />
+                  Connect to Office 365
+                </>
+              )}
+            </Button>
+          )}
           
           <p className="text-sm text-muted-foreground">
             You need to register an application in the Microsoft Azure portal and obtain these credentials.
