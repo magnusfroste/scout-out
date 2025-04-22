@@ -35,7 +35,22 @@ serve(async (req) => {
     const { priceId } = await req.json();
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
+    // Determine product details based on priceId
+    let productName = "";
+    let productDescription = "";
+    
+    if (priceId === "price_1RGoUuHTXSpIB5InGhmQ7gdn") {
+      productName = "5 Credits Package";
+      productDescription = "Purchase of 5 credits for company searches";
+    } else if (priceId === "price_1RGobkHTXSpIB5Iny2gg7sQv") {
+      productName = "25 Credits Package";
+      productDescription = "Purchase of 25 credits for company searches";
+    } else {
+      throw new Error("Invalid price ID");
+    }
+
     console.log(`Creating Stripe checkout for price ID: ${priceId}`);
+    console.log(`Product details: ${productName} - ${productDescription}`);
 
     const session = await stripe.checkout.sessions.create({
       customer_email: user.email,
@@ -51,6 +66,8 @@ serve(async (req) => {
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
+        product_name: productName,
+        product_description: productDescription
       },
     });
 
