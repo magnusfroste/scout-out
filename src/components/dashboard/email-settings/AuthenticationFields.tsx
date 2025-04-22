@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Key } from 'lucide-react';
@@ -13,10 +13,12 @@ interface AuthenticationFieldsProps {
   oauth2ClientSecret: string;
   oauthColumnsExist: boolean;
   isAuthenticating: boolean;
+  emailProvider: string; // Added email provider prop
   onEmailPasswordChange: (value: string) => void;
   onOauth2ClientIdChange: (value: string) => void;
   onOauth2ClientSecretChange: (value: string) => void;
   onInitiateOAuth2: () => void;
+  onAuthTypeChange: (value: 'password' | 'oauth2') => void; // Added auth type change handler
 }
 
 export const AuthenticationFields = ({
@@ -27,11 +29,20 @@ export const AuthenticationFields = ({
   oauth2ClientSecret,
   oauthColumnsExist,
   isAuthenticating,
+  emailProvider,
   onEmailPasswordChange,
   onOauth2ClientIdChange,
   onOauth2ClientSecretChange,
   onInitiateOAuth2,
+  onAuthTypeChange,
 }: AuthenticationFieldsProps) => {
+  
+  // Set authType to oauth2 automatically when Office 365 is selected
+  useEffect(() => {
+    if (emailProvider === 'office365' && authType !== 'oauth2') {
+      onAuthTypeChange('oauth2');
+    }
+  }, [emailProvider, authType, onAuthTypeChange]);
   
   const { renderAuthUi } = OAuth2Settings({
     oauth2ClientId,
@@ -39,6 +50,24 @@ export const AuthenticationFields = ({
     validateForm: () => true,
   });
 
+  // For Office 365, always show OAuth2 UI
+  if (emailProvider === 'office365') {
+    const hasStoredCredentials = existingSettings?.oauth2_client_id && existingSettings?.oauth2_client_secret;
+    const needsAuthentication = !existingSettings?.oauth2_refresh_token;
+    
+    return renderAuthUi(
+      hasStoredCredentials,
+      existingSettings,
+      needsAuthentication,
+      oauthColumnsExist,
+      oauth2ClientSecret,
+      isAuthenticating,
+      onOauth2ClientIdChange,
+      onOauth2ClientSecretChange
+    );
+  }
+
+  // For other providers, show password or OAuth based on authType
   if (authType === 'password') {
     return (
       <div className="space-y-2">

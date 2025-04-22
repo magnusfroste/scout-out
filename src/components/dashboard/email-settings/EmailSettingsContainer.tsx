@@ -151,6 +151,16 @@ const EmailSettingsContainer = () => {
     }
   };
 
+  // Set appropriate SMTP settings for Office 365 when selected
+  useEffect(() => {
+    if (emailProvider === 'office365') {
+      setSmtpHost('smtp.office365.com');
+      setSmtpPort('587');
+      // Ensure we're using OAuth2 for Office 365
+      setAuthType('oauth2');
+    }
+  }, [emailProvider]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -198,10 +208,12 @@ const EmailSettingsContainer = () => {
               oauth2ClientSecret={oauth2ClientSecret}
               oauthColumnsExist={oauthColumnsExist}
               isAuthenticating={isAuthenticating}
+              emailProvider={emailProvider}
               onEmailPasswordChange={setEmailPassword}
               onOauth2ClientIdChange={setOauth2ClientId}
               onOauth2ClientSecretChange={setOauth2ClientSecret}
               onInitiateOAuth2={handleInitiateOAuth}
+              onAuthTypeChange={setAuthType}
             />
             
             <ServerSettings

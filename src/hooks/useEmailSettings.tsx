@@ -31,6 +31,14 @@ export const useEmailSettings = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  useEffect(() => {
+    if (emailProvider === 'office365') {
+      setAuthType('oauth2');
+      if (!smtpHost) setSmtpHost('smtp.office365.com');
+      if (!smtpPort) setSmtpPort('587');
+    }
+  }, [emailProvider]);
+
   const checkMigrationStatus = async () => {
     try {
       const columnsExist = await checkOAuthColumnsExist();
@@ -92,18 +100,22 @@ export const useEmailSettings = () => {
         setSmtpHost(settings.smtp_host);
         setSmtpPort(settings.smtp_port.toString());
         
-        if (settings.oauth2_client_id) {
-          setOauth2ClientId(settings.oauth2_client_id);
+        if (settings.email_provider === 'office365') {
+          setAuthType('oauth2');
+        } else if (settings.oauth2_client_id) {
           setAuthType('oauth2');
         } else {
           setAuthType('password');
+        }
+        
+        if (settings.oauth2_client_id) {
+          setOauth2ClientId(settings.oauth2_client_id);
         }
         
         if (settings.oauth2_client_secret) {
           setOauth2ClientSecret(settings.oauth2_client_secret);
         }
 
-        // Check if we have a valid OAuth2 refresh token
         const hasValid = !!settings.oauth2_refresh_token && settings.email_provider === 'office365';
         setHasValidOAuth(hasValid);
         console.log('Has valid OAuth2 token:', hasValid);
