@@ -22,3 +22,7 @@ verify_jwt = true
 [functions.trigger-value-proposition-webhook]
 enabled = true
 verify_jwt = true
+
+[functions.trigger-company-research-webhook]
+enabled = true
+verify_jwt = true
