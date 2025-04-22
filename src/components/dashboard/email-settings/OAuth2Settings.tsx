@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoCircle, Key, Loader2 } from 'lucide-react';
+import { AlertTriangle, Key, Loader2 } from 'lucide-react';
 import { initiateO365Auth } from '@/services/oauth/oauthFlowService';
 import { getGraphApiRequirements } from '@/services/o365AuthService';
 
@@ -95,8 +95,8 @@ export const OAuth2Settings = ({
         </div>
         
         {needsAuthentication && (
-          <Alert variant="warning" className="bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300">
-            <InfoCircle className="h-4 w-4" />
+          <Alert className="bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300">
+            <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               Your account needs to be connected to Microsoft 365 before sending emails. 
               Please click the "Connect to Microsoft 365" button below.
