@@ -138,11 +138,9 @@ const Header = () => {
               <Link to="/dashboard" className={`text-sm ${isActive('/dashboard')} transition-colors`}>
                 Workflow
               </Link>
-              {userProfile?.is_admin && (
-                <Link to="/settings" className={`text-sm ${isActive('/settings')} transition-colors`}>
-                  Settings
-                </Link>
-              )}
+              <Link to="/settings" className={`text-sm ${isActive('/settings')} transition-colors`}>
+                Settings
+              </Link>
               <Link to="/profile" className={`text-sm ${isActive('/profile')} transition-colors`}>
                 Profile
               </Link>
@@ -223,17 +221,15 @@ const Header = () => {
                       Workflow
                     </Link>
                   </li>
-                  {userProfile?.is_admin && (
-                    <li>
-                      <Link 
-                        to="/settings" 
-                        className={`block text-base ${isActive('/settings')} transition-colors`}
-                        onClick={closeMobileMenu}
-                      >
-                        Settings
-                      </Link>
-                    </li>
-                  )}
+                  <li>
+                    <Link 
+                      to="/settings" 
+                      className={`block text-base ${isActive('/settings')} transition-colors`}
+                      onClick={closeMobileMenu}
+                    >
+                      Settings
+                    </Link>
+                  </li>
                   <li>
                     <Link 
                       to="/profile" 

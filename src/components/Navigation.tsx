@@ -110,12 +110,10 @@ const Navigation = () => {
                   Workflow
                 </Link>
               )}
-              {/* Show admin settings only for admins */}
-              {userProfile?.is_admin && (
-                <Link to="/settings" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
-                  Settings
-                </Link>
-              )}
+              {/* Show settings link for all users */}
+              <Link to="/settings" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+                Settings
+              </Link>
               {/* Show profile link on non-profile pages */}
               {location.pathname !== '/profile' && (
                 <Link to="/profile" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">

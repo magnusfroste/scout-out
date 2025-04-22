@@ -19,6 +19,8 @@ interface GraphEmailRequest {
   body: string;
   senderEmail: string;
   debug?: boolean;
+  cc?: string[];
+  bcc?: string[];
 }
 
 serve(async (req) => {
@@ -37,7 +39,7 @@ serve(async (req) => {
 
   try {
     const emailRequest: GraphEmailRequest = await req.json();
-    const { accessToken, to, subject, body, senderEmail, debug } = emailRequest;
+    const { accessToken, to, subject, body, senderEmail, debug, cc, bcc } = emailRequest;
     
     if (!accessToken || !to || !subject || !body) {
       return new Response(
@@ -52,11 +54,13 @@ serve(async (req) => {
         subject,
         bodyLength: body.length,
         senderEmail,
-        tokenLength: accessToken.length
+        tokenLength: accessToken.length,
+        hasCC: Array.isArray(cc) && cc.length > 0,
+        hasBCC: Array.isArray(bcc) && bcc.length > 0
       });
     }
     
-    const emailContent = {
+    const emailContent: any = {
       message: {
         subject,
         body: {
@@ -79,18 +83,81 @@ serve(async (req) => {
       saveToSentItems: true,
     };
     
-    const response = await fetch(GRAPH_API_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(emailContent),
-    });
+    // Add CC recipients if provided
+    if (cc && cc.length > 0) {
+      emailContent.message.ccRecipients = cc.map(address => ({
+        emailAddress: { address }
+      }));
+      
+      if (debug) {
+        console.log(`Adding ${cc.length} CC recipients`);
+      }
+    }
     
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Graph API error:", errorData);
+    // Add BCC recipients if provided
+    if (bcc && bcc.length > 0) {
+      emailContent.message.bccRecipients = bcc.map(address => ({
+        emailAddress: { address }
+      }));
+      
+      if (debug) {
+        console.log(`Adding ${bcc.length} BCC recipients`);
+      }
+    }
+    
+    // Add a retry mechanism
+    let response;
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        if (debug && retryCount > 0) {
+          console.log(`Retry attempt ${retryCount} of ${maxRetries}`);
+        }
+        
+        response = await fetch(GRAPH_API_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailContent),
+        });
+        
+        // If successful, break out of retry loop
+        if (response.ok) break;
+        
+        // If we get a 401 (Unauthorized), don't retry as the token is likely invalid
+        if (response.status === 401) break;
+        
+        // For other errors, try again with a delay
+        const errorData = await response.text();
+        console.error(`Graph API error (attempt ${retryCount + 1}):`, errorData);
+        
+        if (retryCount < maxRetries) {
+          // Wait for 1 second before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+          retryCount++;
+        } else {
+          break;
+        }
+      } catch (fetchError) {
+        console.error(`Fetch error (attempt ${retryCount + 1}):`, fetchError);
+        
+        if (retryCount < maxRetries) {
+          // Wait for 1 second before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+          retryCount++;
+        } else {
+          throw fetchError;
+        }
+      }
+    }
+    
+    if (!response || !response.ok) {
+      const errorData = await response?.text() || "No response received";
+      console.error("Graph API error after retries:", errorData);
       
       let errorDetails;
       try {
@@ -103,15 +170,19 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           error: errorDetails.error?.message || "Error sending email via Graph API",
-          statusCode: response.status,
+          statusCode: response?.status || 500,
           details: errorDetails,
+          retryAttempts: retryCount
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: response.status }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: response?.status || 500 }
       );
     }
     
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        retryAttempts: retryCount > 0 ? retryCount : undefined
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
     
