@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Mail, Loader2, AlertTriangle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useEmailSettings } from '@/hooks/useEmailSettings';
 import { BasicSettings } from './BasicSettings';
 import { ServerSettings } from './ServerSettings';
@@ -12,11 +13,9 @@ import { EmailSettingsStatus } from './EmailSettingsStatus';
 import { OAuth2Handler } from './OAuth2Handler';
 import { MigrationAlert } from './MigrationAlert';
 import { useEmailSettingsForm } from '@/hooks/useEmailSettingsForm';
-import { OAuth2Settings } from './OAuth2Settings';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { handleO365AuthCallback } from '@/services/oauth/oauthFlowService';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { OAuth2Settings } from './OAuth2Settings';
 
 const EmailSettingsContainer = () => {
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +68,7 @@ const EmailSettingsContainer = () => {
     validateForm
   );
 
+  // Use the OAuth2Settings hook to get the handleInitiateOAuth function
   const { handleInitiateOAuth } = OAuth2Settings({
     oauth2ClientId,
     emailAddress,
