@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,15 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
   onCopySuccess,
   adjustTextareaHeight
 }) => {
+  // Save to localStorage whenever values change
+  useEffect(() => {
+    if (companyId) {
+      localStorage.setItem(`value_proposition_subject_${companyId}`, displaySubject);
+      localStorage.setItem(`value_proposition_intro_${companyId}`, displayIntroduction);
+      localStorage.setItem(`value_proposition_advice_${companyId}`, displayAdvice);
+    }
+  }, [companyId, displaySubject, displayIntroduction, displayAdvice]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">

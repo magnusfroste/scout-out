@@ -11,6 +11,8 @@ interface CompleteEmailSettings extends EmailSettings {
   oauth2_refresh_token?: string | null;
 }
 
+const LOCAL_STORAGE_KEY = 'email_settings_form_data';
+
 export const useEmailSettings = () => {
   const [emailAddress, setEmailAddress] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
@@ -27,9 +29,40 @@ export const useEmailSettings = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [oauthColumnsExist, setOauthColumnsExist] = useState(true);
   const [hasValidOAuth, setHasValidOAuth] = useState(false);
+  const [formDataLoaded, setFormDataLoaded] = useState(false);
 
   const { toast } = useToast();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!formDataLoaded) return; // Don't save until initial data is loaded
+    
+    if (user) {
+      const formData = {
+        emailAddress,
+        emailPassword,
+        emailProvider,
+        smtpHost,
+        smtpPort,
+        authType,
+        oauth2ClientId,
+        oauth2ClientSecret,
+      };
+      
+      localStorage.setItem(`${LOCAL_STORAGE_KEY}_${user.id}`, JSON.stringify(formData));
+    }
+  }, [
+    emailAddress,
+    emailPassword,
+    emailProvider,
+    smtpHost,
+    smtpPort,
+    authType,
+    oauth2ClientId,
+    oauth2ClientSecret,
+    user,
+    formDataLoaded
+  ]);
 
   useEffect(() => {
     if (emailProvider === 'office365') {
@@ -72,7 +105,19 @@ export const useEmailSettings = () => {
     try {
       console.log('Fetching email settings for user ID:', user.id);
       
-      // First, check if RLS policies are properly set up
+      const savedFormData = localStorage.getItem(`${LOCAL_STORAGE_KEY}_${user.id}`);
+      let loadedFromLocalStorage = false;
+      
+      if (savedFormData) {
+        try {
+          const parsedData = JSON.parse(savedFormData);
+          console.log('Loaded form data from localStorage:', parsedData);
+          loadedFromLocalStorage = true;
+        } catch (error) {
+          console.error('Error parsing saved form data:', error);
+        }
+      }
+      
       const rls = await supabase.rpc('get_user_email_settings');
       console.log('RLS function result:', rls);
       
@@ -95,34 +140,59 @@ export const useEmailSettings = () => {
       if (data) {
         const settings = data as CompleteEmailSettings;
         setExistingSettings(settings);
-        setEmailAddress(settings.email_address);
-        setEmailProvider(settings.email_provider);
-        setSmtpHost(settings.smtp_host);
-        setSmtpPort(settings.smtp_port.toString());
         
-        if (settings.email_provider === 'office365') {
-          setAuthType('oauth2');
-        } else if (settings.oauth2_client_id) {
-          setAuthType('oauth2');
+        if (loadedFromLocalStorage && savedFormData) {
+          const parsedData = JSON.parse(savedFormData);
+          setEmailAddress(parsedData.emailAddress || settings.email_address);
+          setEmailProvider(parsedData.emailProvider || settings.email_provider);
+          setSmtpHost(parsedData.smtpHost || settings.smtp_host);
+          setSmtpPort(parsedData.smtpPort || settings.smtp_port.toString());
+          setAuthType(parsedData.authType || (settings.email_provider === 'office365' ? 'oauth2' : 
+                      settings.oauth2_client_id ? 'oauth2' : 'password'));
+          setOauth2ClientId(parsedData.oauth2ClientId || settings.oauth2_client_id || '');
+          setOauth2ClientSecret(parsedData.oauth2ClientSecret || settings.oauth2_client_secret || '');
         } else {
-          setAuthType('password');
-        }
-        
-        if (settings.oauth2_client_id) {
-          setOauth2ClientId(settings.oauth2_client_id);
-        }
-        
-        if (settings.oauth2_client_secret) {
-          setOauth2ClientSecret(settings.oauth2_client_secret);
+          setEmailAddress(settings.email_address);
+          setEmailProvider(settings.email_provider);
+          setSmtpHost(settings.smtp_host);
+          setSmtpPort(settings.smtp_port.toString());
+          
+          if (settings.email_provider === 'office365') {
+            setAuthType('oauth2');
+          } else if (settings.oauth2_client_id) {
+            setAuthType('oauth2');
+          } else {
+            setAuthType('password');
+          }
+          
+          if (settings.oauth2_client_id) {
+            setOauth2ClientId(settings.oauth2_client_id);
+          }
+          
+          if (settings.oauth2_client_secret) {
+            setOauth2ClientSecret(settings.oauth2_client_secret);
+          }
         }
 
         const hasValid = !!settings.oauth2_refresh_token && settings.email_provider === 'office365';
         setHasValidOAuth(hasValid);
         console.log('Has valid OAuth2 token:', hasValid);
+      } else if (loadedFromLocalStorage && savedFormData) {
+        setExistingSettings(null);
+        const parsedData = JSON.parse(savedFormData);
+        setEmailAddress(parsedData.emailAddress || '');
+        setEmailProvider(parsedData.emailProvider || '');
+        setSmtpHost(parsedData.smtpHost || '');
+        setSmtpPort(parsedData.smtpPort || '');
+        setAuthType(parsedData.authType || 'password');
+        setOauth2ClientId(parsedData.oauth2ClientId || '');
+        setOauth2ClientSecret(parsedData.oauth2ClientSecret || '');
       } else {
         setExistingSettings(null);
         resetForm();
       }
+      
+      setFormDataLoaded(true);
     } catch (error: any) {
       console.error('Error fetching email settings:', error);
       toast({
@@ -145,6 +215,12 @@ export const useEmailSettings = () => {
     setOauth2ClientSecret('');
     setAuthType('password');
     setHasValidOAuth(false);
+    
+    if (user) {
+      localStorage.removeItem(`${LOCAL_STORAGE_KEY}_${user.id}`);
+    }
+    
+    setFormDataLoaded(true);
   };
 
   const validateForm = () => {
