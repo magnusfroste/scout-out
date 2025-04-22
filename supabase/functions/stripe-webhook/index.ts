@@ -43,19 +43,19 @@ serve(async (req) => {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const userId = session.metadata?.user_id;
-      const productId = session.line_items?.[0]?.price?.product;
+      const priceId = session.line_items?.data[0]?.price?.id;
 
       if (userId) {
         let creditAmount = 0;
         let description = '';
 
-        // Determine credit amount based on product
-        switch(productId) {
-          case 'prod_SBAq926WeKYdid':
+        // Determine credit amount based on price ID
+        switch(priceId) {
+          case 'price_1O5d4tCNxMPkgjWvAMHzPP5I':
             creditAmount = 5;
             description = 'Purchased 5 credits';
             break;
-          case 'prod_SBAxsncr3cxU1N':
+          case 'price_1O5d57CNxMPkgjWvv7oB4G7G':
             creditAmount = 25;
             description = 'Purchased 25 credits';
             break;
@@ -85,6 +85,8 @@ serve(async (req) => {
             amount: creditAmount,
             description: description
           });
+
+        console.log(`Credits updated for user ${userId}: added ${creditAmount} credits. New total: ${updatedCredits}`);
       }
     }
 

@@ -329,7 +329,7 @@ const Profile = () => {
                   <div className="flex flex-col items-center p-4 border rounded">
                     <p>5 Credits</p>
                     <Button 
-                      onClick={() => handleCreditTopUp('prod_SBAq926WeKYdid')}
+                      onClick={() => handleCreditTopUp('price_1O5d4tCNxMPkgjWvAMHzPP5I')}
                       disabled={isLoading}
                     >
                       {isLoading ? 'Processing...' : 'Buy 5 Credits - €5'}
@@ -338,7 +338,7 @@ const Profile = () => {
                   <div className="flex flex-col items-center p-4 border rounded">
                     <p>25 Credits</p>
                     <Button 
-                      onClick={() => handleCreditTopUp('prod_SBAxsncr3cxU1N')}
+                      onClick={() => handleCreditTopUp('price_1O5d57CNxMPkgjWvv7oB4G7G')}
                       disabled={isLoading}
                     >
                       {isLoading ? 'Processing...' : 'Buy 25 Credits - €20'}

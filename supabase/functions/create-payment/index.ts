@@ -35,6 +35,8 @@ serve(async (req) => {
     const { priceId } = await req.json();
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
+    console.log(`Creating Stripe checkout for price ID: ${priceId}`);
+
     const session = await stripe.checkout.sessions.create({
       customer_email: user.email,
       line_items: [
@@ -51,6 +53,8 @@ serve(async (req) => {
         user_id: user.id,
       },
     });
+
+    console.log(`Stripe checkout session created: ${session.id}, redirecting to ${session.url}`);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
