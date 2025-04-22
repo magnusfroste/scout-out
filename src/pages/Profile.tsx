@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,9 +11,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Label } from '@/components/ui/label';
 import { User, Mail, CreditCard, RefreshCw, Save, Edit, X } from 'lucide-react';
 import CreditDisplay from '@/components/dashboard/CreditDisplay';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 
 const Profile = () => {
@@ -19,6 +20,8 @@ const Profile = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user && !userProfile) {
@@ -89,6 +92,65 @@ const Profile = () => {
     }
   };
 
+  const handleCreditTopUp = async (priceId: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (error) throw error;
+      
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      toast({
+        title: "Payment Error",
+        description: "Could not initiate payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      const { data: transactionData, error } = await supabase
+        .from('credit_transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTransactions(transactionData || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment_success');
+    const paymentCancelled = urlParams.get('payment_cancelled');
+
+    if (paymentSuccess) {
+      toast({
+        title: "Payment Successful",
+        description: "Credits have been added to your account.",
+      });
+    }
+
+    if (paymentCancelled) {
+      toast({
+        title: "Payment Cancelled",
+        description: "Your payment was cancelled.",
+        variant: "default"
+      });
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -112,7 +174,7 @@ const Profile = () => {
       <Navigation />
       
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto space-y-6">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Your Profile</h1>
             <Button 
@@ -254,6 +316,60 @@ const Profile = () => {
                       </ul>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Up Credits</CardTitle>
+                </CardHeader>
+                <CardContent className="flex gap-4">
+                  <div className="flex flex-col items-center p-4 border rounded">
+                    <p>5 Credits</p>
+                    <Button 
+                      onClick={() => handleCreditTopUp('prod_SBAq926WeKYdid')}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Processing...' : 'Buy 5 Credits - €5'}
+                    </Button>
+                  </div>
+                  <div className="flex flex-col items-center p-4 border rounded">
+                    <p>25 Credits</p>
+                    <Button 
+                      onClick={() => handleCreditTopUp('prod_SBAxsncr3cxU1N')}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Processing...' : 'Buy 25 Credits - €20'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Transaction History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            {new Date(transaction.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{transaction.description}</TableCell>
+                          <TableCell>{transaction.amount} credits</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </CardContent>
               </Card>
             </div>
