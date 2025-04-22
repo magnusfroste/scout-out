@@ -66,15 +66,32 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
       
       setCompanySearch(data);
       
-      // Now fetch question answers for this search
+      // Now fetch question answers for this search with agent_questions included
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
-        .select('*')
+        .select(`
+          id,
+          answer,
+          question_id,
+          company_search_id,
+          created_at,
+          agent_questions:question_id(id, question)
+        `)
         .eq('company_search_id', searchId);
         
       if (answersError) throw answersError;
       
-      setQuestionAnswers(answersData || []);
+      // Transform the data to match our CompanyQuestionAnswer interface
+      const transformedAnswers: CompanyQuestionAnswer[] = answersData.map((item: any) => ({
+        id: item.id,
+        answer: item.answer,
+        question_id: item.question_id,
+        company_search_id: item.company_search_id,
+        created_at: item.created_at,
+        agent_questions: item.agent_questions
+      }));
+      
+      setQuestionAnswers(transformedAnswers);
       
       // Set initial values for checking unsaved changes
       if (data) {
