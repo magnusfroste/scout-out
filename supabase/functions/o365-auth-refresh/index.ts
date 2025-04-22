@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -159,8 +160,8 @@ serve(async (req) => {
       // Generic error fallback
       return new Response(
         JSON.stringify({ 
-          error: errorDetails.error || 'unknown_error',
-          error_description: errorDetails.error_description || 'An unknown error occurred',
+          error: errorDetails.error,
+          error_description: errorDetails.error_description,
           details: {
             correlation_id: errorDetails.correlation_id,
             trace_id: errorDetails.trace_id,
@@ -175,21 +176,21 @@ serve(async (req) => {
     }
 
     const tokens: TokenResponse = await tokenResponse.json();
-    console.log('Successfully refreshed tokens');
+    console.log('Successfully obtained tokens');
     console.log('Access token length:', tokens.access_token?.length || 0);
-    console.log('New refresh token length:', tokens.refresh_token?.length || 0);
     console.log('Token expires in:', tokens.expires_in);
     
-    // Store the new refresh token if provided
-    if (tokens.refresh_token && tokens.refresh_token !== refreshToken) {
-      console.log('New refresh token received, should be stored');
+    // If we're getting a new refresh token, log it (but don't log the actual value)
+    if (tokens.refresh_token) {
+      console.log('New refresh token received');
     }
 
     return new Response(
       JSON.stringify({
         access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || refreshToken, // Return the new refresh token if present
+        refresh_token: tokens.refresh_token || refreshToken, // Use new token if provided, otherwise keep the old one
         expires_in: tokens.expires_in,
+        token_type: tokens.token_type,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

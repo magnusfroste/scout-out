@@ -26,3 +26,15 @@ verify_jwt = true
 [functions.trigger-company-research-webhook]
 enabled = true
 verify_jwt = true
+
+[functions.send-graph-email]
+enabled = true
+verify_jwt = true
+
+[functions.o365-auth]
+enabled = true
+verify_jwt = true
+
+[functions.o365-auth-refresh]
+enabled = true
+verify_jwt = true
