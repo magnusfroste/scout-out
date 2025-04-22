@@ -27,7 +27,8 @@ serve(async (req) => {
   const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
   );
 
   try {
@@ -51,11 +52,11 @@ serve(async (req) => {
 
         // Determine credit amount based on price ID
         switch(priceId) {
-          case 'price_1O5d4tCNxMPkgjWvAMHzPP5I':
+          case 'price_1RGoUuHTXSpIB5InGhmQ7gdn':
             creditAmount = 5;
             description = 'Purchased 5 credits';
             break;
-          case 'price_1O5d57CNxMPkgjWvv7oB4G7G':
+          case 'price_1RGobkHTXSpIB5Iny2gg7sQv':
             creditAmount = 25;
             description = 'Purchased 25 credits';
             break;

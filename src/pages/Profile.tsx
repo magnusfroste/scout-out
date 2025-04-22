@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';  // Add this import
 import { Button } from '@/components/ui/button';
@@ -329,7 +328,7 @@ const Profile = () => {
                   <div className="flex flex-col items-center p-4 border rounded">
                     <p>5 Credits</p>
                     <Button 
-                      onClick={() => handleCreditTopUp('price_1O5d4tCNxMPkgjWvAMHzPP5I')}
+                      onClick={() => handleCreditTopUp('price_1RGoUuHTXSpIB5InGhmQ7gdn')}
                       disabled={isLoading}
                     >
                       {isLoading ? 'Processing...' : 'Buy 5 Credits - €5'}
@@ -338,7 +337,7 @@ const Profile = () => {
                   <div className="flex flex-col items-center p-4 border rounded">
                     <p>25 Credits</p>
                     <Button 
-                      onClick={() => handleCreditTopUp('price_1O5d57CNxMPkgjWvv7oB4G7G')}
+                      onClick={() => handleCreditTopUp('price_1RGobkHTXSpIB5Iny2gg7sQv')}
                       disabled={isLoading}
                     >
                       {isLoading ? 'Processing...' : 'Buy 25 Credits - €20'}
