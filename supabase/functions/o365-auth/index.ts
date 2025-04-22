@@ -43,8 +43,22 @@ serve(async (req) => {
     const { code, clientId, clientSecret, redirectUri } = requestBody;
 
     if (!code || !clientId || !clientSecret || !redirectUri) {
+      console.error('Missing required parameters:', { 
+        hasCode: !!code, 
+        hasClientId: !!clientId, 
+        hasClientSecret: !!clientSecret, 
+        hasRedirectUri: !!redirectUri 
+      });
+      
       throw new Error("Missing required parameters");
     }
+
+    console.log('OAuth exchange request initialized with:', {
+      code: code ? `${code.substring(0, 6)}...` : 'missing',
+      clientId: clientId ? `${clientId.substring(0, 6)}...` : 'missing',
+      clientSecret: clientSecret ? 'present' : 'missing',
+      redirectUri
+    });
 
     const tokenRequestParams = new URLSearchParams({
       client_id: clientId,
@@ -56,6 +70,7 @@ serve(async (req) => {
     });
     
     console.log('Requesting token with scopes:', OUTLOOK_SCOPES.join(' '));
+    console.log('Redirect URI:', redirectUri);
     
     const tokenResponse = await fetch(`${MICROSOFT_AUTH_URL}/token`, {
       method: 'POST',
