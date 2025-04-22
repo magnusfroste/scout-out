@@ -41,3 +41,15 @@ export interface CompanySearchRecord {
   subject?: string | null;
   [key: string]: any; 
 }
+
+export interface CompanyQuestionAnswer {
+  id: string;
+  answer: string | null;
+  question_id: string;
+  company_search_id: string;
+  created_at: string;
+  agent_questions: {
+    id: string;
+    question: string;
+  };
+}
