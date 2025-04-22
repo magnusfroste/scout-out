@@ -1,23 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { User, Mail, CreditCard, RefreshCw, Save, Edit, X } from 'lucide-react';
-import CreditDisplay from '@/components/dashboard/CreditDisplay';
-import { Input } from '@/components/ui/input';
-import ProfileHeader from "@/components/profile/ProfileHeader";
-import ProfileDetails from "@/components/profile/ProfileDetails";
-import CreditSection from "@/components/profile/CreditSection";
-import PaymentOptions from "@/components/profile/PaymentOptions";
-import TransactionHistory from "@/components/profile/TransactionHistory";
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileDetails from '@/components/profile/ProfileDetails';
+import CreditSection from '@/components/profile/CreditSection';
+import PaymentOptions from '@/components/profile/PaymentOptions';
+import TransactionHistory from '@/components/profile/TransactionHistory';
 
 const Profile = () => {
   const { user, loading, userProfile, refreshUserProfile, updateProfile } = useAuth();
@@ -47,8 +41,8 @@ const Profile = () => {
     try {
       await refreshUserProfile();
       toast({
-        title: "Profile Refreshed",
-        description: "Your profile has been refreshed successfully.",
+        title: 'Profile Refreshed',
+        description: 'Your profile has been refreshed successfully.',
       });
     } catch (error) {
       console.error('Error refreshing profile:', error);
@@ -71,27 +65,27 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!userProfile) return;
-    
+
     setIsSaving(true);
     try {
       const success = await updateProfile({
         first_name: firstName,
-        last_name: lastName
+        last_name: lastName,
       });
-      
+
       if (success) {
         setIsEditing(false);
         toast({
-          title: "Profile Updated",
-          description: "Your name has been updated successfully.",
+          title: 'Profile Updated',
+          description: 'Your name has been updated successfully.',
         });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
-        title: "Update Failed",
-        description: "Could not update your profile. Please try again.",
-        variant: "destructive",
+        title: 'Update Failed',
+        description: 'Could not update your profile. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -106,14 +100,14 @@ const Profile = () => {
       });
 
       if (error) throw error;
-      
+
       window.location.href = data.url;
     } catch (error) {
       console.error('Error initiating payment:', error);
       toast({
-        title: "Payment Error",
-        description: "Could not initiate payment. Please try again.",
-        variant: "destructive"
+        title: 'Payment Error',
+        description: 'Could not initiate payment. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -143,16 +137,16 @@ const Profile = () => {
 
     if (paymentSuccess) {
       toast({
-        title: "Payment Successful",
-        description: "Credits have been added to your account.",
+        title: 'Payment Successful',
+        description: 'Credits have been added to your account.',
       });
     }
 
     if (paymentCancelled) {
       toast({
-        title: "Payment Cancelled",
-        description: "Your payment was cancelled.",
-        variant: "default"
+        title: 'Payment Cancelled',
+        description: 'Your payment was cancelled.',
+        variant: 'default',
       });
     }
   }, []);
@@ -175,6 +169,9 @@ const Profile = () => {
     return <Navigate to="/auth" replace />;
   }
 
+  // Fix for ProfileDetails user prop expecting { email: string } - provide fallback empty string if email is null
+  const safeUser = user.email ? { email: user.email } : { email: '' };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
@@ -191,11 +188,7 @@ const Profile = () => {
             onCancel={handleCancel}
             onSave={handleSave}
           />
-          {loading ? (
-            <div className="flex justify-center p-8">
-              <div className="animate-pulse text-muted-foreground">Loading profile...</div>
-            </div>
-          ) : !userProfile ? (
+          {!userProfile ? (
             <div className="text-center space-y-4 p-8">
               <div className="text-muted-foreground">Could not load your profile.</div>
               <Button onClick={refreshUserProfile}>Try Again</Button>
@@ -203,7 +196,7 @@ const Profile = () => {
           ) : (
             <div className="space-y-6">
               <ProfileDetails
-                user={user}
+                user={safeUser}
                 userProfile={userProfile}
                 isEditing={isEditing}
                 firstName={firstName}
@@ -211,16 +204,9 @@ const Profile = () => {
                 setFirstName={setFirstName}
                 setLastName={setLastName}
               />
-              <CreditSection
-                credits={userProfile.credits}
-              />
-              <PaymentOptions
-                isLoading={isLoading}
-                onTopUp={handleCreditTopUp}
-              />
-              <TransactionHistory
-                transactions={transactions}
-              />
+              <CreditSection credits={userProfile.credits} />
+              <PaymentOptions isLoading={isLoading} onTopUp={handleCreditTopUp} />
+              <TransactionHistory transactions={transactions} />
             </div>
           )}
         </div>
