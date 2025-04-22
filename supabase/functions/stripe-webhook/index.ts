@@ -44,7 +44,7 @@ serve(async (req) => {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const userId = session.metadata?.user_id;
-      const priceId = session.line_items?.data[0]?.price?.id;
+      const priceId = session.metadata?.price_id;
 
       if (userId) {
         let creditAmount = 0;

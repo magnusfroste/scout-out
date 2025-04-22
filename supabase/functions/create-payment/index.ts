@@ -38,13 +38,17 @@ serve(async (req) => {
     // Determine product details based on priceId
     let productName = "";
     let productDescription = "";
+    let unitAmount = 0;
+    let currency = "eur";
     
     if (priceId === "price_1RGoUuHTXSpIB5InGhmQ7gdn") {
       productName = "5 Credits Package";
       productDescription = "Purchase of 5 credits for company searches";
+      unitAmount = 500; // €5.00
     } else if (priceId === "price_1RGobkHTXSpIB5Iny2gg7sQv") {
       productName = "25 Credits Package";
       productDescription = "Purchase of 25 credits for company searches";
+      unitAmount = 2000; // €20.00
     } else {
       throw new Error("Invalid price ID");
     }
@@ -52,12 +56,20 @@ serve(async (req) => {
     console.log(`Creating Stripe checkout for price ID: ${priceId}`);
     console.log(`Product details: ${productName} - ${productDescription}`);
 
+    // Create checkout session with explicit line item details instead of just using priceId
     const session = await stripe.checkout.sessions.create({
       customer_email: user.email,
       line_items: [
         {
-          price: priceId,
           quantity: 1,
+          price_data: {
+            currency: currency,
+            unit_amount: unitAmount,
+            product_data: {
+              name: productName,
+              description: productDescription,
+            },
+          },
         },
       ],
       mode: "payment",
@@ -67,7 +79,8 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         product_name: productName,
-        product_description: productDescription
+        product_description: productDescription,
+        price_id: priceId // Store original priceId for reference in webhook
       },
     });
 
