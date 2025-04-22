@@ -62,6 +62,26 @@ export const handleO365AuthCallback = async (
     
     if (!data || !data.refresh_token) {
       console.error('No refresh_token received from token exchange:', data);
+      
+      // Special case: If we get an "already redeemed" error but a successful email setup previously
+      if (data?.error && data.error.includes('already redeemed')) {
+        // We'll check if the user already has valid tokens
+        const { data: settings } = await supabase
+          .from('user_email_settings')
+          .select('oauth2_refresh_token')
+          .eq('is_active', true)
+          .maybeSingle();
+          
+        if (settings?.oauth2_refresh_token) {
+          console.log('Found existing refresh token despite "already redeemed" error');
+          return {
+            accessToken: 'existing',
+            refreshToken: settings.oauth2_refresh_token,
+            expiresIn: 3600, // Default value
+          };
+        }
+      }
+      
       if (data?.error) {
         throw new Error(data.error);
       }
@@ -75,6 +95,29 @@ export const handleO365AuthCallback = async (
     };
   } catch (error: any) {
     console.error('Error in handleO365AuthCallback:', error);
+    
+    // If the error is about the code being already redeemed, let's check if we have a valid setup
+    if (error.message?.includes('already redeemed')) {
+      try {
+        const { data: settings } = await supabase
+          .from('user_email_settings')
+          .select('oauth2_refresh_token')
+          .eq('is_active', true)
+          .maybeSingle();
+          
+        if (settings?.oauth2_refresh_token) {
+          console.log('Found existing refresh token despite "already redeemed" error');
+          return {
+            accessToken: 'existing',
+            refreshToken: settings.oauth2_refresh_token,
+            expiresIn: 3600, // Default value
+          };
+        }
+      } catch (checkError) {
+        console.error('Error checking for existing settings:', checkError);
+      }
+    }
+    
     throw new Error(error.message || 'Failed to complete authentication process');
   }
 };
@@ -83,7 +126,12 @@ const handleOAuthError = (error: any) => {
   if (error.message?.includes('invalid_client')) {
     throw new Error('Invalid client ID or secret. Please check your Azure app credentials.');
   } else if (error.message?.includes('invalid_grant')) {
-    throw new Error('Authorization grant expired or already used. Please try authenticating again.');
+    // Check if it's the "already redeemed" error
+    if (error.message?.includes('already redeemed')) {
+      throw new Error('Authorization code was already redeemed. If this is your first login attempt, your authentication may still have succeeded.');
+    } else {
+      throw new Error('Authorization grant expired or already used. Please try authenticating again.');
+    }
   } else if (error.message?.includes('SMTP')) {
     throw new Error('Your Microsoft account is missing SMTP.Send permission. Please update app permissions in Azure Portal.');
   }

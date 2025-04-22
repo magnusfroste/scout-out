@@ -117,10 +117,19 @@ const EmailSettingsContainer = () => {
       if (tokens.refreshToken) {
         console.log('Saving refresh token to database');
         await handleSaveSettings(tokens.refreshToken);
-        toast({
-          title: 'Authentication Successful',
-          description: 'Successfully authenticated with Microsoft 365',
-        });
+        
+        // Be more graceful about "already redeemed" success cases
+        if (tokens.accessToken === 'existing') {
+          toast({
+            title: 'Authentication Complete',
+            description: 'Your Microsoft 365 account was already connected.',
+          });
+        } else {
+          toast({
+            title: 'Authentication Successful',
+            description: 'Successfully authenticated with Microsoft 365',
+          });
+        }
       }
       
       // Clean up session storage
@@ -136,6 +145,26 @@ const EmailSettingsContainer = () => {
       checkOAuthStatus();
     } catch (error: any) {
       console.error('Error handling OAuth callback:', error);
+      
+      // Special handling for "already redeemed" errors - check if we already have a working setup
+      if (error.message?.includes('already redeemed')) {
+        try {
+          await checkOAuthStatus();
+          if (hasValidOAuth) {
+            console.log('Detected valid OAuth setup despite "already redeemed" error');
+            toast({
+              title: 'Authentication Note',
+              description: 'Your Microsoft 365 connection appears to be working despite seeing an error. You can ignore this message.',
+              duration: 5000,
+            });
+            setError(null);
+            return;
+          }
+        } catch (checkError) {
+          console.error('Error checking OAuth status:', checkError);
+        }
+      }
+      
       setError(error.message || 'Failed to complete authentication process');
       
       toast({
