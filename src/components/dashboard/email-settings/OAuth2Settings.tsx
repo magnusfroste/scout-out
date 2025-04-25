@@ -1,13 +1,12 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, ExternalLink, Key, Loader2 } from 'lucide-react';
+import { AlertTriangle, Key, Loader2 } from 'lucide-react';
 import { initiateO365Auth } from '@/services/oauth/oauthFlowService';
 import { getGraphApiRequirements } from '@/services/o365AuthService';
-import { O365SetupGuide } from './O365SetupGuide';
 
 interface OAuth2SettingsProps {
   oauth2ClientId: string;
@@ -104,49 +103,28 @@ export const OAuth2Settings = ({
           </Alert>
         )}
         
-        <Card className="p-4 border border-blue-100 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
-          <h3 className="font-medium mb-2">Microsoft Graph API Integration Requirements</h3>
-          <ul className="text-sm space-y-1 mb-3">
-            <li>• Register an application in the Azure Portal</li>
-            <li>• Required permissions: {requirements.requiredPermissions.join(', ')}</li>
-            <li>• Add redirect URI: {requirements.redirectUris[0]}</li>
-          </ul>
-          <div className="mb-4">
-            <a 
-              href="https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              <ExternalLink className="h-3.5 w-3.5 mr-1" />
-              Microsoft Guide: How to register an application
-            </a>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleInitiateOAuth}
-            className="bg-blue-100 border-blue-200 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300"
-            disabled={isAuthenticating || !oauth2ClientId || !oauthColumnsExist}
-          >
-            {isAuthenticating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              'Connect to Microsoft 365'
-            )}
-          </Button>
-          <p className="text-xs mt-2 text-muted-foreground">
-            You will be redirected to Microsoft to authenticate your account.
-          </p>
-        </Card>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleInitiateOAuth}
+          className="bg-blue-100 border-blue-200 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300 mb-2"
+          disabled={isAuthenticating || !oauth2ClientId || !oauthColumnsExist}
+        >
+          {isAuthenticating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Connecting...
+            </>
+          ) : (
+            'Connect to Microsoft 365'
+          )}
+        </Button>
+        <p className="text-xs mb-4 text-muted-foreground">
+          You will be redirected to Microsoft to authenticate your account.
+        </p>
         
-        <div className="mt-6">
-          <O365SetupGuide />
-        </div>
+        {/* The O365SetupGuide component will be added by EmailSettingsContainer */}
       </div>
     );
   };
