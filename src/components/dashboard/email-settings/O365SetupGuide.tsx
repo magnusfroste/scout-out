@@ -10,7 +10,8 @@ import {
   ExternalLink, 
   AppWindow, 
   CheckCircle2, 
-  CloudCog 
+  CloudCog,
+  Key
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getGraphApiRequirements } from '@/services/o365AuthService';
