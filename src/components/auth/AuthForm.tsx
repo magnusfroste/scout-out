@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Provider } from '@supabase/supabase-js';
 
 interface AuthFormProps {
   isSignUp: boolean;
@@ -87,15 +87,12 @@ const AuthForm: React.FC<AuthFormProps> = ({
     try {
       setLoading(true);
       
-      // Define the redirect options for development vs production
-      const options = {
-        provider: 'google',
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google' as Provider,
         options: {
           redirectTo: window.location.origin + '/auth'
         }
-      };
-      
-      const { error } = await supabase.auth.signInWithOAuth(options);
+      });
       
       if (error) throw error;
       
