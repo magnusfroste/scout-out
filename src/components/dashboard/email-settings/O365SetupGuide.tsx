@@ -1,3 +1,4 @@
+
 import { 
   Card, 
   CardContent, 
@@ -75,10 +76,10 @@ export const O365SetupGuide = () => {
                 </p>
               ))}
               <p className="text-xs mt-1">
-                Additional redirect URI to consider: https://mba.froste.eu/auth/callback
+                You only need to add your main application URL as the redirect URI.
               </p>
               <p className="text-xs text-gray-500">
-                Add this URL in the Azure App Registration under "Authentication" > "Redirect URIs"
+                Add this URL in the Azure App Registration under "Authentication" &gt; "Redirect URIs"
               </p>
             </div>
           </div>
@@ -115,16 +116,18 @@ export const O365SetupGuide = () => {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold">Step 3: Connect to Microsoft 365</h3>
+            <h3 className="font-semibold">Step 3: Connect to Microsoft 365 and Grant API Permissions</h3>
             <p className="text-sm text-muted-foreground">
-              Click the "Connect to Microsoft 365" button above to authorize access and grant the required API permissions. A Microsoft login popup will appear where you can review and grant the necessary permissions.
+              Click the "Connect to Microsoft 365" button above to start the authentication process. A Microsoft login popup will appear where you can review and grant the necessary permissions.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              You'll be asked to sign in to your Microsoft account and grant permission for:
+              You'll be asked to sign in to your Microsoft account and approve the following permissions:
             </p>
             <ul className="text-sm text-muted-foreground list-disc ml-4 mt-1">
-              <li>Reading and sending emails</li>
-              <li>Accessing basic profile information</li>
+              <li>Read and send emails (Mail.ReadWrite, Mail.Send)</li>
+              <li>Access calendar (Calendars.ReadWrite)</li>
+              <li>Access contacts (Contacts.ReadWrite)</li>
+              <li>Basic profile information (User.Read)</li>
             </ul>
           </div>
         </div>
