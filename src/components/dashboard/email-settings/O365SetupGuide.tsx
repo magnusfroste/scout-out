@@ -1,4 +1,3 @@
-
 import { 
   Card, 
   CardContent, 
@@ -18,6 +17,13 @@ export const O365SetupGuide = () => {
   const openMicrosoftDocs = () => {
     window.open(
       "https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app", 
+      "_blank"
+    );
+  };
+
+  const openAzureAppRegistration = () => {
+    window.open(
+      "https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade/quickStartType/AzureADQuickStart",
       "_blank"
     );
   };
@@ -43,6 +49,15 @@ export const O365SetupGuide = () => {
             <p className="text-sm text-muted-foreground">
               Go to Azure Portal, click "App registrations" and select "New registration"
             </p>
+            <Button 
+              variant="link" 
+              size="sm" 
+              onClick={openAzureAppRegistration}
+              className="text-blue-600 hover:text-blue-800 p-0 mt-2"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open Azure App Registration Portal
+            </Button>
           </div>
         </div>
 
