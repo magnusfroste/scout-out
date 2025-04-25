@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { fetchWebhookSettings } from '@/services/webhookService';
-import { Eye, EyeClosed } from 'lucide-react';
+import { Eye, EyeClosed, BrandGoogle } from 'lucide-react';
 
 interface AuthFormProps {
   isSignUp: boolean;
@@ -32,7 +31,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If in maintenance mode, show toast and return
     if (maintenanceMode) {
       toast({
         title: "Maintenance in Progress",
@@ -60,7 +58,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
       
       if (error) throw error;
       
-      // Auth state listener will handle redirect
     } catch (error: any) {
       toast({
         title: "Error signing in",
@@ -75,7 +72,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If in maintenance mode, show toast and return
     if (maintenanceMode) {
       toast({
         title: "Maintenance in Progress",
@@ -97,7 +93,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
     try {
       setLoading(true);
       
-      // Get the default credits from webhook settings
       const webhookSettings = await fetchWebhookSettings();
       console.log('Webhook settings for new user signup:', webhookSettings);
       
@@ -108,7 +103,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
           data: {
             first_name: firstName,
             last_name: lastName,
-            default_credits: webhookSettings?.default_signup_credits || 25 // Use webhook settings, fallback to 25
+            default_credits: webhookSettings?.default_signup_credits || 25
           },
         },
       });
@@ -120,7 +115,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
         description: "Check your email for the confirmation link.",
       });
       
-      // Switch to sign in view
       onToggleMode();
     } catch (error: any) {
       toast({
@@ -135,6 +129,35 @@ const AuthForm: React.FC<AuthFormProps> = ({
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (maintenanceMode) {
+      toast({
+        title: "Maintenance in Progress",
+        description: maintenanceMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'email profile',
+        }
+      });
+
+      if (error) throw error;
+      
+    } catch (error: any) {
+      toast({
+        title: "Google Sign-In Error",
+        description: error.message || "An error occurred during Google Sign-In",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -210,6 +233,30 @@ const AuthForm: React.FC<AuthFormProps> = ({
           disabled={maintenanceMode}
         >
           {isSignUp ? 'Sign Up' : 'Sign In'}
+        </Button>
+      </div>
+      
+      <div className="space-y-4 mt-4">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+        
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleGoogleSignIn}
+          disabled={maintenanceMode}
+        >
+          <BrandGoogle className="h-5 w-5" />
+          Sign {isSignUp ? 'up' : 'in'} with Google
         </Button>
       </div>
     </form>
