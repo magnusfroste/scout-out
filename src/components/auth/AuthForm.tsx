@@ -1,11 +1,168 @@
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2"
-          onClick={handleGoogleSignIn}
-          disabled={maintenanceMode}
-        >
-          {/* Removing the icon temporarily */}
-          Sign {isSignUp ? 'up' : 'in'} with Google
-        </Button>
+import React, { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+
+interface AuthFormProps {
+  isSignUp: boolean;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  onToggleMode: () => void;
+}
+
+const AuthForm: React.FC<AuthFormProps> = ({ 
+  isSignUp, 
+  maintenanceMode,
+  maintenanceMessage,
+  onToggleMode 
+}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (maintenanceMode) {
+      toast({
+        title: "Maintenance Mode",
+        description: maintenanceMessage,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Success!",
+          description: "Check your email for a confirmation link."
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Success!",
+          description: "You have been signed in."
+        });
+      }
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred during authentication.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (maintenanceMode) {
+      toast({
+        title: "Maintenance Mode",
+        description: maintenanceMessage,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google'
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google auth error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred during Google authentication.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="email" className="block text-sm font-medium">
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full px-3 py-2 border rounded-md"
+          disabled={loading || maintenanceMode}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <label htmlFor="password" className="block text-sm font-medium">
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full px-3 py-2 border rounded-md"
+          disabled={loading || maintenanceMode}
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loading || maintenanceMode}
+      >
+        {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+      </Button>
+
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-card text-muted-foreground">Or continue with</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full flex items-center justify-center gap-2"
+        onClick={handleGoogleSignIn}
+        disabled={maintenanceMode}
+      >
+        Sign {isSignUp ? 'up' : 'in'} with Google
+      </Button>
+    </form>
+  );
+};
+
+export default AuthForm;
