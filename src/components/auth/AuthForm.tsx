@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { useToast } from '@/hooks/use-toast';
 import { fetchWebhookSettings } from '@/services/webhookService';
-import { Eye, EyeClosed, BrandGoogle } from 'lucide-react';
+import { Eye, EyeClosed, Google } from 'lucide-react';
 
 interface AuthFormProps {
   isSignUp: boolean;
@@ -255,7 +255,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
           onClick={handleGoogleSignIn}
           disabled={maintenanceMode}
         >
-          <BrandGoogle className="h-5 w-5" />
+          <Google className="h-5 w-5" />
           Sign {isSignUp ? 'up' : 'in'} with Google
         </Button>
       </div>
