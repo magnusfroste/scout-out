@@ -69,7 +69,7 @@ export const O365SetupGuide = () => {
               and personal Microsoft accounts (e.g. Skype, Xbox)"
             </p>
             <div className="text-sm text-muted-foreground mt-2 bg-gray-50 p-2 rounded border border-gray-200">
-              <strong>Redirect URIs (required):</strong>
+              <strong>Redirect URI (required):</strong>
               {requirements.redirectUris.map((uri, index) => (
                 <p key={index} className="break-words mt-1">
                   {uri}
