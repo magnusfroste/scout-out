@@ -1,3 +1,4 @@
+
 import { Answer } from '@/utils/webhookResponseParser';
 import { Question } from '@/types/company';
 import { getMockResponse, getMockErrorResponse } from '@/mocks/companySearchMock';
@@ -5,8 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.DEV;
-
-const DEFAULT_COMPANY_WEBHOOK_URL = 'https://agent.froste.eu/webhook/company';
 
 // Log the environment configuration
 console.log('Webhook Service Configuration:', { 
@@ -93,15 +92,16 @@ export const getCompanyWebhookUrl = async (): Promise<string> => {
       
     if (error) {
       console.error('Error fetching company research webhook URL:', error);
-      return DEFAULT_COMPANY_WEBHOOK_URL;
+      // Return empty string if there's an error
+      return '';
     }
     
     // We use 'url' for step 3 (company research)
-    const webhookUrl = data?.url || DEFAULT_COMPANY_WEBHOOK_URL;
+    const webhookUrl = data?.url || '';
     console.log('Retrieved company research webhook URL:', webhookUrl);
     return webhookUrl;
   } catch (error) {
     console.error('Error in getCompanyWebhookUrl:', error);
-    return DEFAULT_COMPANY_WEBHOOK_URL;
+    return '';
   }
 };
