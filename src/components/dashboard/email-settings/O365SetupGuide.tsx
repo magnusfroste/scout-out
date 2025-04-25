@@ -1,3 +1,4 @@
+
 import { 
   Card, 
   CardContent, 
@@ -79,24 +80,38 @@ export const O365SetupGuide = () => {
 
         <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
           <div className="bg-green-100 text-green-600 p-2 rounded-full">
-            <CheckCircle2 className="h-6 w-6" />
+            <Key className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold">Step 2: Configure Permissions</h3>
+            <h3 className="font-semibold">Step 2: Create Client Credentials</h3>
             <p className="text-sm text-muted-foreground">
-              Select "Microsoft Graph" API permissions for email and profile access
+              After creating the app, follow these steps:
             </p>
+            <ol className="text-sm text-muted-foreground list-decimal ml-4 mt-2 space-y-2">
+              <li>
+                Copy the <strong>Application (client) ID</strong> from the app overview and paste it in the "Microsoft Application (Client) ID" field above
+              </li>
+              <li>
+                Go to "Certificates & secrets" in the left menu
+              </li>
+              <li>
+                Click "New client secret", set an expiry date, and create the secret
+              </li>
+              <li>
+                <strong>Important:</strong> Copy the generated client secret value immediately and paste it in the "Microsoft Client Secret" field above (you won't be able to see it again)
+              </li>
+            </ol>
           </div>
         </div>
 
         <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
           <div className="bg-purple-100 text-purple-600 p-2 rounded-full">
-            <ExternalLink className="h-6 w-6" />
+            <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold">Step 3: Copy Client Credentials</h3>
+            <h3 className="font-semibold">Step 3: Configure Permissions</h3>
             <p className="text-sm text-muted-foreground">
-              Copy Client ID and generate a Client Secret for authentication
+              Select "Microsoft Graph" API permissions for email and profile access
             </p>
           </div>
         </div>
