@@ -11,22 +11,22 @@ interface Testimonial {
 const Testimonials: React.FC = () => {
   const testimonials: Testimonial[] = [
     {
-      quote: "This platform has completely transformed how our team collaborates. The intuitive interface and powerful features have increased our productivity by at least 40%.",
-      author: "Sarah Johnson",
-      role: "CTO",
-      company: "TechNova"
+      quote: "This tool has revolutionized our business development process. We've increased our success rate by 40% and cut research time in half. The AI-powered insights help us connect with prospects in a much more meaningful way.",
+      author: "Michael Chen",
+      role: "Head of Sales",
+      company: "GrowthForce"
     },
     {
-      quote: "I've tried many similar solutions, but nothing comes close to the elegance and efficiency of this platform. It's been a game-changer for our workflow.",
-      author: "Mark Williams",
-      role: "Product Manager",
-      company: "Innovate Inc."
+      quote: "The automated research and personalized outreach capabilities have transformed how we approach potential clients. What used to take hours now takes minutes, and our response rates have improved dramatically.",
+      author: "Sarah Martinez",
+      role: "Business Development Director",
+      company: "ScaleUp Solutions"
     },
     {
-      quote: "The level of customer support is extraordinary. Any questions we've had were answered quickly, and the team has been incredibly helpful throughout our onboarding.",
-      author: "Elena Rodriguez",
-      role: "Operations Director",
-      company: "Global Solutions"
+      quote: "Game-changer for our sales team. The AI-generated insights and value propositions are spot-on, helping us establish meaningful connections quickly. Our conversion rate has increased by 35% since we started using it.",
+      author: "James Wilson",
+      role: "Sales Operations Manager",
+      company: "NextLevel Tech"
     }
   ];
   
