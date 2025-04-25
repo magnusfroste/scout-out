@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -86,17 +87,23 @@ const AuthForm: React.FC<AuthFormProps> = ({
 
     try {
       setLoading(true);
+      console.log("Starting Google authentication process");
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google' as Provider,
         options: {
-          redirectTo: window.location.origin + '/auth'
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
       if (error) throw error;
       
-      // Success is handled by the auth state change listener
+      console.log("Google auth initiated successfully - awaiting redirect");
+      // Success is handled by the auth state change listener in AuthContext
     } catch (error: any) {
       console.error('Google auth error:', error);
       toast({
@@ -104,7 +111,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
         description: error.message || "An error occurred during Google authentication.",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
   };

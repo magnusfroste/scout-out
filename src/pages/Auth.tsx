@@ -20,10 +20,13 @@ const Auth = () => {
   // Check if user is already logged in - silently redirect without messages
   useEffect(() => {
     const checkSession = async () => {
+      console.log('Checking for existing session...');
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
         console.log('User already has session, redirecting to dashboard');
         navigate('/dashboard');
+      } else {
+        console.log('No existing session found');
       }
     };
     
@@ -32,12 +35,19 @@ const Auth = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         if (session) {
           console.log('Auth state changed, user logged in, redirecting to dashboard');
           navigate('/dashboard');
         }
       }
     );
+    
+    // Handle query parameters for potential Google auth callback
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('code')) {
+      console.log('Auth callback detected with code parameter - waiting for auth state to update');
+    }
     
     return () => {
       subscription.unsubscribe();

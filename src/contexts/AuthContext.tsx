@@ -38,10 +38,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loading = authLoading || profileLoading;
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
         setAuthLoading(true);
+        
+        // First set up the auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, newSession) => {
+            console.log('Auth state changed:', event, newSession?.user?.id);
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            setAuthLoading(false);
+          }
+        );
+        
+        // Then check for existing session
         const { data } = await supabase.auth.getSession();
         setSession(data.session);
         
@@ -52,42 +63,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('No initial session found');
           setUser(null);
         }
+        
+        setAuthLoading(false);
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
+        console.error('Error in auth initialization:', error);
         setAuthLoading(false);
       }
     };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log('Auth state changed:', _event, session?.user?.id);
-        setSession(session);
-        
-        if (session?.user) {
-          setUser(session.user);
-        } else {
-          setUser(null);
-        }
-        
-        setAuthLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    
+    initializeAuth();
   }, []);
 
   // Refresh profile when user changes
   useEffect(() => {
     if (user) {
+      console.log('Refreshing user profile for user ID:', user.id);
       refreshUserProfile();
     }
-  }, [user]);
+  }, [user, refreshUserProfile]);
 
   const signOut = async () => {
     try {
