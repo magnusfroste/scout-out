@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { 
   ExternalLink, 
-  Key, 
+  AppWindow, 
   CheckCircle2, 
   CloudCog 
 } from "lucide-react";
@@ -47,7 +47,7 @@ export const O365SetupGuide = () => {
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
           <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
-            <Key className="h-6 w-6" />
+            <AppWindow className="h-6 w-6" />
           </div>
           <div>
             <h3 className="font-semibold">Step 1: Register App in Azure</h3>
