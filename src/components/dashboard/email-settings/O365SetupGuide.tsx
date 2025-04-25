@@ -1,4 +1,3 @@
-
 import { 
   Card, 
   CardContent, 
@@ -43,6 +42,7 @@ export const O365SetupGuide = () => {
           Connect your Microsoft 365 account in just 3 simple steps
         </CardDescription>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
           <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
