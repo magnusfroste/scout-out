@@ -58,6 +58,12 @@ export const O365SetupGuide = () => {
               <ExternalLink className="h-4 w-4 mr-2" />
               Open Azure App Registration Portal
             </Button>
+            <p className="text-sm text-muted-foreground mt-2">
+              <strong>Important:</strong> When registering, select:
+              <br />
+              "Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant) 
+              and personal Microsoft accounts (e.g. Skype, Xbox)"
+            </p>
           </div>
         </div>
 
