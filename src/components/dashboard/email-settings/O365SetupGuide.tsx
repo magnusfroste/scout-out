@@ -68,10 +68,17 @@ export const O365SetupGuide = () => {
               and personal Microsoft accounts (e.g. Skype, Xbox)"
             </p>
             <div className="text-sm text-muted-foreground mt-2 bg-gray-50 p-2 rounded border border-gray-200">
-              <strong>Redirect URI (optional):</strong>
-              <p className="break-words">{requirements.redirectUris[0]}</p>
+              <strong>Redirect URIs (required):</strong>
+              {requirements.redirectUris.map((uri, index) => (
+                <p key={index} className="break-words mt-1">
+                  {uri}
+                </p>
+              ))}
               <p className="text-xs mt-1">
-                We'll return the authentication response to this URI after successful authentication.
+                Additional redirect URI to consider: https://mba.froste.eu/auth/callback
+              </p>
+              <p className="text-xs text-gray-500">
+                Add this URL in the Azure App Registration under "Authentication" > "Redirect URIs"
               </p>
             </div>
           </div>
