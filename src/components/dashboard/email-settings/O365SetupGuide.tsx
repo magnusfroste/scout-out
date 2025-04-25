@@ -12,8 +12,11 @@ import {
   CloudCog 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getGraphApiRequirements } from '@/services/o365AuthService';
 
 export const O365SetupGuide = () => {
+  const requirements = getGraphApiRequirements();
+  
   const openMicrosoftDocs = () => {
     window.open(
       "https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app", 
@@ -64,6 +67,13 @@ export const O365SetupGuide = () => {
               "Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant) 
               and personal Microsoft accounts (e.g. Skype, Xbox)"
             </p>
+            <div className="text-sm text-muted-foreground mt-2 bg-gray-50 p-2 rounded border border-gray-200">
+              <strong>Redirect URI (optional):</strong>
+              <p className="break-words">{requirements.redirectUris[0]}</p>
+              <p className="text-xs mt-1">
+                We'll return the authentication response to this URI after successful authentication.
+              </p>
+            </div>
           </div>
         </div>
 
