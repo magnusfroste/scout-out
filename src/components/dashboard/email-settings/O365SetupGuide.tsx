@@ -1,0 +1,90 @@
+
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  ExternalLink, 
+  Key, 
+  CheckCircle2, 
+  CloudCog 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export const O365SetupGuide = () => {
+  const openMicrosoftDocs = () => {
+    window.open(
+      "https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app", 
+      "_blank"
+    );
+  };
+
+  return (
+    <Card className="border-blue-100 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/20">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CloudCog className="h-6 w-6 text-blue-600" />
+          Microsoft 365 App Setup Guide
+        </CardTitle>
+        <CardDescription>
+          Connect your Microsoft 365 account in just 3 simple steps
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
+          <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
+            <Key className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Step 1: Register App in Azure</h3>
+            <p className="text-sm text-muted-foreground">
+              Go to Azure Portal, click "App registrations" and select "New registration"
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
+          <div className="bg-green-100 text-green-600 p-2 rounded-full">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Step 2: Configure Permissions</h3>
+            <p className="text-sm text-muted-foreground">
+              Select "Microsoft Graph" API permissions for email and profile access
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
+          <div className="bg-purple-100 text-purple-600 p-2 rounded-full">
+            <ExternalLink className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Step 3: Copy Client Credentials</h3>
+            <p className="text-sm text-muted-foreground">
+              Copy Client ID and generate a Client Secret for authentication
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mt-4">
+          <p className="text-sm text-muted-foreground">
+            Need more detailed instructions?
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={openMicrosoftDocs}
+            className="flex items-center gap-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Official Microsoft Guide
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

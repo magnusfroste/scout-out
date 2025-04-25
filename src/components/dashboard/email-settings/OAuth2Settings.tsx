@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, ExternalLink, Key, Loader2 } from 'lucide-react';
 import { initiateO365Auth } from '@/services/oauth/oauthFlowService';
 import { getGraphApiRequirements } from '@/services/o365AuthService';
+import { O365SetupGuide } from './O365SetupGuide';
 
 interface OAuth2SettingsProps {
   oauth2ClientId: string;
@@ -143,6 +143,10 @@ export const OAuth2Settings = ({
             You will be redirected to Microsoft to authenticate your account.
           </p>
         </Card>
+        
+        <div className="mt-6">
+          <O365SetupGuide />
+        </div>
       </div>
     );
   };
