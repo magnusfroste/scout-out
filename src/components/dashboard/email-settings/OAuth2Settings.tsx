@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Key, Loader2 } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Key, Loader2 } from 'lucide-react';
 import { initiateO365Auth } from '@/services/oauth/oauthFlowService';
 import { getGraphApiRequirements } from '@/services/o365AuthService';
 
@@ -111,6 +111,17 @@ export const OAuth2Settings = ({
             <li>• Required permissions: {requirements.requiredPermissions.join(', ')}</li>
             <li>• Add redirect URI: {requirements.redirectUris[0]}</li>
           </ul>
+          <div className="mb-4">
+            <a 
+              href="https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />
+              Microsoft Guide: How to register an application
+            </a>
+          </div>
           <Button
             type="button"
             variant="outline"
