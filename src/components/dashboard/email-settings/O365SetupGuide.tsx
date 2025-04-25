@@ -1,4 +1,3 @@
-
 import { 
   Card, 
   CardContent, 
@@ -109,10 +108,17 @@ export const O365SetupGuide = () => {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold">Step 3: Configure Permissions</h3>
+            <h3 className="font-semibold">Step 3: Connect to Microsoft 365</h3>
             <p className="text-sm text-muted-foreground">
-              Select "Microsoft Graph" API permissions for email and profile access
+              Click the "Connect to Microsoft 365" button above to authorize access and grant the required API permissions. A Microsoft login popup will appear where you can review and grant the necessary permissions.
             </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              You'll be asked to sign in to your Microsoft account and grant permission for:
+            </p>
+            <ul className="text-sm text-muted-foreground list-disc ml-4 mt-1">
+              <li>Reading and sending emails</li>
+              <li>Accessing basic profile information</li>
+            </ul>
           </div>
         </div>
 
