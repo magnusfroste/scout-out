@@ -1,3 +1,4 @@
+
 import { 
   Card, 
   CardContent, 
@@ -75,9 +76,6 @@ export const O365SetupGuide = () => {
               <p className="text-xs mt-1">
                 You only need to add your main application URL as the redirect URI.
               </p>
-              <p className="text-xs text-gray-500">
-                Add this URL in the Azure App Registration under "Authentication" &gt; "Redirect URIs"
-              </p>
             </div>
           </div>
         </div>
@@ -113,19 +111,27 @@ export const O365SetupGuide = () => {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold">Step 3: Connect to Microsoft 365 and Grant API Permissions</h3>
-            <p className="text-sm text-muted-foreground">
-              Click the "Connect to Microsoft 365" button above to start the authentication process. A Microsoft login popup will appear where you can review and grant the necessary permissions.
+            <h3 className="font-semibold">Step 3: Connect to Microsoft 365</h3>
+            <p className="text-sm text-muted-foreground mb-2">
+              The "Connect to Microsoft 365" button initiates the OAuth2 authorization process. When clicked, it will:
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              You'll be asked to sign in to your Microsoft account and approve the following permissions:
-            </p>
-            <ul className="text-sm text-muted-foreground list-disc ml-4 mt-1">
-              <li>Read and send emails (Mail.ReadWrite, Mail.Send)</li>
-              <li>Access calendar (Calendars.ReadWrite)</li>
-              <li>Access contacts (Contacts.ReadWrite)</li>
-              <li>Basic profile information (User.Read)</li>
+            <ul className="text-sm text-muted-foreground list-disc ml-4 space-y-1">
+              <li>Redirect you to Microsoft's login page</li>
+              <li>Prompt you to sign in to your Microsoft account</li>
+              <li>Request consent for the following permissions:</li>
             </ul>
+            <div className="text-sm text-muted-foreground ml-8 mt-1">
+              <strong>Requested Permissions:</strong>
+              <ul className="list-disc pl-4">
+                <li>Read and send emails (Mail.ReadWrite, Mail.Send)</li>
+                <li>Access calendar (Calendars.ReadWrite)</li>
+                <li>Access contacts (Contacts.ReadWrite)</li>
+                <li>Basic profile information (User.Read)</li>
+              </ul>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              After granting consent, you'll be redirected back to the application with a valid access token.
+            </p>
           </div>
         </div>
 
