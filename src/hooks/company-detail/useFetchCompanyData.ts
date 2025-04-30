@@ -75,6 +75,7 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
       }
       
       console.log('Retrieved company search data from Supabase:', searchData);
+      console.log('Email sent timestamp:', searchData.sent_email_at);
       setCompanySearch(searchData);
       
       // Set initial values for value proposition fields
@@ -92,7 +93,8 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
         score: newInitialValues.score,
         advice: newInitialValues.advice ? `${newInitialValues.advice.substring(0, 20)}...` : null,
         introduction: newInitialValues.introduction ? `${newInitialValues.introduction.substring(0, 20)}...` : null,
-        subject: newInitialValues.subject
+        subject: newInitialValues.subject,
+        emailSent: searchData.sent_email_at
       });
       
       // Fetch question answers
@@ -134,8 +136,27 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
 
   // Refetch data function that can be called by components
   const refetchCompanyData = useCallback(async () => {
-    await fetchCompanyData();
-  }, [fetchCompanyData]);
+    console.log('Explicitly refetching company data for ID:', searchId);
+    try {
+      await fetchCompanyData();
+      console.log('Data refresh completed successfully');
+      
+      // Verify the data was actually refreshed
+      const { data, error } = await supabase
+        .from('company_searches')
+        .select('sent_email_at')
+        .eq('id', searchId)
+        .single();
+        
+      if (error) {
+        console.error('Error in verification fetch:', error);
+      } else {
+        console.log('Verification fetch - sent_email_at:', data.sent_email_at);
+      }
+    } catch (error) {
+      console.error('Error refreshing company data:', error);
+    }
+  }, [fetchCompanyData, searchId]);
 
   // Initial fetch
   useEffect(() => {

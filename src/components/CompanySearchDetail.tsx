@@ -107,8 +107,32 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   };
 
   const handleEmailSent = async () => {
-    console.log('Email sent, refreshing company data');
-    await refetchCompanyData();
+    console.log('Email sent callback triggered in CompanySearchDetail, refreshing data');
+    
+    try {
+      await refetchCompanyData();
+      console.log('Company data refreshed successfully after email sent');
+      
+      // Double check if the sent_email_at was updated
+      const { data, error } = await supabase
+        .from('company_searches')
+        .select('sent_email_at')
+        .eq('id', searchId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching sent_email_at after refresh:', error);
+      } else {
+        console.log('Current sent_email_at value after refresh:', data.sent_email_at);
+      }
+    } catch (error) {
+      console.error('Failed to refresh company data after email sent:', error);
+      toast({
+        title: 'Data Refresh Error',
+        description: 'Could not refresh data after email was sent',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {

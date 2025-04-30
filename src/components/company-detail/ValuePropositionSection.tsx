@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -53,11 +54,28 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
     setTimeout(() => {
       setJustCopied(false);
     }, 1000);
+    
+    if (onCopySuccess) {
+      onCopySuccess();
+    }
   };
   
   const handleMagicClick = (score: number, advice: string, introduction: string, subject: string) => {
     if (onMagicSuccess) {
       onMagicSuccess(score, advice, introduction, subject);
+    }
+  };
+  
+  const handleEmailSent = async () => {
+    console.log('Email sent callback triggered in ValuePropositionSection');
+    if (onEmailSent) {
+      try {
+        console.log('Calling parent onEmailSent callback');
+        await onEmailSent();
+        console.log('Parent onEmailSent callback completed successfully');
+      } catch (error) {
+        console.error('Error in parent onEmailSent callback:', error);
+      }
     }
   };
   
@@ -93,7 +111,7 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
               content={displayIntroduction}
               disabled={!displayIntroduction || !displaySubject}
               companyId={companyId}
-              onEmailSent={onEmailSent}
+              onEmailSent={handleEmailSent}
             />
           )}
           
