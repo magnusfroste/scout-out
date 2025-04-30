@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -46,7 +45,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     debouncedSave,
     handleMagicSuccess,
     handleCopySuccess,
-    adjustTextareaHeight
+    adjustTextareaHeight,
+    refetchCompanyData
   } = useCompanyDetail(searchId, handleUpdate);
 
   const handleContactUpdate = async (updates: ContactUpdates) => {
@@ -60,10 +60,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         
       if (error) throw error;
       
-      // Update the UI optimistically
-      if (companySearch) {
-        Object.assign(companySearch, updates);
-      }
+      // After successful update, refetch the data to ensure we have the latest
+      await refetchCompanyData();
       
       toast({
         title: 'Success',

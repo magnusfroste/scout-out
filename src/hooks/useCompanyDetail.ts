@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { CompanySearchRecord, CompanyQuestionAnswer } from '@/types/company';
 import { useFetchCompanyData } from './company-detail/useFetchCompanyData';
 import { useValuePropositionState } from './company-detail/useValuePropositionState';
@@ -12,11 +12,20 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
     companySearch, 
     questionAnswers, 
     isLoading, 
-    initialValues 
+    initialValues,
+    setInitialValues,
+    refetchCompanyData
   } = useFetchCompanyData(searchId);
   
   // State for company search record
   const [companySearchState, setCompanySearchState] = useState<CompanySearchRecord | null>(companySearch);
+  
+  // Update companySearchState when companySearch changes
+  useEffect(() => {
+    if (companySearch) {
+      setCompanySearchState(companySearch);
+    }
+  }, [companySearch]);
   
   // Value proposition state management
   const {
@@ -46,6 +55,7 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
     displayIntroduction,
     displaySubject,
     setHasUnsavedChanges,
+    setInitialValues,
     onUpdate
   });
   
@@ -79,6 +89,7 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
     debouncedSave,
     handleMagicSuccess,
     handleCopySuccess,
-    adjustTextareaHeight
+    adjustTextareaHeight,
+    refetchCompanyData
   };
 };

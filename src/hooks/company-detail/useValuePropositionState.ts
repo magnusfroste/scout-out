@@ -25,40 +25,60 @@ export const useValuePropositionState = (
   searchId: string, 
   initialValues: InitialValues
 ): ValuePropositionState => {
-  const [displayScore, setDisplayScore] = useState<number | null>(null);
-  const [displayAdvice, setDisplayAdvice] = useState('');
-  const [displayIntroduction, setDisplayIntroduction] = useState('');
-  const [displaySubject, setDisplaySubject] = useState('');
+  const [displayScore, setDisplayScore] = useState<number | null>(initialValues.score);
+  const [displayAdvice, setDisplayAdvice] = useState(initialValues.advice || '');
+  const [displayIntroduction, setDisplayIntroduction] = useState(initialValues.introduction || '');
+  const [displaySubject, setDisplaySubject] = useState(initialValues.subject || '');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Load data from localStorage first, then from initialValues
+  
+  // Only use localStorage for draft content that hasn't been saved yet
+  // Always prioritize the server data that was passed in initialValues
   useEffect(() => {
     if (searchId) {
-      // Try to get values from localStorage
-      const storedSubject = localStorage.getItem(`value_proposition_subject_${searchId}`);
-      const storedIntro = localStorage.getItem(`value_proposition_intro_${searchId}`);
-      const storedAdvice = localStorage.getItem(`value_proposition_advice_${searchId}`);
+      // Only load from localStorage if the server data is empty
+      if (!initialValues.subject) {
+        const storedSubject = localStorage.getItem(`value_proposition_subject_${searchId}`);
+        if (storedSubject) setDisplaySubject(storedSubject);
+      }
       
-      // Set values from localStorage if available, otherwise from initialValues
-      setDisplaySubject(storedSubject || initialValues.subject);
-      setDisplayIntroduction(storedIntro || initialValues.introduction);
-      setDisplayAdvice(storedAdvice || initialValues.advice);
-      setDisplayScore(initialValues.score);
+      if (!initialValues.introduction) {
+        const storedIntro = localStorage.getItem(`value_proposition_intro_${searchId}`);
+        if (storedIntro) setDisplayIntroduction(storedIntro);
+      }
+      
+      if (!initialValues.advice) {
+        const storedAdvice = localStorage.getItem(`value_proposition_advice_${searchId}`);
+        if (storedAdvice) setDisplayAdvice(storedAdvice);
+      }
     }
   }, [searchId, initialValues]);
   
+  // Save drafts to localStorage when they change
+  useEffect(() => {
+    if (searchId) {
+      if (displaySubject !== initialValues.subject) {
+        localStorage.setItem(`value_proposition_subject_${searchId}`, displaySubject);
+      }
+      
+      if (displayIntroduction !== initialValues.introduction) {
+        localStorage.setItem(`value_proposition_intro_${searchId}`, displayIntroduction);
+      }
+      
+      if (displayAdvice !== initialValues.advice) {
+        localStorage.setItem(`value_proposition_advice_${searchId}`, displayAdvice);
+      }
+    }
+  }, [displaySubject, displayIntroduction, displayAdvice, searchId, initialValues]);
+  
   // Check for unsaved changes
   useEffect(() => {
-    // Only check if we have initial values
-    if (initialValues.subject !== '' || initialValues.introduction !== '' || initialValues.advice !== '') {
-      const hasChanges = 
-        displaySubject !== initialValues.subject ||
-        displayIntroduction !== initialValues.introduction ||
-        displayAdvice !== initialValues.advice ||
-        displayScore !== initialValues.score;
-      
-      setHasUnsavedChanges(hasChanges);
-    }
+    const hasChanges = 
+      displaySubject !== initialValues.subject ||
+      displayIntroduction !== initialValues.introduction ||
+      displayAdvice !== initialValues.advice ||
+      displayScore !== initialValues.score;
+    
+    setHasUnsavedChanges(hasChanges);
   }, [displaySubject, displayIntroduction, displayAdvice, displayScore, initialValues]);
 
   return {

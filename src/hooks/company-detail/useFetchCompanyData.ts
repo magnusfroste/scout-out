@@ -1,10 +1,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { CompanySearchRecord, CompanyQuestionAnswer } from '@/types/company';
 
-interface UseFetchCompanyDataReturn {
+interface FetchCompanyDataReturn {
   companySearch: CompanySearchRecord | null;
   questionAnswers: CompanyQuestionAnswer[];
   isLoading: boolean;
@@ -14,93 +13,101 @@ interface UseFetchCompanyDataReturn {
     introduction: string;
     subject: string;
   };
+  setInitialValues: (values: any) => void;
+  refetchCompanyData: () => Promise<void>;
 }
 
-export const useFetchCompanyData = (searchId: string): UseFetchCompanyDataReturn => {
+export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn => {
   const [companySearch, setCompanySearch] = useState<CompanySearchRecord | null>(null);
   const [questionAnswers, setQuestionAnswers] = useState<CompanyQuestionAnswer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [initialValues, setInitialValues] = useState({
-    score: null as number | null,
+    score: null,
     advice: '',
     introduction: '',
     subject: ''
   });
-  const { toast } = useToast();
 
-  const fetchCompanySearch = useCallback(async () => {
-    if (!searchId) return;
+  // Fetch company data function
+  const fetchCompanyData = useCallback(async () => {
+    if (!searchId) {
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      console.log('Fetching company search data for ID:', searchId);
+      
+      // Fetch company search data
+      const { data: searchData, error: searchError } = await supabase
         .from('company_searches')
         .select('*')
         .eq('id', searchId)
         .single();
       
-      if (error) throw error;
+      if (searchError) throw searchError;
+      if (!searchData) throw new Error('Company search not found');
       
-      setCompanySearch(data);
+      setCompanySearch(searchData);
+      console.log('Company search data fetched:', searchData);
       
-      // Now fetch question answers for this search with agent_questions included
+      // Set initial values for value proposition fields
+      setInitialValues({
+        score: searchData.score || null,
+        advice: searchData.advice || '',
+        introduction: searchData.introduction || '',
+        subject: searchData.subject || ''
+      });
+      
+      // Fetch question answers
       const { data: answersData, error: answersError } = await supabase
         .from('company_question_answers')
         .select(`
           id,
           answer,
           question_id,
-          company_search_id,
           created_at,
-          agent_questions:question_id(id, question)
+          updated_at,
+          agent_questions (
+            id, 
+            question,
+            rationale
+          )
         `)
-        .eq('company_search_id', searchId);
-        
+        .eq('company_search_id', searchId)
+        .order('created_at', { ascending: true });
+      
       if (answersError) throw answersError;
       
-      // Transform the data to match our CompanyQuestionAnswer interface
-      const transformedAnswers: CompanyQuestionAnswer[] = answersData.map((item: any) => ({
-        id: item.id,
-        answer: item.answer,
-        question_id: item.question_id,
-        company_search_id: item.company_search_id,
-        created_at: item.created_at,
-        agent_questions: item.agent_questions
-      }));
-      
-      setQuestionAnswers(transformedAnswers);
-      
-      // Set initial values for checking unsaved changes
-      if (data) {
-        setInitialValues({
-          score: data.score,
-          advice: data.advice || '',
-          introduction: data.introduction || '',
-          subject: data.subject || ''
-        });
-      }
+      setQuestionAnswers(answersData || []);
+      console.log('Question answers fetched:', answersData?.length || 0, 'answers');
       
     } catch (error: any) {
-      console.error('Error fetching company search:', error);
-      toast({
-        title: 'Error',
-        description: `Failed to load company details: ${error.message}`,
-        variant: 'destructive',
-      });
+      console.error('Error fetching company data:', error);
+      setCompanySearch(null);
+      setQuestionAnswers([]);
     } finally {
       setIsLoading(false);
     }
-  }, [searchId, toast]);
+  }, [searchId]);
+
+  // Refetch data function that can be called by components
+  const refetchCompanyData = useCallback(async () => {
+    await fetchCompanyData();
+  }, [fetchCompanyData]);
 
   // Initial fetch
   useEffect(() => {
-    fetchCompanySearch();
-  }, [fetchCompanySearch]);
+    fetchCompanyData();
+  }, [fetchCompanyData]);
 
   return {
     companySearch,
     questionAnswers,
     isLoading,
-    initialValues
+    initialValues,
+    setInitialValues,
+    refetchCompanyData
   };
 };

@@ -52,6 +52,11 @@ export const useSaveCompanyData = ({
         updated_at: new Date().toISOString()
       };
       
+      // Clear localStorage items before updating to prevent stale data
+      localStorage.removeItem(`value_proposition_subject_${searchId}`);
+      localStorage.removeItem(`value_proposition_intro_${searchId}`);
+      localStorage.removeItem(`value_proposition_advice_${searchId}`);
+      
       const { error } = await supabase
         .from('company_searches')
         .update(updateData)
@@ -59,7 +64,7 @@ export const useSaveCompanyData = ({
         
       if (error) throw error;
       
-      // Update the initial values if setter is provided
+      // Update the initial values to match the currently saved values
       if (setInitialValues) {
         setInitialValues({
           score: displayScore,
