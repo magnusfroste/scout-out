@@ -1,14 +1,10 @@
 
-import React, { useState, useRef, useCallback } from 'react';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Star } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import MagicValuePropositionButton from './MagicValuePropositionButton';
-import SendEmailButton from '../dashboard/SendEmailButton';
+import IntroductionTab from './value-proposition/IntroductionTab';
+import AdviceTab from './value-proposition/AdviceTab';
+import SubjectTab from './value-proposition/SubjectTab';
 
 interface ValuePropositionSectionProps {
   companyId: string;
@@ -48,95 +44,10 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
   onScoreChange
 }) => {
   const [activeTab, setActiveTab] = useState<string>('intro');
-  const [copyToastShown, setCopyToastShown] = useState(false);
-  const { toast } = useToast();
-  const introductionTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const adviceTextareaRef = useRef<HTMLTextAreaElement>(null);
-  
-  const handleIntroductionChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onIntroductionChange(event.target.value);
-    if (onAutoSave) {
-      onAutoSave();
-    }
-  }, [onIntroductionChange, onAutoSave]);
-  
-  const handleAdviceChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onAdviceChange(event.target.value);
-    if (onAutoSave) {
-      onAutoSave();
-    }
-  }, [onAdviceChange, onAutoSave]);
-  
-  const handleSubjectChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    onSubjectChange(event.target.value);
-    if (onAutoSave) {
-      onAutoSave();
-    }
-  }, [onSubjectChange, onAutoSave]);
-  
-  const handleScoreChange = useCallback((newScore: number) => {
-    if (onScoreChange) {
-      onScoreChange(newScore);
-      if (onAutoSave) {
-        onAutoSave();
-      }
-    }
-  }, [onScoreChange, onAutoSave]);
   
   const handleMagicClick = (score: number | null, advice: string | null, introduction: string | null, subject: string | null) => {
     if (onMagicSuccess) {
       onMagicSuccess(score, advice, introduction, subject);
-    }
-  };
-  
-  const handleCopyIntro = () => {
-    navigator.clipboard.writeText(displayIntroduction);
-    if (!copyToastShown) {
-      toast({
-        title: "Copied!",
-        description: "Introduction text copied to clipboard.",
-      });
-      setCopyToastShown(true);
-      setTimeout(() => setCopyToastShown(false), 3000);
-    }
-    if (onCopySuccess) {
-      onCopySuccess();
-    }
-  };
-  
-  const handleCopyAdvice = () => {
-    navigator.clipboard.writeText(displayAdvice);
-    if (!copyToastShown) {
-      toast({
-        title: "Copied!",
-        description: "Advice text copied to clipboard.",
-      });
-      setCopyToastShown(true);
-      setTimeout(() => setCopyToastShown(false), 3000);
-    }
-    if (onCopySuccess) {
-      onCopySuccess();
-    }
-  };
-  
-  const handleCopySubject = () => {
-    navigator.clipboard.writeText(displaySubject);
-    if (!copyToastShown) {
-      toast({
-        title: "Copied!",
-        description: "Subject text copied to clipboard.",
-      });
-      setCopyToastShown(true);
-      setTimeout(() => setCopyToastShown(false), 3000);
-    }
-    if (onCopySuccess) {
-      onCopySuccess();
-    }
-  };
-  
-  const handleTextareaRef = (textarea: HTMLTextAreaElement | null) => {
-    if (textarea && adjustTextareaHeight) {
-      adjustTextareaHeight(textarea);
     }
   };
   
@@ -163,118 +74,40 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
           
           {/* Introduction Tab */}
           <TabsContent value="intro" className="mt-4">
-            <div className="space-y-4">
-              <Label htmlFor="introduction">Introduction Email Body</Label>
-              <Textarea
-                id="introduction"
-                placeholder="Write an introduction for this company..."
-                className="min-h-[200px] font-light leading-relaxed"
-                value={displayIntroduction}
-                onChange={handleIntroductionChange}
-                ref={handleTextareaRef}
-              />
-              
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-muted-foreground">
-                  This introduction will be used in your email to the company.
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopyIntro}
-                    disabled={!displayIntroduction}
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy
-                  </Button>
-                  
-                  {companyEmail && (
-                    <SendEmailButton 
-                      recipientEmail={companyEmail}
-                      recipientName={companyName}
-                      subject={displaySubject || `Value proposition for ${companyName}`}
-                      content={displayIntroduction}
-                      companyId={companyId}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
+            <IntroductionTab
+              companyId={companyId}
+              companyName={companyName}
+              companyEmail={companyEmail}
+              displayIntroduction={displayIntroduction}
+              onIntroductionChange={onIntroductionChange}
+              onCopySuccess={onCopySuccess}
+              adjustTextareaHeight={adjustTextareaHeight}
+              onAutoSave={onAutoSave}
+              displaySubject={displaySubject}
+            />
           </TabsContent>
           
           {/* Advice Tab */}
           <TabsContent value="advice" className="mt-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="advice">Internal Notes & Advice</Label>
-                
-                {/* Score Rating */}
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-sm text-muted-foreground">Company Score</span>
-                  <div className="flex items-center">
-                    {[1, 2, 3, 4, 5].map((score) => (
-                      <Star
-                        key={score}
-                        className={`h-5 w-5 cursor-pointer transition-all ${
-                          score <= (displayScore || 0) 
-                            ? 'fill-yellow-400 text-yellow-400' 
-                            : 'text-gray-300 hover:text-yellow-200'
-                        }`}
-                        onClick={() => handleScoreChange(score)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <Textarea
-                id="advice"
-                placeholder="Write advice about approaching this company..."
-                className="min-h-[200px] font-light leading-relaxed"
-                value={displayAdvice}
-                onChange={handleAdviceChange}
-                ref={handleTextareaRef}
-              />
-              
-              <div className="flex justify-end mt-4">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopyAdvice}
-                  disabled={!displayAdvice}
-                >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy
-                </Button>
-              </div>
-            </div>
+            <AdviceTab
+              displayAdvice={displayAdvice}
+              onAdviceChange={onAdviceChange}
+              onCopySuccess={onCopySuccess}
+              adjustTextareaHeight={adjustTextareaHeight}
+              onAutoSave={onAutoSave}
+              displayScore={displayScore}
+              onScoreChange={onScoreChange}
+            />
           </TabsContent>
           
           {/* Subject Tab */}
           <TabsContent value="subject" className="mt-4">
-            <div className="space-y-4">
-              <Label htmlFor="subject">Email Subject Line</Label>
-              <Input
-                id="subject"
-                placeholder="Enter subject line for email..."
-                className="font-light"
-                value={displaySubject}
-                onChange={handleSubjectChange}
-              />
-              
-              <div className="flex justify-end mt-4">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopySubject}
-                  disabled={!displaySubject}
-                >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy
-                </Button>
-              </div>
-            </div>
+            <SubjectTab
+              displaySubject={displaySubject}
+              onSubjectChange={onSubjectChange}
+              onCopySuccess={onCopySuccess}
+              onAutoSave={onAutoSave}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -283,4 +116,3 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
 };
 
 export default ValuePropositionSection;
-
