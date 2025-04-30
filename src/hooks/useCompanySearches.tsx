@@ -19,6 +19,7 @@ export interface CompanySearch {
   advice?: string;
   introduction?: string;
   subject?: string;
+  sent_email_at?: string;
 }
 
 export function useCompanySearches() {

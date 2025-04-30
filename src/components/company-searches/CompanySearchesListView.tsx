@@ -2,7 +2,8 @@
 import React from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { Loader2, Trash2, Star, ChevronDown, ChevronRight, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Loader2, Trash2, Star, ChevronDown, ChevronRight, ChevronLeft, ExternalLink, Mail, CheckCircle } from 'lucide-react';
+import { format } from 'date-fns';
 import {
   Table,
   TableBody,
@@ -51,6 +52,17 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
         {[...Array(5 - normalizedScore)].map((_, i) => (
           <Star key={i + normalizedScore} className="h-4 w-4 text-gray-300" />
         ))}
+      </div>
+    );
+  };
+  
+  const renderEmailStatus = (sentEmailAt: string | null) => {
+    if (!sentEmailAt) return null;
+    
+    return (
+      <div className="flex items-center text-emerald-600 dark:text-emerald-400">
+        <CheckCircle className="h-4 w-4 mr-1" />
+        <span className="text-xs">Email sent {format(new Date(sentEmailAt), 'MMM d')}</span>
       </div>
     );
   };
@@ -120,7 +132,10 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                   ) : '-'}
                 </TableCell>
                 <TableCell>
-                  {search.contact ? search.contact : '-'}
+                  <div className="flex flex-col">
+                    <span>{search.contact || '-'}</span>
+                    {search.sent_email_at && renderEmailStatus(search.sent_email_at)}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <span className="text-sm text-primary font-medium group-hover:underline inline-flex items-center">
@@ -145,11 +160,24 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                             <span className="font-medium">Role:</span> {search.role}
                           </div>
                         )}
-                        {search.email && (
-                          <div>
-                            <span className="font-medium">Email:</span> {search.email}
-                          </div>
-                        )}
+                        <div className="flex flex-col">
+                          {search.email && (
+                            <div className="flex items-start">
+                              <span className="font-medium mr-2">Email:</span>
+                              <div>
+                                <a href={`mailto:${search.email}`} className="text-blue-600 hover:underline">
+                                  {search.email}
+                                </a>
+                                {search.sent_email_at && (
+                                  <div className="flex items-center text-emerald-600 dark:text-emerald-400 text-xs mt-1">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    <span>Email sent on {format(new Date(search.sent_email_at), 'MMM d, yyyy')}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         {search.phone && (
                           <div>
                             <span className="font-medium">Phone:</span> {search.phone}
