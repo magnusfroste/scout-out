@@ -50,8 +50,7 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
   // Save functionality
   const { 
     isSaving, 
-    handleSave,
-    debouncedSave
+    handleSave
   } = useSaveCompanyData({
     searchId,
     companySearch: companySearchState || companySearch,
@@ -92,7 +91,6 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
     setDisplaySubject,
     hasUnsavedChanges,
     handleSave,
-    debouncedSave,
     handleMagicSuccess,
     handleCopySuccess,
     adjustTextareaHeight,

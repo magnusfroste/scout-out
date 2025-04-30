@@ -1,5 +1,5 @@
 
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ interface AdviceTabProps {
   onAdviceChange: (value: string) => void;
   onCopySuccess?: () => void;
   adjustTextareaHeight?: (textarea: HTMLTextAreaElement) => void;
-  onAutoSave?: () => void;
   displayScore: number | null;
   onScoreChange?: (score: number | null) => void;
 }
@@ -21,29 +20,21 @@ const AdviceTab: React.FC<AdviceTabProps> = ({
   onAdviceChange,
   onCopySuccess,
   adjustTextareaHeight,
-  onAutoSave,
   displayScore = null,
   onScoreChange
 }) => {
   const [copyToastShown, setCopyToastShown] = React.useState(false);
   const { toast } = useToast();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleAdviceChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleAdviceChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     onAdviceChange(event.target.value);
-    if (onAutoSave) {
-      onAutoSave();
-    }
-  }, [onAdviceChange, onAutoSave]);
+  };
 
-  const handleScoreChange = useCallback((newScore: number) => {
+  const handleScoreChange = (newScore: number) => {
     if (onScoreChange) {
       onScoreChange(newScore);
-      if (onAutoSave) {
-        onAutoSave();
-      }
     }
-  }, [onScoreChange, onAutoSave]);
+  };
 
   const handleCopyAdvice = () => {
     navigator.clipboard.writeText(displayAdvice);

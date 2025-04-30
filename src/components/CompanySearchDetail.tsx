@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -43,7 +42,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     setDisplaySubject,
     hasUnsavedChanges,
     handleSave,
-    debouncedSave,
     handleMagicSuccess,
     handleCopySuccess,
     adjustTextareaHeight,
@@ -139,7 +137,6 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               if (textarea) adjustTextareaHeight(textarea);
             }}
             onSave={handleSave}
-            onAutoSave={debouncedSave}
           />
 
           <Separator className="my-2" />

@@ -20,7 +20,6 @@ interface ValuePropositionSectionProps {
   onCopySuccess?: () => void;
   adjustTextareaHeight?: (textarea: HTMLTextAreaElement) => void;
   onSave?: () => void;
-  onAutoSave?: () => void;
   displayScore?: number | null;
   onScoreChange?: (score: number | null) => void;
 }
@@ -39,7 +38,6 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
   onCopySuccess,
   adjustTextareaHeight,
   onSave,
-  onAutoSave,
   displayScore = null,
   onScoreChange
 }) => {
@@ -82,7 +80,7 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
               onIntroductionChange={onIntroductionChange}
               onCopySuccess={onCopySuccess}
               adjustTextareaHeight={adjustTextareaHeight}
-              onAutoSave={onAutoSave}
+              onSave={onSave}
               displaySubject={displaySubject}
             />
           </TabsContent>
@@ -94,7 +92,6 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
               onAdviceChange={onAdviceChange}
               onCopySuccess={onCopySuccess}
               adjustTextareaHeight={adjustTextareaHeight}
-              onAutoSave={onAutoSave}
               displayScore={displayScore}
               onScoreChange={onScoreChange}
             />
@@ -106,7 +103,6 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
               displaySubject={displaySubject}
               onSubjectChange={onSubjectChange}
               onCopySuccess={onCopySuccess}
-              onAutoSave={onAutoSave}
             />
           </TabsContent>
         </Tabs>

@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,24 +10,19 @@ interface SubjectTabProps {
   displaySubject: string;
   onSubjectChange: (value: string) => void;
   onCopySuccess?: () => void;
-  onAutoSave?: () => void;
 }
 
 const SubjectTab: React.FC<SubjectTabProps> = ({
   displaySubject,
   onSubjectChange,
-  onCopySuccess,
-  onAutoSave
+  onCopySuccess
 }) => {
   const [copyToastShown, setCopyToastShown] = React.useState(false);
   const { toast } = useToast();
 
-  const handleSubjectChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onSubjectChange(event.target.value);
-    if (onAutoSave) {
-      onAutoSave();
-    }
-  }, [onSubjectChange, onAutoSave]);
+  };
 
   const handleCopySubject = () => {
     navigator.clipboard.writeText(displaySubject);

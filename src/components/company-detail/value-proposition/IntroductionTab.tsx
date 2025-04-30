@@ -1,5 +1,5 @@
 
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ interface IntroductionTabProps {
   onIntroductionChange: (value: string) => void;
   onCopySuccess?: () => void;
   adjustTextareaHeight?: (textarea: HTMLTextAreaElement) => void;
-  onAutoSave?: () => void;
+  onSave?: () => void;
   displaySubject: string;
 }
 
@@ -27,19 +27,15 @@ const IntroductionTab: React.FC<IntroductionTabProps> = ({
   onIntroductionChange,
   onCopySuccess,
   adjustTextareaHeight,
-  onAutoSave,
+  onSave,
   displaySubject
 }) => {
   const [copyToastShown, setCopyToastShown] = React.useState(false);
   const { toast } = useToast();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleIntroductionChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleIntroductionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     onIntroductionChange(event.target.value);
-    if (onAutoSave) {
-      onAutoSave();
-    }
-  }, [onIntroductionChange, onAutoSave]);
+  };
 
   const handleCopyIntro = () => {
     navigator.clipboard.writeText(displayIntroduction);
