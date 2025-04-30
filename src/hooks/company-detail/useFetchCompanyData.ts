@@ -65,7 +65,7 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
         .single();
       
       if (searchError) {
-        console.error('Error fetching company search data:', searchError);
+        console.error('Error fetching company search data:', searchError.message, searchError.details);
         throw searchError;
       }
       
@@ -74,23 +74,25 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
         throw new Error('Company search not found');
       }
       
-      console.log('Retrieved company search data:', searchData);
+      console.log('Retrieved company search data from Supabase:', searchData);
       setCompanySearch(searchData);
       
       // Set initial values for value proposition fields
       // Always use the database values, ensuring all fields are initialized with values from database
-      setInitialValues({
+      const newInitialValues = {
         score: searchData.score || null,
         advice: searchData.advice || '',
         introduction: searchData.introduction || '',
         subject: searchData.subject || ''
-      });
+      };
       
-      console.log('Set initial values:', {
-        score: searchData.score,
-        advice: searchData.advice ? `${searchData.advice.substring(0, 20)}...` : null,
-        introduction: searchData.introduction ? `${searchData.introduction.substring(0, 20)}...` : null,
-        subject: searchData.subject
+      setInitialValues(newInitialValues);
+      
+      console.log('Set initial values from Supabase:', {
+        score: newInitialValues.score,
+        advice: newInitialValues.advice ? `${newInitialValues.advice.substring(0, 20)}...` : null,
+        introduction: newInitialValues.introduction ? `${newInitialValues.introduction.substring(0, 20)}...` : null,
+        subject: newInitialValues.subject
       });
       
       // Fetch question answers

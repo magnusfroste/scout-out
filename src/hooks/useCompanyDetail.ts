@@ -26,7 +26,9 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
       console.log("Company search updated in useCompanyDetail:", {
         id: companySearch.id,
         hasAdvice: !!companySearch.advice,
+        adviceLength: companySearch.advice?.length,
         hasIntro: !!companySearch.introduction,
+        introLength: companySearch.introduction?.length,
         hasSubject: !!companySearch.subject,
       });
       setCompanySearchState(companySearch);

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -18,6 +19,8 @@ interface CompanySearchDetailProps {
 }
 
 const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetailProps) => {
+  console.log('CompanySearchDetail rendered with searchId:', searchId);
+
   // Create a wrapper for onUpdate that respects the stayOnPage flag
   const handleUpdate = (id: string, data: any) => {
     // Only call onBack/navigate if stayOnPage is not true
@@ -51,7 +54,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   // Log initial data from companySearch when it changes
   useEffect(() => {
     if (companySearch) {
-      console.log("CompanySearchDetail received data:", {
+      console.log("CompanySearchDetail received data from Supabase:", {
         id: companySearch.id,
         name: companySearch.company_name,
         hasAdvice: !!companySearch.advice,
@@ -59,14 +62,19 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         hasIntroduction: !!companySearch.introduction,
         introLength: companySearch.introduction?.length,
         hasSubject: !!companySearch.subject,
+        displayIntroLength: displayIntroduction?.length,
       });
+    } else {
+      console.log("CompanySearchDetail: No company search data received");
     }
-  }, [companySearch]);
+  }, [companySearch, displayIntroduction]);
 
   const handleContactUpdate = async (updates: ContactUpdates) => {
     if (!searchId) return;
     
     try {
+      console.log('Updating contact information:', updates);
+      
       const { error } = await supabase
         .from('company_searches')
         .update(updates)
@@ -74,6 +82,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         
       if (error) throw error;
       
+      console.log('Contact information updated successfully, refetching data');
       // After successful update, refetch the data to ensure we have the latest
       await refetchCompanyData();
       
@@ -101,6 +110,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   }
 
   if (!companySearch) {
+    console.log("CompanySearchDetail: Rendering NotFoundState because companySearch is null");
     return <NotFoundState onBack={onBack} />;
   }
 

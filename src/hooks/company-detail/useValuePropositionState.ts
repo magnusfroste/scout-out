@@ -25,50 +25,27 @@ export const useValuePropositionState = (
   searchId: string, 
   initialValues: InitialValues
 ): ValuePropositionState => {
+  // Initialize state with values from Supabase (via initialValues)
   const [displayScore, setDisplayScore] = useState<number | null>(initialValues.score);
   const [displayAdvice, setDisplayAdvice] = useState(initialValues.advice || '');
   const [displayIntroduction, setDisplayIntroduction] = useState(initialValues.introduction || '');
   const [displaySubject, setDisplaySubject] = useState(initialValues.subject || '');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
-  // Only use localStorage for draft content that hasn't been saved yet
-  // Always prioritize the server data that was passed in initialValues
+  // Update display values when initialValues change (e.g., after fetching from database)
   useEffect(() => {
-    if (searchId) {
-      // Only load from localStorage if the server data is empty
-      if (!initialValues.subject) {
-        const storedSubject = localStorage.getItem(`value_proposition_subject_${searchId}`);
-        if (storedSubject) setDisplaySubject(storedSubject);
-      }
-      
-      if (!initialValues.introduction) {
-        const storedIntro = localStorage.getItem(`value_proposition_intro_${searchId}`);
-        if (storedIntro) setDisplayIntroduction(storedIntro);
-      }
-      
-      if (!initialValues.advice) {
-        const storedAdvice = localStorage.getItem(`value_proposition_advice_${searchId}`);
-        if (storedAdvice) setDisplayAdvice(storedAdvice);
-      }
-    }
-  }, [searchId, initialValues]);
-  
-  // Save drafts to localStorage when they change
-  useEffect(() => {
-    if (searchId) {
-      if (displaySubject !== initialValues.subject) {
-        localStorage.setItem(`value_proposition_subject_${searchId}`, displaySubject);
-      }
-      
-      if (displayIntroduction !== initialValues.introduction) {
-        localStorage.setItem(`value_proposition_intro_${searchId}`, displayIntroduction);
-      }
-      
-      if (displayAdvice !== initialValues.advice) {
-        localStorage.setItem(`value_proposition_advice_${searchId}`, displayAdvice);
-      }
-    }
-  }, [displaySubject, displayIntroduction, displayAdvice, searchId, initialValues]);
+    console.log('Initial values changed in useValuePropositionState:', {
+      score: initialValues.score,
+      adviceLength: initialValues.advice?.length,
+      introductionLength: initialValues.introduction?.length,
+      subject: initialValues.subject
+    });
+    
+    setDisplayScore(initialValues.score);
+    setDisplayAdvice(initialValues.advice || '');
+    setDisplayIntroduction(initialValues.introduction || '');
+    setDisplaySubject(initialValues.subject || '');
+  }, [initialValues]);
   
   // Check for unsaved changes
   useEffect(() => {
