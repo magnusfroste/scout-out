@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy } from 'lucide-react';
+import { Copy, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MagicValuePropositionButton from './MagicValuePropositionButton';
 import SendEmailButton from '../dashboard/SendEmailButton';
@@ -25,6 +25,8 @@ interface ValuePropositionSectionProps {
   adjustTextareaHeight?: (textarea: HTMLTextAreaElement) => void;
   onSave?: () => void;
   onAutoSave?: () => void;
+  displayScore?: number | null;
+  onScoreChange?: (score: number | null) => void;
 }
 
 const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
@@ -41,7 +43,9 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
   onCopySuccess,
   adjustTextareaHeight,
   onSave,
-  onAutoSave
+  onAutoSave,
+  displayScore = null,
+  onScoreChange
 }) => {
   const [activeTab, setActiveTab] = useState<string>('intro');
   const [copyToastShown, setCopyToastShown] = useState(false);
@@ -69,6 +73,15 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
       onAutoSave();
     }
   }, [onSubjectChange, onAutoSave]);
+  
+  const handleScoreChange = useCallback((newScore: number) => {
+    if (onScoreChange) {
+      onScoreChange(newScore);
+      if (onAutoSave) {
+        onAutoSave();
+      }
+    }
+  }, [onScoreChange, onAutoSave]);
   
   const handleMagicClick = (score: number | null, advice: string | null, introduction: string | null, subject: string | null) => {
     if (onMagicSuccess) {
@@ -193,7 +206,28 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
           {/* Advice Tab */}
           <TabsContent value="advice" className="mt-4">
             <div className="space-y-4">
-              <Label htmlFor="advice">Internal Notes & Advice</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="advice">Internal Notes & Advice</Label>
+                
+                {/* Score Rating */}
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-sm text-muted-foreground">Company Score</span>
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((score) => (
+                      <Star
+                        key={score}
+                        className={`h-5 w-5 cursor-pointer transition-all ${
+                          score <= (displayScore || 0) 
+                            ? 'fill-yellow-400 text-yellow-400' 
+                            : 'text-gray-300 hover:text-yellow-200'
+                        }`}
+                        onClick={() => handleScoreChange(score)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
               <Textarea
                 id="advice"
                 placeholder="Write advice about approaching this company..."
@@ -249,3 +283,4 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
 };
 
 export default ValuePropositionSection;
+

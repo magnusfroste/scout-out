@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -8,7 +9,6 @@ import ContactInformation, { ContactUpdates } from './company-detail/ContactInfo
 import QuestionsAnswersSection from './company-detail/QuestionsAnswersSection';
 import LoadingIndicator from './company-detail/LoadingIndicator';
 import NotFoundState from './company-detail/NotFoundState';
-import { CompanySearchRecord } from '@/types/company';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -112,9 +112,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             displayAdvice={displayAdvice}
             displayIntroduction={displayIntroduction}
             displaySubject={displaySubject}
+            displayScore={displayScore}
             onAdviceChange={setDisplayAdvice}
             onIntroductionChange={setDisplayIntroduction}
             onSubjectChange={setDisplaySubject}
+            onScoreChange={setDisplayScore}
             onMagicSuccess={(score, advice, introduction, subject) => 
               handleMagicSuccess(score, advice, introduction, subject)
             }
