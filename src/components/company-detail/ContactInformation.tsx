@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Edit, Save } from 'lucide-react';
+import { Edit, Save, Mail, Clock, CheckCircle } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ContactInformationProps {
   website?: string | null;
@@ -11,6 +12,7 @@ interface ContactInformationProps {
   email?: string | null;
   phone?: string | null;
   role?: string | null;
+  emailSentAt?: string | null;
   onUpdate?: (updates: ContactUpdates) => Promise<void>;
 }
 
@@ -27,6 +29,7 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
   email,
   phone,
   role,
+  emailSentAt,
   onUpdate
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -55,6 +58,17 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const renderEmailSentStatus = () => {
+    if (!emailSentAt) return null;
+    
+    return (
+      <div className="mt-2 flex items-center text-sm text-emerald-600 dark:text-emerald-400">
+        <CheckCircle className="h-4 w-4 mr-1" />
+        <span>Email sent on {format(new Date(emailSentAt), 'MMM d, yyyy h:mm a')}</span>
+      </div>
+    );
   };
 
   return (
@@ -122,14 +136,17 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
           {!isEditing ? (
             <>
               {email && (
-                <div className="flex items-start gap-2">
-                  <span className="font-medium min-w-24">Email:</span>
-                  <a
-                    href={`mailto:${email}`}
-                    className="text-blue-600 hover:underline break-all"
-                  >
-                    {email}
-                  </a>
+                <div className="flex flex-col">
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium min-w-24">Email:</span>
+                    <a
+                      href={`mailto:${email}`}
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {email}
+                    </a>
+                  </div>
+                  {renderEmailSentStatus()}
                 </div>
               )}
               {phone && (
@@ -160,6 +177,12 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
                   onChange={(e) => setEditedEmail(e.target.value)}
                   placeholder="Email address"
                 />
+                {emailSentAt && (
+                  <div className="mt-1 text-xs text-emerald-600 flex items-center">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    <span>Email previously sent on {format(new Date(emailSentAt), 'MMM d, yyyy')}</span>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-1">
                 <span className="font-medium">Phone:</span>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -130,6 +131,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             email={companySearch.email}
             phone={companySearch.phone}
             role={companySearch.role}
+            emailSentAt={companySearch.sent_email_at}
             onUpdate={handleContactUpdate}
           />
           

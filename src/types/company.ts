@@ -39,6 +39,7 @@ export interface CompanySearchRecord {
   advice?: string | null;
   introduction?: string | null;
   subject?: string | null;
+  sent_email_at?: string | null;
   [key: string]: any; 
 }
 

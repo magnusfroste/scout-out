@@ -39,6 +39,7 @@ interface SendEmailButtonProps {
   subject: string;
   content: string;
   disabled?: boolean;
+  companyId?: string; // New prop to track which company the email is being sent to
 }
 
 const SendEmailButton: React.FC<SendEmailButtonProps> = ({
@@ -46,7 +47,8 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   recipientName = "",
   subject,
   content,
-  disabled = false
+  disabled = false,
+  companyId
 }) => {
   const [isSending, setIsSending] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -401,6 +403,24 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
         }
         
         throw new Error(`${errorMessage}`);
+      }
+
+      // If the email was sent successfully and we have a companyId, update the sent_email_at timestamp
+      if (companyId) {
+        try {
+          const { error: updateError } = await supabase
+            .from('company_searches')
+            .update({ sent_email_at: new Date().toISOString() })
+            .eq('id', companyId);
+            
+          if (updateError) {
+            console.error('Error updating sent_email_at:', updateError);
+          } else {
+            console.log('Updated sent_email_at for company:', companyId);
+          }
+        } catch (updateErr) {
+          console.error('Exception updating sent_email_at:', updateErr);
+        }
       }
 
       toast({
