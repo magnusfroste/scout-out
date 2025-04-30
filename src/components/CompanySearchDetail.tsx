@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -116,9 +115,13 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             onAdviceChange={setDisplayAdvice}
             onIntroductionChange={setDisplayIntroduction}
             onSubjectChange={setDisplaySubject}
-            onMagicSuccess={handleMagicSuccess}
+            onMagicSuccess={(score, advice, introduction, subject) => 
+              handleMagicSuccess(score, advice, introduction, subject)
+            }
             onCopySuccess={handleCopySuccess}
-            adjustTextareaHeight={adjustTextareaHeight}
+            adjustTextareaHeight={(textarea) => {
+              if (textarea) adjustTextareaHeight(textarea);
+            }}
             onSave={handleSave}
             onAutoSave={debouncedSave}
           />

@@ -34,13 +34,12 @@ export const useCompanyDetailCallbacks = ({
   const handleCopySuccess = () => {
     toast({
       title: 'Copied',
-      description: 'Introduction copied to clipboard',
+      description: 'Content copied to clipboard',
     });
   };
   
   // Function to adjust textarea height
-  const adjustTextareaHeight = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const textarea = e.target;
+  const adjustTextareaHeight = useCallback((textarea: HTMLTextAreaElement) => {
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, []);

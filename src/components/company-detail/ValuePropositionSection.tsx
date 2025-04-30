@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +20,7 @@ interface ValuePropositionSectionProps {
   onAdviceChange: (value: string) => void;
   onIntroductionChange: (value: string) => void;
   onSubjectChange: (value: string) => void;
-  onMagicSuccess?: () => void;
+  onMagicSuccess?: (score: number | null, advice: string | null, introduction: string | null, subject: string | null) => void;
   onCopySuccess?: () => void;
   adjustTextareaHeight?: (textarea: HTMLTextAreaElement) => void;
   onSave?: () => void;
@@ -69,9 +70,9 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
     }
   }, [onSubjectChange, onAutoSave]);
   
-  const handleMagicClick = () => {
+  const handleMagicClick = (score: number | null, advice: string | null, introduction: string | null, subject: string | null) => {
     if (onMagicSuccess) {
-      onMagicSuccess();
+      onMagicSuccess(score, advice, introduction, subject);
     }
   };
   
@@ -133,6 +134,7 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
         <div className="flex space-x-2">
           <MagicValuePropositionButton
             companyName={companyName}
+            companyId={companyId}
             onSuccess={handleMagicClick}
           />
         </div>
