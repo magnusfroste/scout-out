@@ -25,6 +25,7 @@ interface ValuePropositionSectionProps {
   onCopySuccess: () => void;
   adjustTextareaHeight: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSave?: () => Promise<void>;
+  onAutoSave?: () => void;
 }
 
 const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
@@ -40,7 +41,8 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
   onMagicSuccess,
   onCopySuccess,
   adjustTextareaHeight,
-  onSave
+  onSave,
+  onAutoSave
 }) => {
   // Save to localStorage whenever values change
   useEffect(() => {
@@ -71,6 +73,14 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
     }
   };
 
+  // Handle field changes with auto-save
+  const handleFieldChange = (setter: (value: string) => void, value: string) => {
+    setter(value);
+    if (onAutoSave) {
+      onAutoSave();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -94,7 +104,7 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
           <Input
             id="subject"
             value={displaySubject}
-            onChange={(e) => onSubjectChange(e.target.value)}
+            onChange={(e) => handleFieldChange(onSubjectChange, e.target.value)}
             placeholder="Enter email subject line..."
             className="mb-3 p-2 text-base font-sans border-gray-200 dark:border-gray-800 shadow-inner focus:border-primary focus:ring-1 focus:ring-primary"
           />
@@ -104,7 +114,7 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
             id="introduction"
             value={displayIntroduction}
             onChange={(e) => {
-              onIntroductionChange(e.target.value);
+              handleFieldChange(onIntroductionChange, e.target.value);
               adjustTextareaHeight(e);
             }}
             placeholder="Draft an introduction email or message..."

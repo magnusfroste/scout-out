@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CompanySearchRecord, CompanyQuestionAnswer } from '@/types/company';
 import { useFetchCompanyData } from './company-detail/useFetchCompanyData';
 import { useValuePropositionState } from './company-detail/useValuePropositionState';
@@ -35,7 +35,8 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
   // Save functionality
   const { 
     isSaving, 
-    handleSave 
+    handleSave,
+    debouncedSave
   } = useSaveCompanyData({
     searchId,
     companySearch: companySearchState || companySearch,
@@ -75,6 +76,7 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
     setDisplaySubject,
     hasUnsavedChanges,
     handleSave,
+    debouncedSave,
     handleMagicSuccess,
     handleCopySuccess,
     adjustTextareaHeight

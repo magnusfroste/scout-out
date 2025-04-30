@@ -35,6 +35,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     setDisplaySubject,
     hasUnsavedChanges,
     handleSave,
+    debouncedSave,
     handleMagicSuccess,
     handleCopySuccess,
     adjustTextareaHeight
@@ -110,6 +111,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             onCopySuccess={handleCopySuccess}
             adjustTextareaHeight={adjustTextareaHeight}
             onSave={handleSave}
+            onAutoSave={debouncedSave}
           />
 
           <Separator className="my-2" />

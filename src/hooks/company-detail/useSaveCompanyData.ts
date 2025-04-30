@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CompanySearchRecord } from '@/types/company';
@@ -20,6 +20,7 @@ interface UseSaveCompanyDataProps {
 interface UseSaveCompanyDataReturn {
   isSaving: boolean;
   handleSave: () => Promise<void>;
+  debouncedSave: () => void;
 }
 
 export const useSaveCompanyData = ({
@@ -35,6 +36,7 @@ export const useSaveCompanyData = ({
   onUpdate
 }: UseSaveCompanyDataProps): UseSaveCompanyDataReturn => {
   const [isSaving, setIsSaving] = useState(false);
+  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const handleSave = async () => {
@@ -97,8 +99,33 @@ export const useSaveCompanyData = ({
     }
   };
 
+  // Debounced save function - will save after 2 seconds of inactivity
+  const debouncedSave = useCallback(() => {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    const timeoutId = setTimeout(() => {
+      if (searchId && companySearch) {
+        handleSave();
+      }
+    }, 2000);
+    
+    setSaveTimeout(timeoutId);
+  }, [searchId, companySearch, displayScore, displayAdvice, displayIntroduction, displaySubject]);
+  
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+    };
+  }, [saveTimeout]);
+
   return {
     isSaving,
-    handleSave
+    handleSave,
+    debouncedSave
   };
 };
