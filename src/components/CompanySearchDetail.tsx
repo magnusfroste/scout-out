@@ -20,6 +20,20 @@ interface CompanySearchDetailProps {
 }
 
 const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetailProps) => {
+  // Create a wrapper for onUpdate that respects the stayOnPage flag
+  const handleUpdate = (id: string, data: any) => {
+    // Only call onBack/navigate if stayOnPage is not true
+    if (onUpdate) {
+      if (!data.stayOnPage) {
+        onUpdate(id, data);
+      } else {
+        // If stayOnPage is true, still call onUpdate but without navigating
+        const { stayOnPage, ...updateData } = data;
+        onUpdate(id, updateData);
+      }
+    }
+  };
+
   const {
     companySearch,
     questionAnswers,
@@ -39,7 +53,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     handleMagicSuccess,
     handleCopySuccess,
     adjustTextareaHeight
-  } = useCompanyDetail(searchId, onUpdate);
+  } = useCompanyDetail(searchId, handleUpdate);
 
   const handleContactUpdate = async (updates: ContactUpdates) => {
     if (!searchId) return;
@@ -62,9 +76,12 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
         description: 'Contact information updated successfully',
       });
       
-      // Call the onUpdate callback if provided
-      if (onUpdate) {
-        onUpdate(searchId, updates);
+      // Call the handleUpdate function with stayOnPage flag
+      if (handleUpdate) {
+        handleUpdate(searchId, {
+          ...updates,
+          stayOnPage: true
+        });
       }
     } catch (error: any) {
       console.error('Error updating contact information:', error);

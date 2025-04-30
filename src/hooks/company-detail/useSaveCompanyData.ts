@@ -82,9 +82,13 @@ export const useSaveCompanyData = ({
         description: 'Changes saved successfully',
       });
       
-      // Call the onUpdate callback if provided
+      // Call the onUpdate callback if provided, but with a flag to not navigate
       if (onUpdate) {
-        onUpdate(searchId, updateData);
+        // Pass data along with a flag indicating not to navigate
+        onUpdate(searchId, { 
+          ...updateData,
+          stayOnPage: true  // Add this flag to indicate we want to stay on the page
+        });
       }
       
     } catch (error: any) {
