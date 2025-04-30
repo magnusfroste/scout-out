@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -24,13 +23,8 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
   const handleUpdate = (id: string, data: any) => {
     // Only call onBack/navigate if stayOnPage is not true
     if (onUpdate) {
-      if (!data.stayOnPage) {
-        onUpdate(id, data);
-      } else {
-        // If stayOnPage is true, still call onUpdate but without navigating
-        const { stayOnPage, ...updateData } = data;
-        onUpdate(id, updateData);
-      }
+      // Always add stayOnPage flag to keep user on the detail view
+      onUpdate(id, { ...data, stayOnPage: true });
     }
   };
 
@@ -78,10 +72,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       
       // Call the handleUpdate function with stayOnPage flag
       if (handleUpdate) {
-        handleUpdate(searchId, {
-          ...updates,
-          stayOnPage: true
-        });
+        handleUpdate(searchId, updates);
       }
     } catch (error: any) {
       console.error('Error updating contact information:', error);

@@ -82,12 +82,12 @@ export const useSaveCompanyData = ({
         description: 'Changes saved successfully',
       });
       
-      // Call the onUpdate callback if provided, but with a flag to not navigate
+      // Call the onUpdate callback if provided, always with stayOnPage flag
       if (onUpdate) {
-        // Pass data along with a flag indicating not to navigate
+        // Pass data along with a flag indicating to stay on the page
         onUpdate(searchId, { 
           ...updateData,
-          stayOnPage: true  // Add this flag to indicate we want to stay on the page
+          stayOnPage: true  // Always add this flag to stay on the page
         });
       }
       

@@ -2,11 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 import CompanySearchesLoadingState from './company-searches/CompanySearchesLoadingState';
 import CompanySearchesEmptyState from './company-searches/CompanySearchesEmptyState';
 import CompanySearchesListView from './company-searches/CompanySearchesListView';
 import CompanySearchDetail from './CompanySearchDetail';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface CompanySearchesListProps {
   searches: CompanySearch[];
@@ -35,6 +41,7 @@ const CompanySearchesList = ({
 }: CompanySearchesListProps) => {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedTips, setExpandedTips] = useState(false);
 
   const handleToggleRow = (id: string) => {
     const newExpandedRows = new Set(expandedRows);
@@ -81,14 +88,33 @@ const CompanySearchesList = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between">
-        <div>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-4">
           {batchActionButton && (
             <div onClick={() => onBatchAction && onBatchAction(searches)}>
               {batchActionButton}
             </div>
           )}
+          
+          <Accordion 
+            type="single" 
+            collapsible 
+            className="w-auto border-none shadow-none"
+            value={expandedTips ? 'tips' : ''}
+            onValueChange={(val) => setExpandedTips(val === 'tips')}
+          >
+            <AccordionItem value="tips" className="border-none">
+              <AccordionTrigger className="py-1 text-sm text-muted-foreground hover:no-underline">
+                <span className="text-xs font-normal">View mode tips</span>
+              </AccordionTrigger>
+              <AccordionContent className="text-xs bg-muted/30 p-3 rounded-md max-w-md">
+                <p className="mb-2"><strong>Row expansion:</strong> Click the {expandedRows.size > 0 ? <ChevronDown className="h-3 w-3 inline" /> : <ChevronRight className="h-3 w-3 inline" />} icon to see a brief summary of company details and AI advice.</p>
+                <p><strong>Detail view:</strong> Click on a row or "View Details" for full information, including all Q&A and editable fields for value proposition.</p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
+        
         <Button variant="outline" onClick={onRefresh} size="sm">
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
