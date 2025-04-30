@@ -23,6 +23,12 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
   // Update companySearchState when companySearch changes
   useEffect(() => {
     if (companySearch) {
+      console.log("Company search updated in useCompanyDetail:", {
+        id: companySearch.id,
+        hasAdvice: !!companySearch.advice,
+        hasIntro: !!companySearch.introduction,
+        hasSubject: !!companySearch.subject,
+      });
       setCompanySearchState(companySearch);
     }
   }, [companySearch]);

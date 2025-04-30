@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useCompanyDetail } from '@/hooks/useCompanyDetail';
@@ -48,6 +49,21 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     adjustTextareaHeight,
     refetchCompanyData
   } = useCompanyDetail(searchId, handleUpdate);
+
+  // Log initial data from companySearch when it changes
+  useEffect(() => {
+    if (companySearch) {
+      console.log("CompanySearchDetail received data:", {
+        id: companySearch.id,
+        name: companySearch.company_name,
+        hasAdvice: !!companySearch.advice,
+        adviceLength: companySearch.advice?.length,
+        hasIntroduction: !!companySearch.introduction,
+        introLength: companySearch.introduction?.length,
+        hasSubject: !!companySearch.subject,
+      });
+    }
+  }, [companySearch]);
 
   const handleContactUpdate = async (updates: ContactUpdates) => {
     if (!searchId) return;

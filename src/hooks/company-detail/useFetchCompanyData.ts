@@ -39,25 +39,58 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
     try {
       console.log('Fetching company search data for ID:', searchId);
       
-      // Fetch company search data
+      // Fetch company search data with explicit columns selection
       const { data: searchData, error: searchError } = await supabase
         .from('company_searches')
-        .select('*')
+        .select(`
+          id, 
+          company_name, 
+          created_at, 
+          user_id, 
+          result, 
+          contact_info,
+          www, 
+          contact, 
+          email, 
+          phone,
+          role,
+          score,
+          advice,
+          introduction,
+          subject,
+          sent_email_at,
+          updated_at
+        `)
         .eq('id', searchId)
         .single();
       
-      if (searchError) throw searchError;
-      if (!searchData) throw new Error('Company search not found');
+      if (searchError) {
+        console.error('Error fetching company search data:', searchError);
+        throw searchError;
+      }
       
+      if (!searchData) {
+        console.error('Company search not found for ID:', searchId);
+        throw new Error('Company search not found');
+      }
+      
+      console.log('Retrieved company search data:', searchData);
       setCompanySearch(searchData);
-      console.log('Company search data fetched:', searchData);
       
       // Set initial values for value proposition fields
+      // Always use the database values, ensuring all fields are initialized with values from database
       setInitialValues({
         score: searchData.score || null,
         advice: searchData.advice || '',
         introduction: searchData.introduction || '',
         subject: searchData.subject || ''
+      });
+      
+      console.log('Set initial values:', {
+        score: searchData.score,
+        advice: searchData.advice ? `${searchData.advice.substring(0, 20)}...` : null,
+        introduction: searchData.introduction ? `${searchData.introduction.substring(0, 20)}...` : null,
+        subject: searchData.subject
       });
       
       // Fetch question answers
@@ -87,8 +120,6 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
       } else {
         setQuestionAnswers([]);
       }
-      
-      console.log('Question answers fetched:', answersData?.length || 0, 'answers');
       
     } catch (error: any) {
       console.error('Error fetching company data:', error);
