@@ -88,7 +88,7 @@ const MagicValuePropositionButton = ({ companyId, onSuccess }: MagicValueProposi
 
       toast({
         title: "Success",
-        description: "Value proposition generated successfully",
+        description: "Value proposition generated and saved successfully",
       });
       
     } catch (error: any) {

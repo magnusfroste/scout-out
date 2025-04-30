@@ -109,6 +109,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             onMagicSuccess={handleMagicSuccess}
             onCopySuccess={handleCopySuccess}
             adjustTextareaHeight={adjustTextareaHeight}
+            onSave={handleSave}
           />
 
           <Separator className="my-2" />

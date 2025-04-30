@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -182,17 +181,14 @@ export const useCompanyDetail = (searchId: string, onUpdate?: (id: string, data:
     }
   };
   
-  // Handle magic button success
+  // Handle magic button success - Auto-save is now integrated in the ValuePropositionSection component
   const handleMagicSuccess = (score: number | null, advice: string | null, introduction: string | null, subject: string | null) => {
     if (score !== null) setDisplayScore(score);
     if (advice) setDisplayAdvice(advice);
     if (introduction) setDisplayIntroduction(introduction);
     if (subject) setDisplaySubject(subject);
     
-    toast({
-      title: 'Success',
-      description: 'Value proposition generated successfully',
-    });
+    // Note: We don't auto-save here anymore, as it's handled in the ValuePropositionSection component
   };
   
   // Handle copy success

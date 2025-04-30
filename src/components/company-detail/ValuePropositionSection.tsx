@@ -24,6 +24,7 @@ interface ValuePropositionSectionProps {
   ) => void;
   onCopySuccess: () => void;
   adjustTextareaHeight: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onSave?: () => Promise<void>;
 }
 
 const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
@@ -38,7 +39,8 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
   onSubjectChange,
   onMagicSuccess,
   onCopySuccess,
-  adjustTextareaHeight
+  adjustTextareaHeight,
+  onSave
 }) => {
   // Save to localStorage whenever values change
   useEffect(() => {
@@ -49,13 +51,33 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
     }
   }, [companyId, displaySubject, displayIntroduction, displayAdvice]);
 
+  // Handle successful magic generation with auto-save
+  const handleMagicSuccess = async (
+    score: number | null,
+    advice: string | null,
+    introduction: string | null,
+    subject: string | null
+  ) => {
+    // First update the displayed values
+    onMagicSuccess(score, advice, introduction, subject);
+    
+    // Then auto-save if save function is provided
+    if (onSave) {
+      try {
+        await onSave();
+      } catch (error) {
+        console.error('Auto-save after magic write failed:', error);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Value Proposition</h3>
         <MagicValuePropositionButton 
           companyId={companyId} 
-          onSuccess={onMagicSuccess} 
+          onSuccess={handleMagicSuccess} 
         />
       </div>
       
