@@ -57,9 +57,15 @@ const CompanySearchesList = ({
           onRefresh();
         }}
         onUpdate={(id, data) => {
-          // When data is updated in detail view, refresh the searches data and return to list
-          onRefresh();
-          setSelectedSearchId(null);
+          // Check if data has stayOnPage flag
+          if (data && data.stayOnPage) {
+            // Just refresh data without navigating back to list
+            onRefresh();
+          } else {
+            // When data is updated in detail view and no stayOnPage flag, refresh the searches data and return to list
+            onRefresh();
+            setSelectedSearchId(null);
+          }
         }}
       />
     );
