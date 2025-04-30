@@ -5,11 +5,13 @@ import { Separator } from '@/components/ui/separator';
 import { useCompanyDetail } from '@/hooks/useCompanyDetail';
 import CompanyHeader from './company-detail/CompanyHeader';
 import ValuePropositionSection from './company-detail/ValuePropositionSection';
-import ContactInformation from './company-detail/ContactInformation';
+import ContactInformation, { ContactUpdates } from './company-detail/ContactInformation';
 import QuestionsAnswersSection from './company-detail/QuestionsAnswersSection';
 import LoadingIndicator from './company-detail/LoadingIndicator';
 import NotFoundState from './company-detail/NotFoundState';
 import { CompanySearchRecord } from '@/types/company';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CompanySearchDetailProps {
   searchId: string;
@@ -37,6 +39,41 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     handleCopySuccess,
     adjustTextareaHeight
   } = useCompanyDetail(searchId, onUpdate);
+
+  const handleContactUpdate = async (updates: ContactUpdates) => {
+    if (!searchId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('company_searches')
+        .update(updates)
+        .eq('id', searchId);
+        
+      if (error) throw error;
+      
+      // Update the UI optimistically
+      if (companySearch) {
+        Object.assign(companySearch, updates);
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Contact information updated successfully',
+      });
+      
+      // Call the onUpdate callback if provided
+      if (onUpdate) {
+        onUpdate(searchId, updates);
+      }
+    } catch (error: any) {
+      console.error('Error updating contact information:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to update contact information: ${error.message}`,
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return <LoadingIndicator />;
@@ -82,6 +119,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
             email={companySearch.email}
             phone={companySearch.phone}
             role={companySearch.role}
+            onUpdate={handleContactUpdate}
           />
           
           <QuestionsAnswersSection questionAnswers={questionAnswers} />
