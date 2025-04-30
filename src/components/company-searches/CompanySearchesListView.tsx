@@ -183,19 +183,35 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                             <span className="font-medium">Phone:</span> {search.phone}
                           </div>
                         )}
-                        {search.answer_count > 0 && (
+                      </div>
+                      
+                      {/* Value Proposition Information */}
+                      <div className="space-y-2 mt-2">
+                        {(search.subject || search.introduction || search.advice) && (
+                          <h4 className="font-medium text-sm">Value Proposition</h4>
+                        )}
+                        
+                        {search.subject && (
                           <div>
-                            <span className="font-medium">Answers:</span> {search.answer_count}
+                            <span className="font-medium text-xs block text-muted-foreground">Email Subject:</span>
+                            <p className="text-sm mt-1">{search.subject}</p>
+                          </div>
+                        )}
+                        
+                        {search.introduction && (
+                          <div>
+                            <span className="font-medium text-xs block text-muted-foreground">Introduction:</span>
+                            <p className="text-sm mt-1 line-clamp-2">{search.introduction}</p>
+                          </div>
+                        )}
+                        
+                        {search.advice && (
+                          <div>
+                            <span className="font-medium text-xs block text-muted-foreground">Advice:</span>
+                            <p className="text-sm mt-1 line-clamp-3">{search.advice}</p>
                           </div>
                         )}
                       </div>
-                      
-                      {search.advice && (
-                        <div className="mt-2">
-                          <span className="font-medium">AI Advice:</span>
-                          <p className="text-sm mt-1 line-clamp-3">{search.advice}</p>
-                        </div>
-                      )}
                       
                       <div className="flex justify-end mt-4">
                         <Button 
