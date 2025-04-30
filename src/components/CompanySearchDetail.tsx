@@ -57,6 +57,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
       console.log("CompanySearchDetail received data from Supabase:", {
         id: companySearch.id,
         name: companySearch.company_name,
+        emailSent: companySearch.sent_email_at,
         hasAdvice: !!companySearch.advice,
         adviceLength: companySearch.advice?.length,
         hasIntroduction: !!companySearch.introduction,
@@ -105,6 +106,11 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
     }
   };
 
+  const handleEmailSent = async () => {
+    console.log('Email sent, refreshing company data');
+    await refetchCompanyData();
+  };
+
   if (isLoading) {
     return <LoadingIndicator />;
   }
@@ -147,6 +153,7 @@ const CompanySearchDetail = ({ searchId, onBack, onUpdate }: CompanySearchDetail
               if (textarea) adjustTextareaHeight(textarea);
             }}
             onSave={handleSave}
+            onEmailSent={handleEmailSent}
           />
 
           <Separator className="my-2" />

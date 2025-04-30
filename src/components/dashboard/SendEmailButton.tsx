@@ -40,6 +40,7 @@ interface SendEmailButtonProps {
   content: string;
   disabled?: boolean;
   companyId?: string; // New prop to track which company the email is being sent to
+  onEmailSent?: () => Promise<void>; // New callback to trigger data refresh
 }
 
 const SendEmailButton: React.FC<SendEmailButtonProps> = ({
@@ -48,7 +49,8 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
   subject,
   content,
   disabled = false,
-  companyId
+  companyId,
+  onEmailSent
 }) => {
   const [isSending, setIsSending] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -408,15 +410,29 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
       // If the email was sent successfully and we have a companyId, update the sent_email_at timestamp
       if (companyId) {
         try {
+          console.log('Email sent successfully, updating sent_email_at for company:', companyId);
+          const currentTime = new Date().toISOString();
+          
           const { error: updateError } = await supabase
             .from('company_searches')
-            .update({ sent_email_at: new Date().toISOString() })
+            .update({ sent_email_at: currentTime })
             .eq('id', companyId);
             
           if (updateError) {
             console.error('Error updating sent_email_at:', updateError);
+            toast({
+              title: "Warning",
+              description: "Email was sent but we couldn't update the sent timestamp.",
+              variant: "destructive",
+            });
           } else {
-            console.log('Updated sent_email_at for company:', companyId);
+            console.log('Updated sent_email_at for company:', companyId, 'to:', currentTime);
+            
+            // Call the onEmailSent callback to refresh data if provided
+            if (onEmailSent) {
+              console.log('Calling onEmailSent callback to refresh data');
+              await onEmailSent();
+            }
           }
         } catch (updateErr) {
           console.error('Exception updating sent_email_at:', updateErr);
