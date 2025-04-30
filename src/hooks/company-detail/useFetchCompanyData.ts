@@ -67,6 +67,7 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
           id,
           answer,
           question_id,
+          company_search_id,
           created_at,
           updated_at,
           agent_questions (
@@ -80,7 +81,13 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
       
       if (answersError) throw answersError;
       
-      setQuestionAnswers(answersData || []);
+      // Make sure we're setting an array that matches the CompanyQuestionAnswer type
+      if (answersData) {
+        setQuestionAnswers(answersData as CompanyQuestionAnswer[]);
+      } else {
+        setQuestionAnswers([]);
+      }
+      
       console.log('Question answers fetched:', answersData?.length || 0, 'answers');
       
     } catch (error: any) {
