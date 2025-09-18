@@ -28,16 +28,12 @@ interface BusinessData {
   autoSaved?: boolean;
 }
 
-const DEFAULT_WEBHOOK_URL = 'https://agent.froste.eu/webhook/mybusiness';
-
 const MyBusiness = () => {
   const { user, userProfile, updateProfile } = useAuth();
   const [websiteUrl, setWebsiteUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [businessData, setBusinessData] = useState<BusinessData | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
-  const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const [isResetting, setIsResetting] = useState<boolean>(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const [methodUsed, setMethodUsed] = useState<string>('');
@@ -49,28 +45,9 @@ const MyBusiness = () => {
     setIsLoadingProfile(false);
   }, [userProfile?.website_url]);
 
-  useEffect(() => {
-    const loadWebhookSettings = async () => {
-      setIsLoadingSettings(true);
-      try {
-        const settings = await fetchWebhookSettings();
-        if (settings && settings.mybusiness_url) {
-          console.log('Loaded My Business webhook URL:', settings.mybusiness_url);
-          setWebhookUrl(settings.mybusiness_url);
-        } else {
-          console.warn('No My Business webhook URL configured in settings');
-          setWebhookUrl(DEFAULT_WEBHOOK_URL);
-        }
-      } catch (error) {
-        console.error('Error loading webhook settings:', error);
-        setWebhookUrl(DEFAULT_WEBHOOK_URL);
-      } finally {
-        setIsLoadingSettings(false);
-      }
-    };
+  const [error, setError] = useState<string | null>(null);
 
-    loadWebhookSettings();
-    
+  useEffect(() => {
     if (userProfile?.business_data) {
       const savedData: BusinessData = {
         elevatorPitch: userProfile.business_data.elevator_pitch,
@@ -95,13 +72,11 @@ const MyBusiness = () => {
       return;
     }
 
-    const currentWebhookUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
-    
     setIsLoading(true);
     setBusinessData(null); // Clear previous data while loading
     
     try {
-      console.log(`Calling my business webhook: ${currentWebhookUrl}`);
+      console.log('Calling my business webhook via edge function');
       console.log(`With website: ${websiteUrl}`);
       
       toast({
@@ -109,7 +84,7 @@ const MyBusiness = () => {
         description: "Analyzing your business website. This may take a moment...",
       });
       
-      const response = await callMyBusinessWebhook(currentWebhookUrl, websiteUrl);
+      const response = await callMyBusinessWebhook('', websiteUrl);
       
       if (!response.ok) {
         throw new Error(`Service temporarily unavailable`);
@@ -554,7 +529,7 @@ const MyBusiness = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoadingSettings || isLoadingProfile ? (
+          {isLoadingProfile ? (
             <div className="flex justify-center items-center py-4">
               <div className="animate-pulse text-muted-foreground">Loading business tools...</div>
             </div>
@@ -591,7 +566,7 @@ const MyBusiness = () => {
             </div>
           )}
         </CardContent>
-        {businessData && !isLoadingSettings && !isLoadingProfile && (
+        {businessData && !isLoadingProfile && (
           <CardFooter>
             {!businessData.autoSaved && (
               <Button 

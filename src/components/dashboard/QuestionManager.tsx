@@ -10,7 +10,6 @@ import { Plus, Pencil, Trash2, Loader2, Wand2, ChevronDown, ChevronRight, Info }
 import { supabase } from '@/integrations/supabase/client';
 import { fetchQuestionsFromWebhook, QuestionResponse } from '@/services/questionService';
 import { useProfile } from '@/hooks/useProfile';
-import { fetchWebhookSettings } from '@/services/webhookService';
 import { 
   Tooltip,
   TooltipContent,
