@@ -29,14 +29,40 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
 
     console.log('Questions response:', data);
 
-    // Extract questions from the response
-    if (data && Array.isArray(data.questions)) {
-      return data.questions;
-    } else if (Array.isArray(data)) {
-      return data;
+    // Extract questions from the response - handle multiple response formats
+    let questions = null;
+    
+    // Format 1: Array with nested output.questions structure
+    if (Array.isArray(data) && data.length > 0 && data[0].output && Array.isArray(data[0].output.questions)) {
+      console.log('Parsing format: data[0].output.questions');
+      questions = data[0].output.questions.map((q: any) => ({
+        question: q.question,
+        rationale: q.explanation || q.rationale || '' // Map explanation to rationale
+      }));
+    }
+    // Format 2: Direct questions array
+    else if (data && Array.isArray(data.questions)) {
+      console.log('Parsing format: data.questions');
+      questions = data.questions.map((q: any) => ({
+        question: q.question,
+        rationale: q.explanation || q.rationale || ''
+      }));
+    }
+    // Format 3: Data itself is an array of questions
+    else if (Array.isArray(data) && data.length > 0 && data[0].question) {
+      console.log('Parsing format: direct array');
+      questions = data.map((q: any) => ({
+        question: q.question,
+        rationale: q.explanation || q.rationale || ''
+      }));
     }
 
-    console.error('Invalid response format from questions webhook');
+    if (questions && questions.length > 0) {
+      console.log(`Successfully parsed ${questions.length} questions:`, questions);
+      return questions;
+    }
+
+    console.error('Could not extract questions from response. Response structure:', JSON.stringify(data, null, 2));
     return null;
   } catch (error: any) {
     console.error('Error fetching questions from webhook:', error);
