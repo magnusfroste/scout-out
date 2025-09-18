@@ -96,57 +96,13 @@ Deno.serve(async (req) => {
     
     if (!webhookUrl) {
       console.error('Value Proposition webhook URL not configured in secrets');
-      
-      // Fallback to database if secret is not available
-      console.log('Falling back to database for webhook URL');
-      
-      const { data: settings, error: settingsError } = await supabase
-        .from('webhook_settings')
-        .select('value_proposition_url')
-        .limit(1)
-        .single();
-
-      if (settingsError || !settings?.value_proposition_url) {
-        console.error('Error fetching webhook settings:', settingsError);
-        return new Response(JSON.stringify({
-          success: false,
-          message: "Value Proposition webhook URL not configured. Please check your settings."
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        });
-      }
-      
-      const dbWebhookUrl = settings.value_proposition_url;
-      console.log('Using webhook URL from database:', !!dbWebhookUrl);
-      
-      try {
-        console.log(`Attempting to call webhook at: ${dbWebhookUrl}`);
-        const webhookResponse = await fetch(dbWebhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(requestData)
-        });
-        
-        return await processWebhookResponse(webhookResponse, corsHeaders, "Edge Function with Database");
-      } catch (error) {
-        console.error(`Error calling webhook: ${error.message}`);
-        // Return a more detailed error response
-        return new Response(JSON.stringify({
-          success: false,
-          message: `Error calling webhook: ${error.message}`,
-          details: {
-            webhookUrl: dbWebhookUrl.replace(/\/\/([^:\/]+:[^@\/]+)@/, '//***:***@'), // Mask any credentials in URL
-            error: error.toString()
-          }
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 502
-        });
-      }
+      return new Response(JSON.stringify({
+        success: false,
+        message: "Value Proposition webhook URL not configured. Please configure VALUE_PROPOSITION_WEBHOOK_URL secret."
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      });
     }
 
     console.log('Using webhook URL from secrets');

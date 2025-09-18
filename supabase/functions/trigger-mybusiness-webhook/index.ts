@@ -96,79 +96,13 @@ Deno.serve(async (req) => {
     
     if (!webhookUrl) {
       console.error('MyBusiness webhook URL not configured in secrets');
-      
-      // Fallback to database if secret is not available
-      console.log('Falling back to database for webhook URL');
-      
-      const { data: settings, error: settingsError } = await supabase
-        .from('webhook_settings')
-        .select('mybusiness_url')
-        .limit(1)
-        .single();
-
-      if (settingsError || !settings?.mybusiness_url) {
-        console.error('Error fetching webhook settings:', settingsError);
-        return new Response(JSON.stringify({
-          success: false,
-          message: "MyBusiness webhook URL not configured. Please check your settings."
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        });
-      }
-      
-      const dbWebhookUrl = settings.mybusiness_url;
-      console.log('Using webhook URL from database:', !!dbWebhookUrl);
-      
-      // Input validation
-      if (!requestData.website && !requestData.company) {
-        console.error('Missing required parameters');
-        return new Response(JSON.stringify({
-          success: false,
-          message: "Missing required parameters: website or company name is required"
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        });
-      }
-
-      // Prepare the payload for the webhook
-      const webhookPayload = {
-        url: requestData.website,
-        company: requestData.company
-      };
-      
-      console.log(`Forwarding request to webhook (using database URL)`);
-      console.log('Webhook payload:', webhookPayload);
-      
-      try {
-        console.log(`Attempting to call webhook at: ${dbWebhookUrl}`);
-        const webhookResponse = await fetch(dbWebhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(webhookPayload)
-        });
-        
-        // Process response
-        return await processWebhookResponse(webhookResponse, corsHeaders, "Edge Function with Database");
-      } catch (error) {
-        console.error(`Error calling webhook: ${error.message}`);
-        // Return a more detailed error response
-        return new Response(JSON.stringify({
-          success: false,
-          message: `Error calling webhook: ${error.message}`,
-          details: {
-            webhookUrl: dbWebhookUrl.replace(/\/\/([^:\/]+:[^@\/]+)@/, '//***:***@'), // Mask any credentials in URL
-            error: error.toString()
-          }
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 502
-        });
-      }
+      return new Response(JSON.stringify({
+        success: false,
+        message: "MyBusiness webhook URL not configured. Please configure MYBUSINESS_WEBHOOK_URL secret."
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      });
     }
     
     console.log('Using webhook URL from secrets');
