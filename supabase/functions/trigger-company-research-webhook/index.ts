@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     console.log('Company Research webhook function triggered');
-    const { company, questions, webhookUrl } = await req.json();
+    const { company, questions } = await req.json();
     
     // Get authorization header from the incoming request
     const authHeader = req.headers.get('Authorization');
@@ -22,8 +22,33 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    console.log('Making request to webhook:', webhookUrl);
-    console.log('Company:', company);
+    // Get webhook URL from secret first, then fallback to database
+    let webhookUrl = Deno.env.get('COMPANY_RESEARCH_WEBHOOK_URL');
+    
+    if (!webhookUrl) {
+      console.log('Secret not found, attempting database fallback');
+      // Fallback to database (will be removed in Phase 2)
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data, error } = await supabase
+        .from('webhook_settings')
+        .select('url')
+        .single();
+        
+      if (error || !data?.url) {
+        throw new Error('No webhook URL configured');
+      }
+      
+      webhookUrl = data.url;
+      console.log('Using database fallback URL');
+    } else {
+      console.log('Using secret-based webhook URL');
+    }
+
+    console.log('Making request to webhook for company:', company);
     console.log('Questions count:', questions.length);
 
     const response = await fetch(webhookUrl, {

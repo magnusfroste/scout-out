@@ -60,8 +60,7 @@ export const callCompanyWebhook = async (
     const { data, error } = await supabase.functions.invoke('trigger-company-research-webhook', {
       body: {
         company: companyName,
-        questions: questions,
-        webhookUrl: webhookUrl
+        questions: questions
       }
     });
 
