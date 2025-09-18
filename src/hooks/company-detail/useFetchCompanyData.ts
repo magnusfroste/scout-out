@@ -137,25 +137,8 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
   // Refetch data function that can be called by components
   const refetchCompanyData = useCallback(async () => {
     console.log('Explicitly refetching company data for ID:', searchId);
-    try {
-      await fetchCompanyData();
-      console.log('Data refresh completed successfully');
-      
-      // Verify the data was actually refreshed
-      const { data, error } = await supabase
-        .from('company_searches')
-        .select('sent_email_at')
-        .eq('id', searchId)
-        .single();
-        
-      if (error) {
-        console.error('Error in verification fetch:', error);
-      } else {
-        console.log('Verification fetch - sent_email_at:', data.sent_email_at);
-      }
-    } catch (error) {
-      console.error('Error refreshing company data:', error);
-    }
+    await fetchCompanyData();
+    console.log('Data refresh completed successfully');
   }, [fetchCompanyData, searchId]);
 
   // Initial fetch

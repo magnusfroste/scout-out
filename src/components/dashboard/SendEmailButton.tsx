@@ -413,41 +413,30 @@ const SendEmailButton: React.FC<SendEmailButtonProps> = ({
           console.log('Email sent successfully, updating sent_email_at for company:', companyId);
           const currentTime = new Date().toISOString();
           
-          // Log before updating Supabase
-          console.log('About to update sent_email_at in Supabase for company ID:', companyId);
-          
-          const { data: updateData, error: updateError } = await supabase
+          const { error: updateError } = await supabase
             .from('company_searches')
             .update({ sent_email_at: currentTime })
-            .eq('id', companyId)
-            .select();
+            .eq('id', companyId);
             
           if (updateError) {
             console.error('Error updating sent_email_at:', updateError);
-            console.error('Error details:', JSON.stringify(updateError));
             toast({
               title: "Warning",
-              description: `Email was sent but we couldn't update timestamp: ${updateError.message}`,
+              description: `Email was sent but couldn't update timestamp: ${updateError.message}`,
               variant: "destructive",
             });
           } else {
-            console.log('Updated sent_email_at successfully:', updateData);
-            console.log('Updated timestamp for company:', companyId, 'to:', currentTime);
+            console.log('Updated sent_email_at successfully to:', currentTime);
             
-            // Call the onEmailSent callback to refresh data if provided
+            // Call the onEmailSent callback to refresh data immediately
             if (onEmailSent) {
               console.log('Calling onEmailSent callback to refresh data');
-              try {
-                await onEmailSent();
-                console.log('Data refresh completed successfully');
-              } catch (refreshErr) {
-                console.error('Error during data refresh:', refreshErr);
-              }
+              await onEmailSent();
+              console.log('Data refresh completed successfully');
             }
           }
         } catch (updateErr: any) {
           console.error('Exception updating sent_email_at:', updateErr);
-          console.error('Exception stack:', updateErr.stack);
           toast({
             title: "Error Updating Timestamp",
             description: `Technical error: ${updateErr.message}`,
