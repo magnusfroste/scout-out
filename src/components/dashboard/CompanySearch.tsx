@@ -132,20 +132,30 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ questions, onSearch, sear
         description: "Searching for company data...",
       });
 
-      const { data: webhookSettings } = await supabase
-        .from('webhook_settings')
+      // Check if company search has already been triggered for this company
+      const existingSearch = await supabase
+        .from('company_searches')
         .select('*')
-        .single();
-      
-      if (!webhookSettings || !webhookSettings.url) {
-        throw new Error("Webhook URL not configured. Please contact an administrator.");
+        .eq('company_name', companyName)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingSearch.data) {
+        toast({
+          title: "Search Already Exists", 
+          description: `You have already searched for "${companyName}". Check your search history.`,
+          variant: "destructive",
+        });
+        return;
       }
+
+      console.log('Triggering company search via edge function for company:', companyName);
       
       const { callCompanyWebhook } = await import('@/services/companyWebhookService');
-      
-      console.log(`Making webhook call to ${webhookSettings.url} for company ${companyName}`);
+
+      console.log('Making webhook call for company:', companyName);
       const response = await callCompanyWebhook(
-        webhookSettings.url,
+        '', // webhook URL now managed via secrets
         companyName,
         questions
       );

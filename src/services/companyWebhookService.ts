@@ -82,25 +82,8 @@ export const callCompanyWebhook = async (
 };
 
 export const getCompanyWebhookUrl = async (): Promise<string> => {
-  try {
-    console.log('Fetching company research webhook URL from settings');
-    const { data, error } = await supabase
-      .from('webhook_settings')
-      .select('*')
-      .single();
-      
-    if (error) {
-      console.error('Error fetching company research webhook URL:', error);
-      // Return empty string if there's an error
-      return '';
-    }
-    
-    // We use 'url' for step 3 (company research)
-    const webhookUrl = data?.url || '';
-    console.log('Retrieved company research webhook URL:', webhookUrl);
-    return webhookUrl;
-  } catch (error) {
-    console.error('Error in getCompanyWebhookUrl:', error);
-    return '';
-  }
+  // Company research webhook URL is now managed via secrets in the edge function
+  // This function is kept for backwards compatibility but returns empty string
+  console.log('Company research webhook URL is now managed via COMPANY_RESEARCH_WEBHOOK_URL secret');
+  return '';
 };

@@ -53,21 +53,6 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     }
   }, [userProfile]);
 
-  useEffect(() => {
-    const getWebhookUrl = async () => {
-      try {
-        const settings = await fetchWebhookSettings();
-        if (settings && settings.questions_url) {
-          setQuestionsWebhookUrl(settings.questions_url);
-        }
-      } catch (error) {
-        console.error('Error fetching webhook URL:', error);
-      }
-    };
-    
-    getWebhookUrl();
-  }, []);
-
   const handleAddQuestion = async () => {
     if (!newQuestion.trim() || !userId) return;
     

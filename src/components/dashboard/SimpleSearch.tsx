@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { callCompanyWebhook, getCompanyWebhookUrl } from '@/services/companyWebhookService';
+import { callCompanyWebhook } from '@/services/companyWebhookService';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import { Question, SearchResultType } from '@/types/company';
 import QuestionsList from './QuestionsList';
@@ -23,22 +23,9 @@ const SimpleSearch: React.FC<SimpleSearchProps> = ({ questions }) => {
   const [isLoadingWebhook, setIsLoadingWebhook] = useState(true);
   const { toast } = useToast();
 
-  // Load webhook URL when component mounts
+  // Load webhook URL when component mounts - no longer needed as URLs are managed via secrets
   useEffect(() => {
-    const loadWebhookUrl = async () => {
-      setIsLoadingWebhook(true);
-      try {
-        const url = await getCompanyWebhookUrl();
-        setWebhookUrl(url);
-        console.log("Loaded company research webhook URL for SimpleSearch:", url);
-      } catch (error) {
-        console.error('Error loading company research webhook URL:', error);
-        setWebhookUrl('');
-      } finally {
-        setIsLoadingWebhook(false);
-      }
-    };
-    loadWebhookUrl();
+    setIsLoadingWebhook(false);
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {

@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { deductCredits, calculateCreditCost } from '@/utils/creditUtils';
-import { fetchWebhookSettings } from '@/services/webhookService';
 import { parseWebhookResponse } from '@/utils/webhookResponseParser';
 import { storeSearchResults } from '@/services/companySearchService';
-import { callCompanyWebhook, getCompanyWebhookUrl } from '@/services/companyWebhookService';
 import { Question, SearchResultType } from '@/types/company';
 
 // Simplified search process states
@@ -40,23 +38,10 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
   // Credit cost calculation memoized to prevent unnecessary recalculations
   const creditCost = useMemo(() => calculateCreditCost(questions.length), [questions.length]);
 
-  // Load webhook URL only once when component mounts
+  // Load webhook URL only once when component mounts - now returns empty since URLs are managed via secrets
   useEffect(() => {
-    const loadWebhookUrl = async () => {
-      setIsLoadingWebhook(true);
-      try {
-        // Use the new function to get the company research webhook URL
-        const url = await getCompanyWebhookUrl();
-        setWebhookUrl(url);
-        console.log("Loaded company research webhook URL:", url);
-      } catch (error) {
-        console.error('Error loading company research webhook URL:', error);
-        setWebhookUrl('');
-      } finally {
-        setIsLoadingWebhook(false);
-      }
-    };
-    loadWebhookUrl();
+    setIsLoadingWebhook(false);
+    setWebhookUrl(''); // Empty since webhook URLs are now managed via secrets in edge functions
   }, []);
 
   // Reset error message when company name changes
@@ -142,16 +127,7 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
       return;
     }
 
-    // Check if webhook URL is available
-    if (!webhookUrl) {
-      toast({
-        title: "Error",
-        description: "Company research webhook URL is not configured",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Check webhook availability is no longer needed as URLs are managed via secrets
     if (!user || !userProfile) {
       console.error("User or user profile is missing", { user, userProfile });
       setErrorMessage("Authentication error. Please try logging out and back in.");
@@ -177,12 +153,13 @@ export const useCompanySearch = (questions: Question[], onSearch: () => void) =>
     // This allows us to handle the finally block properly
     const performSearch = async () => {
       try {
-        console.log("Making webhook call to:", webhookUrl);
+        console.log("Making webhook call (URL managed via secrets)");
         console.log("Searching for company:", companyName);
         
-        // Make the webhook call - this is where we need to ensure the button stays in searching state
+        // Make the webhook call - webhook URL is now managed via secrets in the edge function
         console.log("Starting webhook call - button should remain in searching state");
-        const directResponse = await callCompanyWebhook(webhookUrl, companyName, questions);
+        const { callCompanyWebhook } = await import('@/services/companyWebhookService');
+        const directResponse = await callCompanyWebhook('', companyName, questions);
         
         // Check if the search was cancelled or another search started
         if (!isSearchingRef.current) {

@@ -1,88 +1,18 @@
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import WebhookForm from '@/components/dashboard/WebhookForm';
-import MyBusinessWebhookForm from '@/components/dashboard/MyBusinessWebhookForm';
-import ValuePropositionWebhookForm from '@/components/dashboard/ValuePropositionWebhookForm';
 import EmailSettings from '@/components/dashboard/EmailSettings';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  fetchWebhookSettings, 
-  updateWebhookSettings,
-  updateMyBusinessWebhookSettings,
-  updateValuePropositionWebhookSettings,
-  updateCompanyResearchWebhookSettings,
-  updateQuestionsWebhookSettings
-} from '@/services/webhookService';
-import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 const Settings = () => {
   const { user, loading, userProfile } = useAuth();
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [myBusinessWebhookUrl, setMyBusinessWebhookUrl] = useState('');
-  const [valuePropositionWebhookUrl, setValuePropositionWebhookUrl] = useState('');
-  const [companyResearchWebhookUrl, setCompanyResearchWebhookUrl] = useState('');
-  const [questionsWebhookUrl, setQuestionsWebhookUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [adminChecked, setAdminChecked] = useState(false);
 
-  useEffect(() => {
-    if (!loading) {
-      if (user && userProfile?.is_admin) {
-        console.log('User is admin, loading webhook settings');
-        loadWebhookSettings();
-      } else {
-        console.log('User is not admin or not logged in');
-        setIsLoading(false);
-        setAdminChecked(true);
-      }
-    }
-  }, [loading, user, userProfile]);
-
-  const loadWebhookSettings = async () => {
-    setIsLoading(true);
-    try {
-      console.log('Fetching webhook settings...');
-      const settings = await fetchWebhookSettings();
-      console.log('Webhook settings received:', settings);
-      
-      if (settings) {
-        // Set URLs for each step from their respective database columns
-        setQuestionsWebhookUrl(settings.questions_url || '');
-        setWebhookUrl(settings.url || '');
-        setMyBusinessWebhookUrl(settings.mybusiness_url || '');
-        setValuePropositionWebhookUrl(settings.value_proposition_url || '');
-        setCompanyResearchWebhookUrl(settings.url || '');
-        
-        console.log(`Set questions URL (Step 2): ${settings.questions_url}`);
-        console.log(`Set company research URL (Step 3): ${settings.url}`);
-        console.log(`Set mybusiness URL (Step 1): ${settings.mybusiness_url}`);
-        console.log(`Set value proposition URL (Step 4): ${settings.value_proposition_url}`);
-      } else {
-        console.warn('No webhook settings found');
-        toast({
-          title: "Information",
-          description: "No webhook settings found. You can create them now.",
-        });
-      }
-    } catch (error) {
-      console.error('Error loading webhook settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load webhook settings",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      setAdminChecked(true);
-    }
-  };
-
-  if (loading || (isLoading && !adminChecked)) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
@@ -100,73 +30,6 @@ const Settings = () => {
     console.log('User not logged in, redirecting to login');
     return <Navigate to="/login" replace />;
   }
-
-  const handleQuestionsWebhookUpdate = async (newUrl: string) => {
-    try {
-      // Update the questions_url column for Step 2
-      const success = await updateQuestionsWebhookSettings(newUrl);
-      if (success) {
-        setQuestionsWebhookUrl(newUrl);
-      }
-    } catch (error) {
-      console.error('Error updating questions webhook URL:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update questions webhook URL",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleMyBusinessWebhookUpdate = async (newUrl: string) => {
-    try {
-      const success = await updateMyBusinessWebhookSettings(newUrl);
-      if (success) {
-        setMyBusinessWebhookUrl(newUrl);
-      }
-    } catch (error) {
-      console.error('Error updating My Business webhook URL:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update My Business webhook URL",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleValuePropositionWebhookUpdate = async (newUrl: string) => {
-    try {
-      const success = await updateValuePropositionWebhookSettings(newUrl);
-      if (success) {
-        setValuePropositionWebhookUrl(newUrl);
-      }
-    } catch (error) {
-      console.error('Error updating Value Proposition webhook URL:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update Value Proposition webhook URL",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCompanyResearchWebhookUpdate = async (newUrl: string) => {
-    try {
-      // This updates the 'url' column used for Step 3 (Company Research)
-      const success = await updateCompanyResearchWebhookSettings(newUrl);
-      if (success) {
-        setCompanyResearchWebhookUrl(newUrl);
-        setWebhookUrl(newUrl);
-      }
-    } catch (error) {
-      console.error('Error updating Company Research webhook URL:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update Company Research webhook URL",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -199,61 +62,34 @@ const Settings = () => {
               <TabsContent value="admin" className="space-y-8">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Step 1: My Business Webhook Configuration</CardTitle>
+                    <CardTitle>Webhook Configuration</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <MyBusinessWebhookForm 
-                      webhookUrl={myBusinessWebhookUrl}
-                      setWebhookUrl={handleMyBusinessWebhookUpdate}
-                      isDisabled={isLoading}
-                      showDescription={true}
-                    />
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 2: Questions Webhook Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <WebhookForm 
-                      webhookUrl={questionsWebhookUrl}
-                      setWebhookUrl={handleQuestionsWebhookUpdate}
-                      isDisabled={isLoading}
-                      showDescription={true}
-                      labelText="Questions Webhook URL"
-                      description="Enter the URL for your questions webhook endpoint (used in Step 2)"
-                    />
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 3: Company Research Webhook Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <WebhookForm 
-                      webhookUrl={companyResearchWebhookUrl}
-                      setWebhookUrl={handleCompanyResearchWebhookUpdate}
-                      isDisabled={isLoading}
-                      showDescription={true}
-                      labelText="Company Research Webhook URL"
-                      description="Enter the URL for your company research webhook endpoint (used in Step 3)"
-                    />
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 4: Value Proposition Webhook Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ValuePropositionWebhookForm 
-                      webhookUrl={valuePropositionWebhookUrl}
-                      setWebhookUrl={handleValuePropositionWebhookUpdate}
-                      isDisabled={isLoading}
-                      showDescription={true}
-                    />
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Webhook URLs are now managed via secure environment variables in Supabase Edge Functions.
+                        To configure webhook URLs, update the following secrets in your Supabase project dashboard:
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                      <div><strong>Step 1 (My Business):</strong> MYBUSINESS_WEBHOOK_URL</div>
+                      <div><strong>Step 2 (Questions):</strong> QUESTIONS_WEBHOOK_URL</div>
+                      <div><strong>Step 3 (Company Research):</strong> COMPANY_RESEARCH_WEBHOOK_URL</div>
+                      <div><strong>Step 4 (Value Proposition):</strong> VALUE_PROPOSITION_WEBHOOK_URL</div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <a 
+                        href={`https://supabase.com/dashboard/project/pqskutdrekcinpymvigm/settings/functions`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Configure Webhook Secrets →
+                      </a>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

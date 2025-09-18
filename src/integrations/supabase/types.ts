@@ -377,39 +377,6 @@ export type Database = {
         }
         Relationships: []
       }
-      webhook_settings: {
-        Row: {
-          created_at: string | null
-          default_signup_credits: number | null
-          id: string
-          mybusiness_url: string | null
-          questions_url: string | null
-          updated_at: string | null
-          url: string
-          value_proposition_url: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          default_signup_credits?: number | null
-          id?: string
-          mybusiness_url?: string | null
-          questions_url?: string | null
-          updated_at?: string | null
-          url?: string
-          value_proposition_url?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          default_signup_credits?: number | null
-          id?: string
-          mybusiness_url?: string | null
-          questions_url?: string | null
-          updated_at?: string | null
-          url?: string
-          value_proposition_url?: string | null
-        }
-        Relationships: []
-      }
       webhook_testing: {
         Row: {
           created_at: string
