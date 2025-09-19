@@ -1,6 +1,10 @@
 
 project_id = "pqskutdrekcinpymvigm"
 
+[functions.o365-auth-shared]
+enabled = true
+verify_jwt = true
+
 [functions.send-email]
 enabled = true
 verify_jwt = true

@@ -13,4 +13,5 @@ export interface EmailSettings {
   oauth2_client_id?: string | null;
   oauth2_client_secret?: string | null;
   oauth2_refresh_token?: string | null;
+  connection_type?: string | null;
 }

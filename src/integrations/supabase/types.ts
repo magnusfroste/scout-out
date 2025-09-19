@@ -299,6 +299,7 @@ export type Database = {
       user_email_settings: {
         Row: {
           app_password: string | null
+          connection_type: string | null
           created_at: string | null
           email_address: string
           email_provider: string
@@ -315,6 +316,7 @@ export type Database = {
         }
         Insert: {
           app_password?: string | null
+          connection_type?: string | null
           created_at?: string | null
           email_address: string
           email_provider: string
@@ -331,6 +333,7 @@ export type Database = {
         }
         Update: {
           app_password?: string | null
+          connection_type?: string | null
           created_at?: string | null
           email_address?: string
           email_provider?: string
@@ -414,6 +417,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           app_password: string | null
+          connection_type: string | null
           created_at: string | null
           email_address: string
           email_provider: string

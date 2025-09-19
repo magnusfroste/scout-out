@@ -254,6 +254,40 @@ const EmailSettingsContainer = () => {
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Connection Type Selector */}
+        <div className="bg-muted/50 p-4 rounded-lg border">
+          <h3 className="font-semibold mb-3">Choose Your Setup Method</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-200" 
+                  onClick={() => window.location.href = '/simple-connect'}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <div>
+                    <h4 className="font-medium text-green-700">Simple Connect</h4>
+                    <p className="text-sm text-muted-foreground">One-click setup, no configuration needed</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-blue-200 bg-blue-50/50">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <div>
+                    <h4 className="font-medium text-blue-700">Advanced Setup</h4>
+                    <p className="text-sm text-muted-foreground">Full control with your own Azure app</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            <strong>Simple Connect:</strong> Uses our shared OAuth app for instant setup. 
+            <strong>Advanced Setup:</strong> Use your own Azure app registration for maximum control.
+          </p>
+        </div>
         {error && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
