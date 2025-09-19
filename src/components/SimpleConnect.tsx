@@ -171,7 +171,7 @@ const SimpleConnect = () => {
       });
 
       // Start the shared OAuth flow
-      initiateO365AuthShared();
+      await initiateO365AuthShared();
       
     } catch (error) {
       console.error('Error starting OAuth flow:', error);

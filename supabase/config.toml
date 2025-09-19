@@ -1,6 +1,10 @@
 
 project_id = "pqskutdrekcinpymvigm"
 
+[functions.get-shared-client-id]
+enabled = true
+verify_jwt = true
+
 [functions.o365-auth-shared]
 enabled = true
 verify_jwt = true

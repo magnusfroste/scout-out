@@ -12,32 +12,43 @@ const OUTLOOK_SCOPES = 'openid email profile offline_access https://graph.micros
 /**
  * Initiate OAuth 2.0 authorization flow using shared app credentials
  */
-export const initiateO365AuthShared = (): void => {
+export const initiateO365AuthShared = async (): Promise<void> => {
   console.log('Starting shared O365 OAuth flow...');
   
-  // Store the redirect URL and flow type in session storage for later use
-  sessionStorage.setItem('oauth_redirect_url', MICROSOFT_OAUTH_ENDPOINTS.redirectUrl);
-  sessionStorage.setItem('oauth_flow_type', 'shared');
-  
-  // Generate state parameter for security
-  const state = crypto.randomUUID();
-  sessionStorage.setItem('oauth_state', state);
-  
-  // Note: We don't store client credentials in session since they're handled server-side
-  
-  // Build authorization URL - we use a placeholder client_id since it will be handled server-side
-  const authUrl = new URL(MICROSOFT_OAUTH_ENDPOINTS.authUrl);
-  authUrl.searchParams.set('client_id', 'SHARED_APP'); // Placeholder - real ID is server-side
-  authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('redirect_uri', MICROSOFT_OAUTH_ENDPOINTS.redirectUrl);
-  authUrl.searchParams.set('scope', OUTLOOK_SCOPES);
-  authUrl.searchParams.set('response_mode', 'query');
-  authUrl.searchParams.set('state', state);
-  
-  console.log('Redirecting to Microsoft for shared app authorization...');
-  
-  // Redirect to Microsoft authorization endpoint
-  window.location.href = authUrl.toString();
+  try {
+    // Get the shared client ID from the server
+    const { data, error } = await supabase.functions.invoke('get-shared-client-id');
+    
+    if (error || !data?.clientId) {
+      console.error('Failed to get shared client ID:', error);
+      throw new Error('Unable to get shared OAuth configuration');
+    }
+    
+    // Store the redirect URL and flow type in session storage for later use
+    sessionStorage.setItem('oauth_redirect_url', MICROSOFT_OAUTH_ENDPOINTS.redirectUrl);
+    sessionStorage.setItem('oauth_flow_type', 'shared');
+    
+    // Generate state parameter for security
+    const state = crypto.randomUUID();
+    sessionStorage.setItem('oauth_state', state);
+    
+    // Build authorization URL with the real shared client ID
+    const authUrl = new URL(MICROSOFT_OAUTH_ENDPOINTS.authUrl);
+    authUrl.searchParams.set('client_id', data.clientId);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('redirect_uri', MICROSOFT_OAUTH_ENDPOINTS.redirectUrl);
+    authUrl.searchParams.set('scope', OUTLOOK_SCOPES);
+    authUrl.searchParams.set('response_mode', 'query');
+    authUrl.searchParams.set('state', state);
+    
+    console.log('Redirecting to Microsoft for shared app authorization...');
+    
+    // Redirect to Microsoft authorization endpoint
+    window.location.href = authUrl.toString();
+  } catch (error) {
+    console.error('Error starting shared OAuth flow:', error);
+    throw error;
+  }
 };
 
 /**
