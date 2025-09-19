@@ -249,9 +249,10 @@ const SimpleConnect = () => {
       
     } catch (error) {
       console.error('Error starting OAuth flow:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to start the connection process. Please try again.";
       toast({
         title: "Connection Failed",
-        description: "Failed to start the connection process. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsConnecting(false);

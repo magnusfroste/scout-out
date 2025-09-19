@@ -51,6 +51,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
-[functions.composio-connect-account]
+[functions.create-user-mcp-server]
 enabled = true
 verify_jwt = true
+
+[db]
+  major_version = 15
+

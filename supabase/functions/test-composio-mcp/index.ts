@@ -86,6 +86,60 @@ class MCPClient {
     }
   }
   
+  async getUserMCPServer(apiKey: string, userId: string): Promise<{ id: string; url: string; connectedAccountIds: string[] }> {
+    try {
+      console.log('🔍 Looking for user-specific MCP server...');
+      
+      // List existing MCP servers using the correct endpoint and headers
+      const listResponse = await fetch(`https://backend.composio.dev/api/v1/mcp/servers/user/${userId}`, {
+        method: 'GET',
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!listResponse.ok) {
+        throw new Error(`Failed to list MCP servers: ${listResponse.status}`);
+      }
+
+      const existingServers = await listResponse.json();
+      console.log('📋 Existing MCP servers:', JSON.stringify(existingServers, null, 2));
+
+      // Look for the specific server with our target auth config
+      const existingServer = existingServers.find((server: any) => 
+        server.userId === userId
+      );
+
+      if (existingServer) {
+        console.log('✅ Found existing MCP server:', existingServer.id, 'Name:', existingServer.name);
+        
+        // Check connected accounts
+        const connectedAccountIds = existingServer.connectedAccountIds || [];
+        if (connectedAccountIds.length === 0) {
+          console.log('⚠️ No connected accounts found. Email accounts need to be connected to send emails.');
+        } else {
+          console.log(`✅ Found ${connectedAccountIds.length} connected account(s): ${connectedAccountIds.join(', ')}`);
+        }
+        
+        // Use the existing URL format from the server
+        const mcpUrl = existingServer.url || `https://apollo.composio.dev/v3/mcp/${existingServer.id}?transport=sse`;
+        return { 
+          id: existingServer.id, 
+          url: mcpUrl,
+          connectedAccountIds 
+        };
+      }
+
+      // If no existing server found, throw an error
+      throw new Error(`No MCP server found for user ${userId}. Please ensure the user has a valid MCP server configuration.`);
+
+    } catch (error) {
+      console.error('❌ Error in getUserMCPServer:', error);
+      throw error;
+    }
+  }
+  
   async connectToMCPServer(mcpUrl: string): Promise<WebSocket> {
     console.log('🔌 Connecting to MCP server URL:', mcpUrl);
     
@@ -281,7 +335,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       console.log('📡 Testing MCP server connection...');
       
-      const serverInfo = await mcpClient.getExistingMCPServer(composioApiKey);
+      const serverInfo = await mcpClient.getUserMCPServer(composioApiKey, userId);
       
       return new Response(JSON.stringify({
         success: true,
@@ -314,8 +368,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log('📧 Testing email sending via MCP protocol...');
       
-      // Get existing MCP server
-      const serverInfo = await mcpClient.getExistingMCPServer(composioApiKey);
+      // Get user-specific MCP server
+      const serverInfo = await mcpClient.getUserMCPServer(composioApiKey, userId);
       
       // Check if accounts are connected
       if (serverInfo.connectedAccountIds.length === 0) {
@@ -329,10 +383,9 @@ const handler = async (req: Request): Promise<Response> => {
             connectedAccountIds: serverInfo.connectedAccountIds,
             message: `No email accounts are connected to the MCP server. Please connect an Outlook account first.`,
             troubleshooting: {
-              step1: 'Go to https://app.composio.dev',
-              step2: 'Navigate to your MCP server configuration',
-              step3: 'Connect an Outlook account to enable email sending',
-              step4: 'Ensure the account has proper permissions'
+              step1: 'Go to Settings -> Email Integration',
+              step2: 'Click \"Connect Office 365\" and follow the prompts',
+              step3: 'Ensure the account has proper permissions'
             }
           },
           timestamp: new Date().toISOString()
