@@ -31,7 +31,7 @@ interface MCPClientCapabilities {
 class MCPClient {
   private messageId = 1;
   
-  async getExistingMCPServer(apiKey: string): Promise<{ id: string; url: string }> {
+  async getExistingMCPServer(apiKey: string): Promise<{ id: string; url: string; connectedAccountIds: string[] }> {
     try {
       console.log('🔍 Looking for existing MCP server with auth config...');
       
@@ -59,9 +59,22 @@ class MCPClient {
 
       if (existingServer) {
         console.log('✅ Found existing MCP server:', existingServer.id, 'Name:', existingServer.name);
+        
+        // Check connected accounts
+        const connectedAccountIds = existingServer.connectedAccountIds || [];
+        if (connectedAccountIds.length === 0) {
+          console.log('⚠️ No connected accounts found. Email accounts need to be connected to send emails.');
+        } else {
+          console.log(`✅ Found ${connectedAccountIds.length} connected account(s): ${connectedAccountIds.join(', ')}`);
+        }
+        
         // Use the existing URL format from the server
         const mcpUrl = existingServer.url || `https://apollo.composio.dev/v3/mcp/${existingServer.id}?transport=sse`;
-        return { id: existingServer.id, url: mcpUrl };
+        return { 
+          id: existingServer.id, 
+          url: mcpUrl,
+          connectedAccountIds 
+        };
       }
 
       // If no existing server found, throw an error
@@ -277,7 +290,14 @@ const handler = async (req: Request): Promise<Response> => {
           serverId: serverInfo.id,
           mcpUrl: serverInfo.url,
           userId: userId,
-          message: 'MCP server connection successful'
+          connectedAccountIds: serverInfo.connectedAccountIds,
+          connectedAccountsCount: serverInfo.connectedAccountIds.length,
+          message: serverInfo.connectedAccountIds.length > 0 
+            ? `MCP server connection successful with ${serverInfo.connectedAccountIds.length} connected account(s)`
+            : 'MCP server connection successful, but no email accounts are connected',
+          warning: serverInfo.connectedAccountIds.length === 0 
+            ? 'You need to connect an Outlook account to send emails through MCP'
+            : null
         },
         timestamp: new Date().toISOString()
       }), {
@@ -296,6 +316,33 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Get existing MCP server
       const serverInfo = await mcpClient.getExistingMCPServer(composioApiKey);
+      
+      // Check if accounts are connected
+      if (serverInfo.connectedAccountIds.length === 0) {
+        return new Response(JSON.stringify({
+          success: false,
+          testType: 'email',
+          error: 'No connected accounts found',
+          data: {
+            serverId: serverInfo.id,
+            mcpUrl: serverInfo.url,
+            connectedAccountIds: serverInfo.connectedAccountIds,
+            message: `No email accounts are connected to the MCP server. Please connect an Outlook account first.`,
+            troubleshooting: {
+              step1: 'Go to https://app.composio.dev',
+              step2: 'Navigate to your MCP server configuration',
+              step3: 'Connect an Outlook account to enable email sending',
+              step4: 'Ensure the account has proper permissions'
+            }
+          },
+          timestamp: new Date().toISOString()
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      console.log(`✅ Proceeding with email test using ${serverInfo.connectedAccountIds.length} connected account(s)`);
       
       // Connect to the MCP server
       ws = await mcpClient.connectToMCPServer(serverInfo.url);
@@ -339,6 +386,7 @@ const handler = async (req: Request): Promise<Response> => {
           serverId: serverInfo.id,
           mcpUrl: serverInfo.url,
           userId: userId,
+          connectedAccountIds: serverInfo.connectedAccountIds,
           toolUsed: emailTool.name,
           toolArgs: toolArgs,
           result: emailResult,
