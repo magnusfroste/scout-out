@@ -174,16 +174,15 @@ const ComposioMCPTest = () => {
 
       {/* Connection Test */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-2">1. MCP Server Instance Creation Test</h4>
+        <h4 className="font-semibold mb-2">1. MCP Server Connection Test</h4>
         <p className="text-sm text-gray-600 mb-4">
-          Create user-specific MCP server instance with auth config <code>ac_pfIe0Qy6LJq7</code> and test API connectivity.
-          Each user gets their own MCP server instance for personalized email sending.
+          Connect to existing MCP server with auth config <code>ac_pfIe0Qy6LJq7</code> and test API connectivity.
+          User context is passed through the MCP protocol for personalized access.
         </p>
         
         {connectionResult?.data?.serverId && (
           <div className="mb-4 p-2 bg-green-50 rounded">
             <p className="text-sm"><strong>Server ID:</strong> {connectionResult.data.serverId}</p>
-            <p className="text-sm"><strong>Instance ID:</strong> {connectionResult.data.instanceId}</p>
             <p className="text-sm"><strong>User ID:</strong> {connectionResult.data.userId}</p>
             <p className="text-sm"><strong>MCP URL:</strong> {connectionResult.data.mcpUrl}</p>
           </div>
@@ -194,7 +193,7 @@ const ComposioMCPTest = () => {
           disabled={isTestingConnection || !user}
           className="w-full"
         >
-          {!user ? 'Please Log In' : isTestingConnection ? 'Creating MCP Instance...' : 'Test MCP Server Instance Creation'}
+          {!user ? 'Please Log In' : isTestingConnection ? 'Testing MCP Connection...' : 'Test MCP Server Connection'}
         </Button>
         {renderResult(connectionResult, 'MCP Server Creation Result')}
       </Card>
@@ -255,8 +254,8 @@ const ComposioMCPTest = () => {
       <Card className="p-4 bg-blue-50">
         <h4 className="font-semibold mb-2">Test Instructions</h4>
         <ul className="text-sm space-y-1">
-          <li>1. Make sure you're logged in - each user gets their own MCP server instance</li>
-          <li>2. First run the MCP server instance creation test to verify API access</li>
+          <li>1. Make sure you're logged in - user context is passed through MCP protocol</li>
+          <li>2. First run the MCP server connection test to verify API access</li>
           <li>3. If successful, test email sending with a real email address</li>
           <li>4. Monitor the browser console and edge function logs for detailed debugging</li>
           <li>5. Check recipient's inbox to confirm email delivery</li>

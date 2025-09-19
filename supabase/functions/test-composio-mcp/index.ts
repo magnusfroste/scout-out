@@ -31,11 +31,11 @@ interface MCPClientCapabilities {
 class MCPClient {
   private messageId = 1;
   
-  async createOrGetMCPServerInstance(apiKey: string, userId: string): Promise<{ serverId: string; instanceId: string; url: string }> {
+  async getExistingMCPServer(apiKey: string): Promise<{ id: string; url: string }> {
     try {
-      console.log(`🔍 Looking for MCP server instance for user: ${userId}...`);
+      console.log('🔍 Looking for existing MCP server with auth config...');
       
-      // First, get the MCP config server ID (mcp-config-bqrn5q)
+      // List existing MCP servers using the correct endpoint and headers
       const listResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
         method: 'GET',
         headers: {
@@ -51,76 +51,24 @@ class MCPClient {
       const existingServers = await listResponse.json();
       console.log('📋 Existing MCP servers:', JSON.stringify(existingServers, null, 2));
 
-      // Find the mcp-config-bqrn5q server
+      // Look for the specific server with our target auth config
       const targetAuthConfig = 'ac_pfIe0Qy6LJq7';
-      const configServer = existingServers.find((server: any) => 
+      const existingServer = existingServers.find((server: any) => 
         server.authConfigs && server.authConfigs.includes(targetAuthConfig)
       );
 
-      if (!configServer) {
-        throw new Error(`No MCP config server found with auth config ${targetAuthConfig}.`);
+      if (existingServer) {
+        console.log('✅ Found existing MCP server:', existingServer.id, 'Name:', existingServer.name);
+        // Use the existing URL format from the server
+        const mcpUrl = existingServer.url || `https://apollo.composio.dev/v3/mcp/${existingServer.id}?transport=sse`;
+        return { id: existingServer.id, url: mcpUrl };
       }
 
-      console.log('✅ Found MCP config server:', configServer.id, 'Name:', configServer.name);
-
-      // Now check if there's already an instance for this user
-      const instancesResponse = await fetch(`https://backend.composio.dev/api/v1/mcp/servers/${configServer.id}/instances`, {
-        method: 'GET',
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (instancesResponse.ok) {
-        const instances = await instancesResponse.json();
-        console.log('📋 Existing instances:', JSON.stringify(instances, null, 2));
-        
-        // Look for an instance with this user ID
-        const userInstance = instances.find((instance: any) => instance.userId === userId);
-        
-        if (userInstance) {
-          console.log(`✅ Found existing instance for user ${userId}:`, userInstance.id);
-          const instanceUrl = `https://apollo.composio.dev/v3/mcp/${configServer.id}/instances/${userInstance.id}?transport=sse`;
-          return { 
-            serverId: configServer.id, 
-            instanceId: userInstance.id, 
-            url: instanceUrl 
-          };
-        }
-      }
-
-      // Create a new instance for this user
-      console.log(`🆕 Creating new MCP instance for user: ${userId}`);
-      const createInstanceResponse = await fetch(`https://backend.composio.dev/api/v1/mcp/servers/${configServer.id}/instances`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          name: `instance-${userId.substring(0, 8)}` // Short name based on user ID
-        })
-      });
-
-      if (!createInstanceResponse.ok) {
-        const errorText = await createInstanceResponse.text();
-        throw new Error(`Failed to create MCP instance: ${createInstanceResponse.status} - ${errorText}`);
-      }
-
-      const newInstance = await createInstanceResponse.json();
-      console.log('✅ Created new MCP instance:', newInstance);
-      
-      const instanceUrl = `https://apollo.composio.dev/v3/mcp/${configServer.id}/instances/${newInstance.id}?transport=sse`;
-      return { 
-        serverId: configServer.id, 
-        instanceId: newInstance.id, 
-        url: instanceUrl 
-      };
+      // If no existing server found, throw an error
+      throw new Error(`No MCP server found with auth config ${targetAuthConfig}. Please ensure the mcp-config-bqrn5q server exists with proper configuration.`);
 
     } catch (error) {
-      console.error('❌ Error in createOrGetMCPServerInstance:', error);
+      console.error('❌ Error in getExistingMCPServer:', error);
       throw error;
     }
   }
@@ -150,7 +98,7 @@ class MCPClient {
     });
   }
   
-  async initializeMCP(ws: WebSocket): Promise<void> {
+  async initializeMCP(ws: WebSocket, userId?: string): Promise<void> {
     console.log('🤝 Initializing MCP session...');
     
     const initMessage: MCPMessage = {
@@ -166,7 +114,14 @@ class MCPClient {
         clientInfo: {
           name: 'MBA-Composio-Client',
           version: '1.0.0'
-        }
+        },
+        // Include user context if provided
+        ...(userId && { 
+          meta: { 
+            userId: userId,
+            context: 'MBA SaaS Application'
+          } 
+        })
       }
     };
     
@@ -305,25 +260,24 @@ const handler = async (req: Request): Promise<Response> => {
     
     const mcpClient = new MCPClient();
     
-    // Test 1: MCP Server Instance Creation and URL Generation
+    // Test 1: MCP Server Connection Test
     if (testType === 'connection') {
       if (!userId) {
         throw new Error('Connection test requires userId');
       }
       
-      console.log('📡 Testing MCP server instance creation and URL generation...');
+      console.log('📡 Testing MCP server connection...');
       
-      const instanceInfo = await mcpClient.createOrGetMCPServerInstance(composioApiKey, userId);
+      const serverInfo = await mcpClient.getExistingMCPServer(composioApiKey);
       
       return new Response(JSON.stringify({
         success: true,
         testType: 'connection',
         data: {
-          serverId: instanceInfo.serverId,
-          instanceId: instanceInfo.instanceId,
-          mcpUrl: instanceInfo.url,
+          serverId: serverInfo.id,
+          mcpUrl: serverInfo.url,
           userId: userId,
-          message: 'MCP server instance created/retrieved successfully'
+          message: 'MCP server connection successful'
         },
         timestamp: new Date().toISOString()
       }), {
@@ -340,14 +294,14 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log('📧 Testing email sending via MCP protocol...');
       
-      // Get/create MCP server instance for this user
-      const instanceInfo = await mcpClient.createOrGetMCPServerInstance(composioApiKey, userId);
+      // Get existing MCP server
+      const serverInfo = await mcpClient.getExistingMCPServer(composioApiKey);
       
-      // Connect to the MCP server instance
-      ws = await mcpClient.connectToMCPServer(instanceInfo.url);
+      // Connect to the MCP server
+      ws = await mcpClient.connectToMCPServer(serverInfo.url);
       
-      // Initialize MCP session
-      await mcpClient.initializeMCP(ws);
+      // Initialize MCP session with user context
+      await mcpClient.initializeMCP(ws, userId);
       
       // List available tools
       const tools = await mcpClient.listTools(ws);
@@ -382,9 +336,8 @@ const handler = async (req: Request): Promise<Response> => {
         success: true,
         testType: 'email',
         data: {
-          serverId: instanceInfo.serverId,
-          instanceId: instanceInfo.instanceId,
-          mcpUrl: instanceInfo.url,
+          serverId: serverInfo.id,
+          mcpUrl: serverInfo.url,
           userId: userId,
           toolUsed: emailTool.name,
           toolArgs: toolArgs,
