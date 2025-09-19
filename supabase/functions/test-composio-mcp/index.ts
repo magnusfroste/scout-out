@@ -31,85 +31,45 @@ class MCPClient {
   private messageId = 1;
   
   async createOrGetMCPServer(apiKey: string): Promise<{ id: string; url: string }> {
-    console.log('🏗️ Creating/getting Composio MCP server...');
-    
-    // First, check if we already have a server for Outlook
-    const listResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers?toolkits=outlook', {
-      method: 'GET',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!listResponse.ok) {
-      throw new Error(`Failed to list MCP servers: ${listResponse.status}`);
-    }
-    
-    const listData = await listResponse.json();
-    console.log('📋 Existing MCP servers:', listData);
-    
-    let serverId: string;
-    
-    // If we have an existing Outlook server, use it
-    if (listData.items && listData.items.length > 0) {
-      serverId = listData.items[0].id;
-      console.log('♻️ Using existing MCP server:', serverId);
-    } else {
-      // Create a new MCP server for Outlook
-      console.log('🆕 Creating new MCP server...');
-      const createResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
-        method: 'POST',
+    try {
+      console.log('🔍 Looking for existing MCP server with auth config...');
+      
+      // First, list existing MCP servers using the correct endpoint
+      const listResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
+        method: 'GET',
         headers: {
-          'x-api-key': apiKey,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: 'MBA Outlook Server',
-          server_config: [{
-            auth_config_id: 'ac_pfIe0Qy6LJq7',
-            allowed_tools: ['OUTLOOK_SEND_EMAIL']
-          }],
-          options: {
-            is_chat_auth: true
-          }
-        })
       });
-      
-      if (!createResponse.ok) {
-        throw new Error(`Failed to create MCP server: ${createResponse.status}`);
+
+      if (!listResponse.ok) {
+        throw new Error(`Failed to list MCP servers: ${listResponse.status}`);
       }
-      
-      const createData = await createResponse.json();
-      serverId = createData.id;
-      console.log('✅ Created MCP server:', serverId);
+
+      const existingServers = await listResponse.json();
+      console.log('📋 Existing MCP servers:', JSON.stringify(existingServers, null, 2));
+
+      // Look for the specific server with our target auth config
+      const targetAuthConfig = 'ac_pfIe0Qy6LJq7';
+      const existingServer = existingServers.find((server: any) => 
+        server.authConfigs && server.authConfigs.includes(targetAuthConfig)
+      );
+
+      if (existingServer) {
+        console.log('✅ Found existing MCP server:', existingServer.id, 'Name:', existingServer.name);
+        // Use the existing URL format from the server
+        const mcpUrl = existingServer.url || `https://apollo.composio.dev/v3/mcp/${existingServer.id}?transport=sse`;
+        return { id: existingServer.id, url: mcpUrl };
+      }
+
+      // If no existing server found, throw an error instead of creating a new one
+      throw new Error(`No MCP server found with auth config ${targetAuthConfig}. Please ensure the mcp-config-bqrn5q server exists with proper configuration.`);
+
+    } catch (error) {
+      console.error('❌ Error in createOrGetMCPServer:', error);
+      throw error;
     }
-    
-    // Generate MCP server URL for a test user
-    const generateResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers/generate', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        mcp_server_id: serverId,
-        user_id: 'test-user@mba.com',
-        include_composio_helper_actions: true
-      })
-    });
-    
-    if (!generateResponse.ok) {
-      throw new Error(`Failed to generate MCP URL: ${generateResponse.status}`);
-    }
-    
-    const generateData = await generateResponse.json();
-    console.log('🔗 Generated MCP URL:', generateData.url);
-    
-    return {
-      id: serverId,
-      url: generateData.url
-    };
   }
   
   async connectToMCPServer(mcpUrl: string): Promise<WebSocket> {
