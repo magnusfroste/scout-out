@@ -34,11 +34,11 @@ class MCPClient {
     try {
       console.log('🔍 Looking for existing MCP server with auth config...');
       
-      // First, list existing MCP servers using the correct endpoint
+      // First, list existing MCP servers using the correct endpoint and headers
       const listResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'x-api-key': apiKey,
           'Content-Type': 'application/json',
         },
       });
