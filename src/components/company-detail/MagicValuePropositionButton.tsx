@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { callValuePropositionWebhook, getValuePropositionWebhookUrl } from '@/services/valueProposition';
+import { callValuePropositionWebhook } from '@/services/valueProposition';
 
 interface MagicValuePropositionButtonProps {
   companyName: string;
@@ -32,12 +32,6 @@ const MagicValuePropositionButton = ({ companyName, companyId, onSuccess }: Magi
 
       if (companyError && companyId) throw companyError;
 
-      // Fetch webhook URL
-      const webhookUrl = await getValuePropositionWebhookUrl();
-      if (!webhookUrl) {
-        throw new Error("Value proposition webhook URL not configured");
-      }
-
       // Get business data from user profile
       const businessData = userProfile?.business_data || null;
       const userInfo = {
@@ -47,7 +41,7 @@ const MagicValuePropositionButton = ({ companyName, companyId, onSuccess }: Magi
 
       // Call the webhook
       const response = await callValuePropositionWebhook(
-        webhookUrl,
+        "",
         companyData || { company_name: companyName },
         businessData,
         null,
