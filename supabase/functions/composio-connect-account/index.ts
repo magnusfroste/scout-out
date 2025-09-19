@@ -74,128 +74,18 @@ serve(async (req: Request) => {
     console.log('📧 Email address:', emailAddress);
     console.log('🔄 Redirect URL:', redirectUrl);
 
-    // Step 1: Get or create Auth Config for Office365/Outlook
-    console.log('🔍 Looking for existing Office365 Auth Config...');
+    // Use proven working components from our testing
+    const AUTH_CONFIG_ID = 'ac_pfIe0Qy6LJq7'; // Known working auth config
+    const MCP_SERVER_ID = 'cb5c8cdf-1448-41d3-87d8-7e014fb0ef91'; // Known working MCP server
     
-    const authConfigsResponse = await fetch('https://backend.composio.dev/api/v1/auth/configs', {
-      headers: {
-        'X-API-Key': composioApiKey,
-        'Content-Type': 'application/json'
-      }
-    });
+    console.log('✅ Using proven working auth config:', AUTH_CONFIG_ID);
+    console.log('✅ Using proven working MCP server:', MCP_SERVER_ID);
 
-    if (!authConfigsResponse.ok) {
-      throw new Error(`Failed to fetch auth configs: ${authConfigsResponse.statusText}`);
-    }
+    // Create simplified auth config and server objects for compatibility
+    const outlookAuthConfig = { id: AUTH_CONFIG_ID };
+    const mcpServer = { id: MCP_SERVER_ID };
 
-    const { items: authConfigs }: { items: AuthConfig[] } = await authConfigsResponse.json();
-    console.log('📋 Found auth configs:', authConfigs.length);
-    
-    let outlookAuthConfig = authConfigs.find(config => 
-      config.appType === 'OUTLOOK' && config.authMode === 'OAUTH2'
-    );
-
-    if (!outlookAuthConfig) {
-      console.log('➕ Creating new Outlook Auth Config...');
-      
-      const createAuthConfigResponse = await fetch('https://backend.composio.dev/api/v1/auth/configs', {
-        method: 'POST',
-        headers: {
-          'X-API-Key': composioApiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          appType: 'OUTLOOK',
-          authMode: 'OAUTH2',
-          name: `outlook-config-${Date.now()}`,
-          config: {
-            scope: 'https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read openid email profile offline_access'
-          }
-        })
-      });
-
-      if (!createAuthConfigResponse.ok) {
-        const errorText = await createAuthConfigResponse.text();
-        throw new Error(`Failed to create auth config: ${errorText}`);
-      }
-
-      outlookAuthConfig = await createAuthConfigResponse.json();
-      console.log('✅ Created Outlook Auth Config:', outlookAuthConfig.id);
-    } else {
-      console.log('✅ Using existing Outlook Auth Config:', outlookAuthConfig.id);
-    }
-
-    // Step 2: Get or ensure MCP server exists and is linked to the auth config
-    console.log('🔍 Looking for existing MCP server...');
-    
-    const mcpServersResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
-      headers: {
-        'X-API-Key': composioApiKey
-      }
-    });
-
-    if (!mcpServersResponse.ok) {
-      throw new Error(`Failed to fetch MCP servers: ${mcpServersResponse.statusText}`);
-    }
-
-    const { items: mcpServers }: { items: MCPServer[] } = await mcpServersResponse.json();
-    console.log('📋 Found MCP servers:', mcpServers.length);
-    
-    let mcpServer = mcpServers.find(server => 
-      server.authConfigs && server.authConfigs.includes(outlookAuthConfig.id)
-    );
-
-    if (!mcpServer) {
-      // Check if there's any existing server and add our auth config to it
-      if (mcpServers.length > 0) {
-        mcpServer = mcpServers[0];
-        console.log('🔗 Adding auth config to existing MCP server:', mcpServer.id);
-        
-        const updateServerResponse = await fetch(`https://backend.composio.dev/api/v1/mcp/servers/${mcpServer.id}`, {
-          method: 'PATCH',
-          headers: {
-            'X-API-Key': composioApiKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            authConfigs: [...(mcpServer.authConfigs || []), outlookAuthConfig.id]
-          })
-        });
-
-        if (!updateServerResponse.ok) {
-          const errorText = await updateServerResponse.text();
-          console.error('Failed to update MCP server:', errorText);
-          // Continue anyway, might still work
-        } else {
-          console.log('✅ Updated MCP server with auth config');
-          mcpServer.authConfigs = [...(mcpServer.authConfigs || []), outlookAuthConfig.id];
-        }
-      } else {
-        console.log('➕ Creating new MCP server with auth config...');
-        
-        const createServerResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
-          method: 'POST',
-          headers: {
-            'X-API-Key': composioApiKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: `mcp-server-${user.id}-${Date.now()}`,
-            authConfigs: [outlookAuthConfig.id]
-          })
-        });
-
-        if (!createServerResponse.ok) {
-          const errorText = await createServerResponse.text();
-          throw new Error(`Failed to create MCP server: ${errorText}`);
-        }
-
-        mcpServer = await createServerResponse.json();
-        console.log('✅ Created MCP server:', mcpServer.id);
-      }
-    }
-
-    // Step 3: Initiate OAuth connection
+    // Initiate OAuth connection using proven working components
     console.log('🚀 Initiating OAuth connection for auth config:', outlookAuthConfig.id);
     
     const connectResponse = await fetch(`https://backend.composio.dev/api/v1/auth/configs/${outlookAuthConfig.id}/connect`, {
