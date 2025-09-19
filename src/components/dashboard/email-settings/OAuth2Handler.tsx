@@ -36,14 +36,15 @@ export const OAuth2Handler = ({ onAuthCallback }: OAuth2HandlerProps) => {
       setHasHandled(true); // Mark as handled to prevent duplicate processing
       console.log('Authorization code detected in URL, handling callback');
       
-      // Remove code from URL immediately to prevent reuse
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
+      // Keep code in the URL until after the callback completes; we'll remove it after handling
+
       onAuthCallback()
         .then(() => {
           console.log('OAuth callback successfully handled');
           setIsHandling(false);
           sessionStorage.removeItem('emailSettings_redirecting');
+          // Remove code from URL after successful handling
+          window.history.replaceState({}, document.title, window.location.pathname);
         })
         .catch(error => {
           console.error('Error handling OAuth callback:', error);
@@ -70,6 +71,8 @@ export const OAuth2Handler = ({ onAuthCallback }: OAuth2HandlerProps) => {
           }
           
           sessionStorage.removeItem('emailSettings_redirecting');
+          // Also cleanup the URL on error
+          window.history.replaceState({}, document.title, window.location.pathname);
         });
     } else {
       console.log('No authorization code in URL, already handled, or not in redirecting state');
