@@ -29,29 +29,36 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
 
     console.log('Questions response:', data);
 
+    // First, check if this is wrapped in an edge function response
+    let actualData = data;
+    if (data && data.success && data.data) {
+      console.log('Unwrapping edge function response');
+      actualData = data.data;
+    }
+
     // Extract questions from the response - handle multiple response formats
     let questions = null;
     
     // Format 1: Array with nested output.questions structure
-    if (Array.isArray(data) && data.length > 0 && data[0].output && Array.isArray(data[0].output.questions)) {
-      console.log('Parsing format: data[0].output.questions');
-      questions = data[0].output.questions.map((q: any) => ({
+    if (Array.isArray(actualData) && actualData.length > 0 && actualData[0].output && Array.isArray(actualData[0].output.questions)) {
+      console.log('Parsing format: actualData[0].output.questions');
+      questions = actualData[0].output.questions.map((q: any) => ({
         question: q.question,
         rationale: q.explanation || q.rationale || '' // Map explanation to rationale
       }));
     }
     // Format 2: Direct questions array
-    else if (data && Array.isArray(data.questions)) {
-      console.log('Parsing format: data.questions');
-      questions = data.questions.map((q: any) => ({
+    else if (actualData && Array.isArray(actualData.questions)) {
+      console.log('Parsing format: actualData.questions');
+      questions = actualData.questions.map((q: any) => ({
         question: q.question,
         rationale: q.explanation || q.rationale || ''
       }));
     }
     // Format 3: Data itself is an array of questions
-    else if (Array.isArray(data) && data.length > 0 && data[0].question) {
+    else if (Array.isArray(actualData) && actualData.length > 0 && actualData[0].question) {
       console.log('Parsing format: direct array');
-      questions = data.map((q: any) => ({
+      questions = actualData.map((q: any) => ({
         question: q.question,
         rationale: q.explanation || q.rationale || ''
       }));
