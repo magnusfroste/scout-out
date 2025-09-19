@@ -34,12 +34,7 @@ class MCPClient {
     console.log('🔌 Connecting to Composio MCP server...');
     
     // Connect to Composio's MCP WebSocket endpoint
-    const ws = new WebSocket('wss://backend.composio.dev/api/v2/mcp', {
-      headers: {
-        'x-api-key': apiKey,
-        'Authorization': `Bearer ${apiKey}`
-      }
-    });
+    const ws = new WebSocket('wss://backend.composio.dev/api/v2/mcp');
     
     return new Promise((resolve, reject) => {
       ws.onopen = () => {
