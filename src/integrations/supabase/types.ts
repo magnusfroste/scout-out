@@ -185,6 +185,45 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_connections: {
+        Row: {
+          auth_config_id: string | null
+          connected_at: string | null
+          connection_type: string
+          created_at: string
+          email_address: string
+          id: string
+          mcp_server_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth_config_id?: string | null
+          connected_at?: string | null
+          connection_type?: string
+          created_at?: string
+          email_address: string
+          id?: string
+          mcp_server_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth_config_id?: string | null
+          connected_at?: string | null
+          connection_type?: string
+          created_at?: string
+          email_address?: string
+          id?: string
+          mcp_server_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

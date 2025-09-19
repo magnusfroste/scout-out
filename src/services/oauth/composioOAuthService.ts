@@ -85,36 +85,19 @@ export const handleComposioOAuthCallback = async (): Promise<{ success: boolean;
       
       console.log('✅ Composio OAuth connection successful');
       
-      // Update the connection status in our database
-      const { error: updateError } = await supabase
-        .from('oauth_connections')
-        .update({ 
-          status: 'connected',
-          connected_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id)
-        .eq('email_address', emailAddress)
-        .eq('connection_type', 'composio');
-        
-      if (updateError) {
-        console.error('Failed to update connection status:', updateError);
-        // Don't fail the whole process for this
-      }
-      
       // Create or update email settings record
       const { data: existingSettings } = await supabase
         .from('user_email_settings')
         .select('*')
         .eq('user_id', user.id)
         .eq('email_address', emailAddress)
-        .single();
+        .maybeSingle();
         
       if (existingSettings) {
         // Update existing record
         await supabase
           .from('user_email_settings')
           .update({
-            auth_type: 'oauth2',
             connection_type: 'composio',
             is_active: true,
             updated_at: new Date().toISOString()
@@ -130,8 +113,7 @@ export const handleComposioOAuthCallback = async (): Promise<{ success: boolean;
             email_address: emailAddress,
             email_provider: 'office365',
             smtp_host: 'smtp.office365.com',
-            smtp_port: '587',
-            auth_type: 'oauth2',
+            smtp_port: 587, // Use integer instead of string
             connection_type: 'composio',
             is_active: true
           });
@@ -169,12 +151,13 @@ export const checkComposioConnection = async (emailAddress?: string): Promise<{ 
       return { connected: false };
     }
     
+    // Check for Composio connection in user_email_settings
     let query = supabase
-      .from('oauth_connections')
+      .from('user_email_settings')
       .select('*')
       .eq('user_id', user.id)
       .eq('connection_type', 'composio')
-      .eq('status', 'connected');
+      .eq('is_active', true);
       
     if (emailAddress) {
       query = query.eq('email_address', emailAddress);
@@ -184,7 +167,7 @@ export const checkComposioConnection = async (emailAddress?: string): Promise<{ 
     
     return {
       connected: connections && connections.length > 0,
-      mcpServerId: connections?.[0]?.mcp_server_id
+      mcpServerId: undefined // Will be available after types are updated
     };
   } catch (error) {
     console.error('Error checking Composio connection:', error);
