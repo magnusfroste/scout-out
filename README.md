@@ -85,6 +85,12 @@ To test error handling, include the word "error" in the company name (e.g., "Err
 
 You can add or modify mock company data by editing the `src/mocks/companySearchMock.ts` file.
 
+## Webhook API Integration
+
+This project integrates with external webhooks for various features like question generation, company research, and value proposition creation. For detailed information about webhook response formats and integration requirements, see:
+
+📄 **[WEBHOOK_API_SPECIFICATION.md](./WEBHOOK_API_SPECIFICATION.md)** - Complete webhook API documentation
+
 ## What technologies are used for this project?
 
 This project is built with .
