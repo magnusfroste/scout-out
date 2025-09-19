@@ -50,3 +50,7 @@ verify_jwt = true
 [functions.test-composio-mcp]
 enabled = true
 verify_jwt = true
+
+[functions.composio-connect-account]
+enabled = true
+verify_jwt = true
