@@ -46,3 +46,7 @@ verify_jwt = true
 [functions.o365-auth-refresh]
 enabled = true
 verify_jwt = true
+
+[functions.test-composio-mcp]
+enabled = true
+verify_jwt = true

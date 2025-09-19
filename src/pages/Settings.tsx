@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import ComposioMCPTest from '@/components/dashboard/ComposioMCPTest';
 
 const Settings = () => {
   const { user, loading, userProfile } = useAuth();
@@ -44,6 +45,9 @@ const Settings = () => {
               <TabsTrigger value="user">User Settings</TabsTrigger>
               {userProfile?.is_admin && (
                 <TabsTrigger value="admin">Admin Settings</TabsTrigger>
+              )}
+              {userProfile?.is_admin && (
+                <TabsTrigger value="mcp-test">MCP Testing</TabsTrigger>
               )}
             </TabsList>
             
@@ -90,6 +94,19 @@ const Settings = () => {
                         Configure Webhook Secrets →
                       </a>
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+            
+            {userProfile?.is_admin && (
+              <TabsContent value="mcp-test" className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Composio MCP Integration Testing</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ComposioMCPTest />
                   </CardContent>
                 </Card>
               </TabsContent>
