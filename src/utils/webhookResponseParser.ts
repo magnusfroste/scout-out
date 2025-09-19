@@ -42,6 +42,12 @@ export const parseWebhookResponse = (responseData: any): WebhookParseResult => {
       return { processedResults: [] };
     }
     
+    // Check if the response is the new company research format (direct object with answers array)
+    if (responseData.answers && Array.isArray(responseData.answers)) {
+      console.log('Detected new company research response format with answers array');
+      return parseNewCompanyResearchResponse(responseData);
+    }
+    
     // Check if the response is the new format with method field (from Edge Function)
     if (responseData.method) {
       console.log('Detected Edge Function response format with method:', responseData.method);
@@ -148,6 +154,61 @@ const parseCompanySearchResponse = (responseData: any): WebhookParseResult => {
     }
   } catch (error) {
     console.error('Error parsing company search response:', error);
+  }
+  
+  return { processedResults, contactInfo };
+};
+
+/**
+ * Parses the new company research webhook response format
+ * 
+ * Format:
+ * {
+ *   company_name: string,
+ *   contact_info: {
+ *     email: string,
+ *     phone: string,
+ *     website: string,
+ *     contact: string
+ *   },
+ *   answers: [
+ *     {
+ *       question_id: string,
+ *       question: string,
+ *       answer: string
+ *     }
+ *   ]
+ * }
+ */
+const parseNewCompanyResearchResponse = (responseData: any): WebhookParseResult => {
+  let processedResults: Answer[] = [];
+  let contactInfo: ContactInfo | undefined = undefined;
+  
+  try {
+    console.log('Parsing new company research response format');
+    
+    // Extract contact info
+    if (responseData.contact_info) {
+      contactInfo = {
+        www: responseData.contact_info.website || responseData.contact_info.www || undefined,
+        contact: responseData.contact_info.contact || undefined,
+        role: responseData.contact_info.role || undefined,
+        email: responseData.contact_info.email || undefined,
+        phone: responseData.contact_info.phone || undefined
+      };
+    }
+    
+    // Extract answers with question IDs
+    if (Array.isArray(responseData.answers)) {
+      processedResults = responseData.answers.map(answer => ({
+        question_id: answer.question_id,
+        answer: answer.answer
+      }));
+      
+      console.log(`Successfully parsed ${processedResults.length} answers with question IDs`);
+    }
+  } catch (error) {
+    console.error('Error parsing new company research response:', error);
   }
   
   return { processedResults, contactInfo };
