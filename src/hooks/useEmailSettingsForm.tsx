@@ -25,7 +25,7 @@ export const useEmailSettingsForm = (
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleSaveSettings = async (refreshToken?: string) => {
+  const handleSaveSettings = async (refreshToken?: string): Promise<boolean> => {
     console.group('Save Email Settings');
     console.log('User:', user ? user.id : 'No user');
     console.log('Auth Type:', authType);
@@ -42,13 +42,13 @@ export const useEmailSettingsForm = (
         variant: 'destructive',
       });
       console.groupEnd();
-      return;
+      return false;
     }
     
     if (!validateForm()) {
       console.error('Form validation failed');
       console.groupEnd();
-      return;
+      return false;
     }
     
     setIsSaving(true);
@@ -135,6 +135,7 @@ export const useEmailSettingsForm = (
       }
       
       await fetchEmailSettings();
+      return true;
     } catch (error: any) {
       console.error('Error saving email settings:', error);
       toast({
@@ -142,6 +143,7 @@ export const useEmailSettingsForm = (
         description: `Failed to save email settings: ${error.message}`,
         variant: 'destructive',
       });
+      return false;
     } finally {
       setIsSaving(false);
       console.groupEnd();

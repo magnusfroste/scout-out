@@ -43,9 +43,13 @@ export const handleO365AuthCallback = async (
   clientSecret: string,
   redirectUri: string
 ) => {
-  console.log('Starting OAuth callback handling with code:', code ? code.substring(0, 6) + '...' : 'no code');
+  console.log('🔄 Starting OAuth callback handling...');
+  console.log('📝 Authorization code length:', code?.length || 0);
+  console.log('🔑 Client ID:', clientId?.substring(0, 8) + '...');
+  console.log('🔗 Redirect URI:', redirectUri);
   
   try {
+    console.log('📞 Calling o365-auth edge function...');
     const { data, error } = await supabase.functions.invoke('o365-auth', {
       body: JSON.stringify({
         code,
@@ -56,12 +60,18 @@ export const handleO365AuthCallback = async (
     });
     
     if (error) {
-      console.error('Error from o365-auth edge function:', error);
+      console.error('❌ Error from o365-auth edge function:', error);
       handleOAuthError(error);
     }
     
+    console.log('📨 Response from edge function:', { 
+      hasData: !!data, 
+      hasRefreshToken: !!data?.refresh_token,
+      hasAccessToken: !!data?.access_token 
+    });
+    
     if (!data || !data.refresh_token) {
-      console.error('No refresh_token received from token exchange:', data);
+      console.error('❌ No refresh_token received from token exchange:', data);
       
       // Special case: If we get an "already redeemed" error but a successful email setup previously
       if (data?.error && data.error.includes('already redeemed')) {
@@ -88,13 +98,14 @@ export const handleO365AuthCallback = async (
       throw new Error('Failed to get refresh token');
     }
     
+    console.log('✅ Successfully exchanged tokens');
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in,
     };
   } catch (error: any) {
-    console.error('Error in handleO365AuthCallback:', error);
+    console.error('❌ Error in handleO365AuthCallback:', error);
     
     // If the error is about the code being already redeemed, let's check if we have a valid setup
     if (error.message?.includes('already redeemed')) {

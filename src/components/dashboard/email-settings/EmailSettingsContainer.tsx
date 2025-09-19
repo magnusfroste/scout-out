@@ -14,6 +14,8 @@ import { OAuth2Handler } from './OAuth2Handler';
 import { MigrationAlert } from './MigrationAlert';
 import { useEmailSettingsForm } from '@/hooks/useEmailSettingsForm';
 import { handleO365AuthCallback } from '@/services/oauth/oauthFlowService';
+import { saveOAuth2Tokens } from '@/services/oauth/tokenService';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { OAuth2Settings } from './OAuth2Settings';
 
@@ -109,27 +111,68 @@ const EmailSettingsContainer = () => {
         throw new Error('Client secret is required to complete authentication');
       }
 
+      // Show loading toast for token exchange
+      toast({
+        title: 'Processing Authentication',
+        description: 'Exchanging authorization code for tokens...',
+      });
+
       // Exchange authorization code for tokens
       const tokens = await handleO365AuthCallback(code, clientId, clientSecret, redirectUri);
-      console.log('Received tokens from authorization code exchange');
+      console.log('✅ Successfully received tokens from Microsoft');
+      
+      // Show success toast for token reception
+      toast({
+        title: 'Tokens Received',
+        description: 'Successfully received authentication tokens from Microsoft',
+      });
       
       // Save the tokens to the database
       if (tokens.refreshToken) {
-        console.log('Saving refresh token to database');
-        await handleSaveSettings(tokens.refreshToken);
+        toast({
+          title: 'Saving Tokens',
+          description: 'Saving authentication tokens to database...',
+        });
         
-        // Be more graceful about "already redeemed" success cases
-        if (tokens.accessToken === 'existing') {
-          toast({
-            title: 'Authentication Complete',
-            description: 'Your Microsoft 365 account was already connected.',
-          });
-        } else {
-          toast({
-            title: 'Authentication Successful',
-            description: 'Successfully authenticated with Microsoft 365',
-          });
+        console.log('💾 Starting token save to database');
+        
+        // Get current user for proper RLS compliance
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error('User session expired during token save. Please try again.');
         }
+        
+        // Use the enhanced saveOAuth2Tokens function
+        const saveResult = await saveOAuth2Tokens(
+          user.id,
+          tokens.refreshToken,
+          clientId,
+          clientSecret,
+          userEmail || ''
+        );
+        
+        if (saveResult.success) {
+          // Refresh settings after successful save
+          await fetchEmailSettings();
+          
+          // Be more graceful about "already redeemed" success cases
+          if (tokens.accessToken === 'existing') {
+            toast({
+              title: 'Authentication Complete',
+              description: 'Your Microsoft 365 account was already connected and verified.',
+            });
+          } else {
+            toast({
+              title: 'Authentication Successful',
+              description: 'Successfully authenticated and saved Microsoft 365 credentials',
+            });
+          }
+        } else {
+          console.error('❌ Failed to save tokens:', saveResult.error);
+          throw new Error(saveResult.error || 'Failed to save authentication tokens to database');
+        }
+      } else {
+        throw new Error('No refresh token received from Microsoft authentication');
       }
       
       // Clean up session storage
@@ -270,7 +313,7 @@ const EmailSettingsContainer = () => {
           isDeleting={isDeleting}
           isSaving={isSaving}
           onDelete={handleDeleteSettings}
-          onSave={() => handleSaveSettings()}
+          onSave={async () => { await handleSaveSettings(); }}
         />
       </CardFooter>
       

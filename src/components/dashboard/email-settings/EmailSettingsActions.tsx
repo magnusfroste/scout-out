@@ -19,7 +19,7 @@ interface EmailSettingsActionsProps {
   isDeleting: boolean;
   isSaving: boolean;
   onDelete: () => Promise<void>;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<void | boolean>;
 }
 
 export const EmailSettingsActions = ({
