@@ -30,15 +30,99 @@ interface MCPClientCapabilities {
 class MCPClient {
   private messageId = 1;
   
-  async connectToComposiofMCP(apiKey: string): Promise<WebSocket> {
-    console.log('🔌 Connecting to Composio MCP server...');
+  async createOrGetMCPServer(apiKey: string): Promise<{ id: string; url: string }> {
+    console.log('🏗️ Creating/getting Composio MCP server...');
     
-    // Connect to Composio's MCP WebSocket endpoint
-    const ws = new WebSocket('wss://backend.composio.dev/api/v2/mcp');
+    // First, check if we already have a server for Outlook
+    const listResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers?toolkits=outlook', {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!listResponse.ok) {
+      throw new Error(`Failed to list MCP servers: ${listResponse.status}`);
+    }
+    
+    const listData = await listResponse.json();
+    console.log('📋 Existing MCP servers:', listData);
+    
+    let serverId: string;
+    
+    // If we have an existing Outlook server, use it
+    if (listData.items && listData.items.length > 0) {
+      serverId = listData.items[0].id;
+      console.log('♻️ Using existing MCP server:', serverId);
+    } else {
+      // Create a new MCP server for Outlook
+      console.log('🆕 Creating new MCP server...');
+      const createResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'MBA Outlook Server',
+          server_config: [{
+            auth_config_id: 'ac_pfIe0Qy6LJq7',
+            allowed_tools: ['OUTLOOK_SEND_EMAIL']
+          }],
+          options: {
+            is_chat_auth: true
+          }
+        })
+      });
+      
+      if (!createResponse.ok) {
+        throw new Error(`Failed to create MCP server: ${createResponse.status}`);
+      }
+      
+      const createData = await createResponse.json();
+      serverId = createData.id;
+      console.log('✅ Created MCP server:', serverId);
+    }
+    
+    // Generate MCP server URL for a test user
+    const generateResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers/generate', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mcp_server_id: serverId,
+        user_id: 'test-user@mba.com',
+        include_composio_helper_actions: true
+      })
+    });
+    
+    if (!generateResponse.ok) {
+      throw new Error(`Failed to generate MCP URL: ${generateResponse.status}`);
+    }
+    
+    const generateData = await generateResponse.json();
+    console.log('🔗 Generated MCP URL:', generateData.url);
+    
+    return {
+      id: serverId,
+      url: generateData.url
+    };
+  }
+  
+  async connectToMCPServer(mcpUrl: string): Promise<WebSocket> {
+    console.log('🔌 Connecting to MCP server URL:', mcpUrl);
+    
+    // Convert HTTP URL to WebSocket URL if needed
+    const wsUrl = mcpUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+    
+    const ws = new WebSocket(wsUrl);
     
     return new Promise((resolve, reject) => {
       ws.onopen = () => {
-        console.log('✅ Connected to Composio MCP');
+        console.log('✅ Connected to MCP server');
         resolve(ws);
       };
       
@@ -208,24 +292,19 @@ const handler = async (req: Request): Promise<Response> => {
     
     const mcpClient = new MCPClient();
     
-    // Test 1: MCP Connection and Initialization
+    // Test 1: MCP Server Creation and URL Generation
     if (testType === 'connection') {
-      console.log('📡 Testing MCP connection and initialization...');
+      console.log('📡 Testing MCP server creation and URL generation...');
       
-      ws = await mcpClient.connectToComposiofMCP(composioApiKey);
-      await mcpClient.initializeMCP(ws);
-      const tools = await mcpClient.listTools(ws);
-      
-      ws.close();
+      const serverInfo = await mcpClient.createOrGetMCPServer(composioApiKey);
       
       return new Response(JSON.stringify({
         success: true,
         testType: 'connection',
         data: {
-          connectionEstablished: true,
-          protocolVersion: '2024-11-05',
-          availableTools: tools,
-          toolCount: tools.length
+          serverId: serverInfo.id,
+          mcpUrl: serverInfo.url,
+          message: 'MCP server created/retrieved successfully'
         },
         timestamp: new Date().toISOString()
       }), {
@@ -234,7 +313,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Test 2: Email Sending via MCP
+    // Test 2: Email Sending via MCP Protocol
     if (testType === 'email') {
       if (!recipientEmail || !subject || !body) {
         throw new Error('Email test requires recipientEmail, subject, and body');
@@ -242,30 +321,38 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log('📧 Testing email sending via MCP protocol...');
       
-      ws = await mcpClient.connectToComposiofMCP(composioApiKey);
+      // Get/create MCP server and URL
+      const serverInfo = await mcpClient.createOrGetMCPServer(composioApiKey);
+      
+      // Connect to the MCP server
+      ws = await mcpClient.connectToMCPServer(serverInfo.url);
+      
+      // Initialize MCP session
       await mcpClient.initializeMCP(ws);
+      
+      // List available tools
       const tools = await mcpClient.listTools(ws);
+      console.log('📋 Available MCP tools:', tools);
       
       // Find Outlook email tool
       const emailTool = tools.find(tool => 
-        tool.name && tool.name.toLowerCase().includes('email') && 
-        tool.name.toLowerCase().includes('outlook')
+        tool.name && (
+          tool.name.toLowerCase().includes('outlook') && tool.name.toLowerCase().includes('send') ||
+          tool.name.toLowerCase().includes('email')
+        )
       );
       
       if (!emailTool) {
-        throw new Error('No Outlook email tool found in available MCP tools');
+        throw new Error(`No Outlook email tool found. Available tools: ${tools.map(t => t.name).join(', ')}`);
       }
       
       console.log('📧 Using email tool:', emailTool.name);
       
-      // Call the email tool with auth config
+      // Call the email tool
       const toolArgs = {
         to: recipientEmail,
         subject: subject,
-        body: body,
-        authConfig: {
-          authConfigId: "ac_pfIe0Qy6LJq7"
-        }
+        body: body
       };
       
       const emailResult = await mcpClient.callTool(ws, emailTool.name, toolArgs);
@@ -276,10 +363,12 @@ const handler = async (req: Request): Promise<Response> => {
         success: true,
         testType: 'email',
         data: {
+          serverId: serverInfo.id,
+          mcpUrl: serverInfo.url,
           toolUsed: emailTool.name,
           toolArgs: toolArgs,
           result: emailResult,
-          availableTools: tools
+          availableTools: tools.map(t => ({ name: t.name, description: t.description }))
         },
         timestamp: new Date().toISOString()
       }), {
