@@ -85,19 +85,40 @@ export const handleComposioOAuthCallback = async (): Promise<{ success: boolean;
       
       console.log('✅ Composio OAuth connection successful');
       
+      // Update the connection status in our database (the table might exist or not)
+      try {
+        const { error: updateError } = await supabase
+          .from('oauth_connections')
+          .update({ 
+            status: 'connected',
+            connected_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('email_address', emailAddress)
+          .eq('connection_type', 'composio');
+          
+        if (updateError) {
+          console.error('Failed to update connection status:', updateError);
+          // Don't fail the whole process for this
+        }
+      } catch (oauthError) {
+        console.warn('oauth_connections table not available, skipping connection tracking');
+      }
+      
       // Create or update email settings record
       const { data: existingSettings } = await supabase
         .from('user_email_settings')
         .select('*')
         .eq('user_id', user.id)
         .eq('email_address', emailAddress)
-        .maybeSingle();
+        .single();
         
       if (existingSettings) {
         // Update existing record
         await supabase
           .from('user_email_settings')
           .update({
+            auth_type: 'oauth2',
             connection_type: 'composio',
             is_active: true,
             updated_at: new Date().toISOString()
@@ -113,7 +134,8 @@ export const handleComposioOAuthCallback = async (): Promise<{ success: boolean;
             email_address: emailAddress,
             email_provider: 'office365',
             smtp_host: 'smtp.office365.com',
-            smtp_port: 587, // Use integer instead of string
+            smtp_port: 587, // Use number instead of string
+            auth_type: 'oauth2',
             connection_type: 'composio',
             is_active: true
           });
@@ -151,23 +173,47 @@ export const checkComposioConnection = async (emailAddress?: string): Promise<{ 
       return { connected: false };
     }
     
-    // Check for Composio connection in user_email_settings
-    let query = supabase
+    // Try to check oauth_connections table first
+    try {
+      let query = supabase
+        .from('oauth_connections')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('connection_type', 'composio')
+        .eq('status', 'connected');
+        
+      if (emailAddress) {
+        query = query.eq('email_address', emailAddress);
+      }
+      
+      const { data: connections } = await query;
+      
+      if (connections && connections.length > 0) {
+        return {
+          connected: true,
+          mcpServerId: connections[0]?.mcp_server_id
+        };
+      }
+    } catch (error) {
+      console.warn('oauth_connections table not available, checking user_email_settings');
+    }
+    
+    // Fallback to checking user_email_settings
+    let fallbackQuery = supabase
       .from('user_email_settings')
       .select('*')
       .eq('user_id', user.id)
-      .eq('connection_type', 'composio')
-      .eq('is_active', true);
+      .eq('connection_type', 'composio');
       
     if (emailAddress) {
-      query = query.eq('email_address', emailAddress);
+      fallbackQuery = fallbackQuery.eq('email_address', emailAddress);
     }
     
-    const { data: connections } = await query;
+    const { data: emailSettings } = await fallbackQuery;
     
     return {
-      connected: connections && connections.length > 0,
-      mcpServerId: undefined // Will be available after types are updated
+      connected: emailSettings && emailSettings.length > 0,
+      mcpServerId: undefined // Not available in email settings table
     };
   } catch (error) {
     console.error('Error checking Composio connection:', error);

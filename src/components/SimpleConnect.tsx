@@ -16,6 +16,15 @@ const SimpleConnect = () => {
   const [isProcessingCallback, setIsProcessingCallback] = useState(false);
   const [connectionType, setConnectionType] = useState<'shared' | 'composio'>('shared');
 
+  // Check for preset connection type from settings page
+  useEffect(() => {
+    const presetFlowType = sessionStorage.getItem('oauth_flow_type');
+    if (presetFlowType === 'composio') {
+      setConnectionType('composio');
+      sessionStorage.removeItem('oauth_flow_type'); // Clean up
+    }
+  }, []);
+
   useEffect(() => {
     // Check if this is a callback from OAuth (shared app or Composio)
     const urlParams = new URLSearchParams(window.location.search);

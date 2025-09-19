@@ -271,6 +271,22 @@ const EmailSettingsContainer = () => {
               </CardContent>
             </Card>
             
+            <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-purple-200" 
+                  onClick={() => {
+                    sessionStorage.setItem('oauth_flow_type', 'composio');
+                    window.location.href = '/simple-connect';
+                  }}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <div>
+                    <h4 className="font-medium text-purple-700">Composio MCP</h4>
+                    <p className="text-sm text-muted-foreground">Advanced MCP integration with Composio</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
             <Card className="border-2 border-blue-200 bg-blue-50/50">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
@@ -285,6 +301,7 @@ const EmailSettingsContainer = () => {
           </div>
           <p className="text-xs text-muted-foreground mt-3 text-center">
             <strong>Simple Connect:</strong> Uses our shared OAuth app for instant setup. 
+            <strong>Composio MCP:</strong> Advanced MCP protocol integration.
             <strong>Advanced Setup:</strong> Use your own Azure app registration for maximum control.
           </p>
         </div>
