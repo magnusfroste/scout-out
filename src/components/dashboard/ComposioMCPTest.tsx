@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface TestResult {
@@ -18,6 +19,7 @@ interface TestResult {
 }
 
 const ComposioMCPTest = () => {
+  const { user } = useAuth();
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [connectionResult, setConnectionResult] = useState<TestResult | null>(null);
@@ -29,14 +31,22 @@ const ComposioMCPTest = () => {
   const [body, setBody] = useState('This is a test email sent through Composio MCP from MBA SaaS application.');
 
   const testConnection = async () => {
+    if (!user) {
+      toast.error('Please log in to test MCP connection');
+      return;
+    }
+
     setIsTestingConnection(true);
     setConnectionResult(null);
     
     try {
-      console.log('Testing MCP connection via edge function...');
+      console.log(`Testing MCP connection for user ${user.id} via edge function...`);
       
       const { data, error } = await supabase.functions.invoke('test-composio-mcp', {
-        body: { testType: 'connection' }
+        body: { 
+          testType: 'connection',
+          userId: user.id
+        }
       });
 
       if (error) {
@@ -48,9 +58,9 @@ const ComposioMCPTest = () => {
       setConnectionResult(data);
       
       if (data.success) {
-        toast.success('✅ MCP server created successfully!');
+        toast.success('✅ MCP server instance created successfully!');
       } else {
-        toast.error('❌ MCP server creation failed');
+        toast.error('❌ MCP server instance creation failed');
       }
     } catch (error: any) {
       console.error('Connection test error:', error);
@@ -67,6 +77,11 @@ const ComposioMCPTest = () => {
   };
 
   const testEmailSending = async () => {
+    if (!user) {
+      toast.error('Please log in to test email sending');
+      return;
+    }
+
     if (!recipientEmail || !subject || !body) {
       toast.error('Please fill in all email fields');
       return;
@@ -76,11 +91,12 @@ const ComposioMCPTest = () => {
     setEmailResult(null);
     
     try {
-      console.log('Testing email sending via MCP edge function...');
+      console.log(`Testing email sending for user ${user.id} via MCP edge function...`);
       
       const { data, error } = await supabase.functions.invoke('test-composio-mcp', {
         body: { 
           testType: 'email',
+          userId: user.id,
           recipientEmail,
           subject,
           body
@@ -158,24 +174,27 @@ const ComposioMCPTest = () => {
 
       {/* Connection Test */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-2">1. MCP Server Creation Test</h4>
+        <h4 className="font-semibold mb-2">1. MCP Server Instance Creation Test</h4>
         <p className="text-sm text-gray-600 mb-4">
-          Create MCP server with auth config <code>ac_pfIe0Qy6LJq7</code> and test API connectivity.
+          Create user-specific MCP server instance with auth config <code>ac_pfIe0Qy6LJq7</code> and test API connectivity.
+          Each user gets their own MCP server instance for personalized email sending.
         </p>
         
         {connectionResult?.data?.serverId && (
           <div className="mb-4 p-2 bg-green-50 rounded">
             <p className="text-sm"><strong>Server ID:</strong> {connectionResult.data.serverId}</p>
+            <p className="text-sm"><strong>Instance ID:</strong> {connectionResult.data.instanceId}</p>
+            <p className="text-sm"><strong>User ID:</strong> {connectionResult.data.userId}</p>
             <p className="text-sm"><strong>MCP URL:</strong> {connectionResult.data.mcpUrl}</p>
           </div>
         )}
         
         <Button 
           onClick={testConnection}
-          disabled={isTestingConnection}
+          disabled={isTestingConnection || !user}
           className="w-full"
         >
-          {isTestingConnection ? 'Creating MCP Server...' : 'Test MCP Server Creation'}
+          {!user ? 'Please Log In' : isTestingConnection ? 'Creating MCP Instance...' : 'Test MCP Server Instance Creation'}
         </Button>
         {renderResult(connectionResult, 'MCP Server Creation Result')}
       </Card>
@@ -222,10 +241,10 @@ const ComposioMCPTest = () => {
           
           <Button 
             onClick={testEmailSending}
-            disabled={isTestingEmail || !recipientEmail || !subject || !body}
+            disabled={isTestingEmail || !recipientEmail || !subject || !body || !user}
             className="w-full"
           >
-            {isTestingEmail ? 'Sending Email via MCP...' : 'Send Email via MCP Protocol'}
+            {!user ? 'Please Log In' : isTestingEmail ? 'Sending Email via MCP...' : 'Send Email via MCP Protocol'}
           </Button>
         </div>
         
@@ -236,11 +255,12 @@ const ComposioMCPTest = () => {
       <Card className="p-4 bg-blue-50">
         <h4 className="font-semibold mb-2">Test Instructions</h4>
         <ul className="text-sm space-y-1">
-          <li>1. First run the MCP server creation test to verify API access</li>
-          <li>2. If successful, test email sending with a real email address</li>
-          <li>3. Monitor the browser console and edge function logs for detailed debugging</li>
-          <li>4. Check recipient's inbox to confirm email delivery</li>
-          <li>5. Review the detailed response data to understand the MCP protocol flow</li>
+          <li>1. Make sure you're logged in - each user gets their own MCP server instance</li>
+          <li>2. First run the MCP server instance creation test to verify API access</li>
+          <li>3. If successful, test email sending with a real email address</li>
+          <li>4. Monitor the browser console and edge function logs for detailed debugging</li>
+          <li>5. Check recipient's inbox to confirm email delivery</li>
+          <li>6. Review the detailed response data to understand the MCP protocol flow</li>
         </ul>
       </Card>
     </div>
