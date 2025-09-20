@@ -10,30 +10,32 @@ interface ConnectionRequest {
   userId: string;
   emailAddress: string;
   redirectUrl?: string; // Make optional for testing steps
-  step?: 'check_db' | 'create_auth_config' | 'create_mcp_server' | 'get_connect_url';
+  step?: 'check_db' | 'get_auth_config' | 'create_mcp_server' | 'get_connect_url';
   // For specific steps, we might need existing IDs
   authConfigId?: string;
   mcpServerId?: string;
 }
 
-// Helper function to create an Auth Config
-async function createAuthConfig(apiKey: string): Promise<string> {
-  console.log('🔄 Creating new Office 365 Auth Config...');
-  const response = await fetch('https://backend.composio.dev/api/v1/auth_configs', {
-    method: 'POST',
+// Helper function to get existing Auth Config
+async function getExistingAuthConfig(apiKey: string): Promise<string> {
+  console.log('🔍 Fetching existing Office 365 Auth Config...');
+  const response = await fetch('https://backend.composio.dev/api/v1/apps/office365/auth-configs', {
+    method: 'GET',
     headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      toolkit: { slug: 'outlook' },
-      auth_config: { type: 'use_composio_managed_auth' },
-    }),
   });
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to create auth config: ${errorText}`);
+    throw new Error(`Failed to fetch auth configs: ${errorText}`);
   }
-  const result = await response.json();
-  console.log('✅ Created Auth Config:', result.auth_config.id);
-  return result.auth_config.id;
+  const authConfigs = await response.json();
+  const outlookAuthConfig = authConfigs.find((config: any) => 
+    config.auth_scheme === 'oauth2' && config.app_name === 'office365'
+  );
+  if (!outlookAuthConfig) {
+    throw new Error('No Outlook OAuth2 auth config found. Please create one in Composio dashboard.');
+  }
+  console.log('✅ Found existing Auth Config:', outlookAuthConfig.id);
+  return outlookAuthConfig.id;
 }
 
 // Helper function to create an MCP Server
@@ -57,7 +59,7 @@ async function createMCPServer(apiKey: string, userId: string, authConfigId: str
 }
 
 // Main server handler
-// Gets the shared app-level auth config, creating it if it doesn't exist.
+// Gets the shared app-level auth config, using existing one if available.
 async function getOrCreateAppAuthConfig(supabase: SupabaseClient, apiKey: string): Promise<string> {
   const { data: existing } = await supabase
     .from('app_integrations')
@@ -70,8 +72,8 @@ async function getOrCreateAppAuthConfig(supabase: SupabaseClient, apiKey: string
     return existing.config.auth_config_id;
   }
 
-  console.log('🔄 No app-level Auth Config found, creating one...');
-  const authConfigId = await createAuthConfig(apiKey);
+  console.log('🔄 No app-level Auth Config found, fetching existing one...');
+  const authConfigId = await getExistingAuthConfig(apiKey);
 
   const { error } = await supabase.from('app_integrations').upsert({
     integration_name: 'composio_outlook',
@@ -79,8 +81,8 @@ async function getOrCreateAppAuthConfig(supabase: SupabaseClient, apiKey: string
   });
 
   if (error) {
-    console.error('Failed to save new app-level auth config:', error);
-    throw new Error('Failed to save new app-level auth config.');
+    console.error('Failed to save app-level auth config:', error);
+    throw new Error('Failed to save app-level auth config.');
   }
 
   return authConfigId;
@@ -112,9 +114,9 @@ serve(async (req: Request) => {
             const { data: connection } = await supabaseClient.from('oauth_connections').select('*').eq('user_id', userId).eq('email_address', emailAddress).single();
             return new Response(JSON.stringify({ success: true, step: 'check_db', data: connection }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
-          case 'create_auth_config': {
-            const authConfigId = await createAuthConfig(composioApiKey);
-            return new Response(JSON.stringify({ success: true, step: 'create_auth_config', data: { authConfigId } }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          case 'get_auth_config': {
+            const authConfigId = await getExistingAuthConfig(composioApiKey);
+            return new Response(JSON.stringify({ success: true, step: 'get_auth_config', data: { authConfigId } }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
           case 'create_mcp_server': {
             if (!inputAuthConfigId) throw new Error('authConfigId is required for create_mcp_server step');
