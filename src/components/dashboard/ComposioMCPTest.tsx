@@ -114,12 +114,12 @@ const ComposioMCPTest = () => {
         authConfigId = dbData.data.auth_config_id;
       }
 
-      // Step 2: Create Auth Config
+      // Step 2: Get Auth Config
       if (!authConfigId) {
         const { data: authData, error: authError } = await supabase.functions.invoke('get-or-create-mcp-connection', {
-          body: { step: 'create_auth_config', userId: user.id, emailAddress: user.email! },
+          body: { step: 'get_auth_config', userId: user.id, emailAddress: user.email! },
         });
-                        const authResult = { name: 'Create Auth Config', success: !authError, data: authData?.data, error: getErrorMessage(authError) };
+                        const authResult = { name: 'Get Auth Config', success: !authError, data: authData?.data, error: getErrorMessage(authError) };
         setDiagnosticSteps(prev => [...prev, authResult]);
         if (authData?.data?.authConfigId) {
           authConfigId = authData.data.authConfigId;
@@ -282,9 +282,9 @@ const ComposioMCPTest = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Composio MCP Integration Test</h3>
+        <h3 className="text-lg font-semibold mb-4">MCP Integration Test</h3>
         <p className="text-sm text-gray-600 mb-6">
-          Test Composio MCP integration for Outlook email sending via secure edge function.
+          Test MCP integration for email sending via secure edge function using your configured email provider.
           This validates MCP server creation and email delivery capabilities.
         </p>
       </div>
@@ -292,7 +292,7 @@ const ComposioMCPTest = () => {
       <Card className="p-4 border-blue-200 bg-blue-50">
         <h4 className="font-semibold mb-2">0. Connection Setup Diagnostic</h4>
         <p className="text-sm text-gray-600 mb-4">
-          Run a step-by-step test of the entire connection flow to diagnose issues.
+          Run a step-by-step test of the entire connection flow to diagnose issues with your email provider.
         </p>
         <Button 
           onClick={runDiagnostic}
