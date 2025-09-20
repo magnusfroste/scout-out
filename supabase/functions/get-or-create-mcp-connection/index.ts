@@ -19,9 +19,9 @@ interface ConnectionRequest {
 // Helper function to create an Auth Config
 async function createAuthConfig(apiKey: string): Promise<string> {
   console.log('🔄 Creating new Office 365 Auth Config...');
-  const response = await fetch('https://backend.composio.dev/api/v3/auth_configs', {
+  const response = await fetch('https://backend.composio.dev/api/v1/auth_configs', {
     method: 'POST',
-    headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+    headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       toolkit: { slug: 'outlook' },
       auth_config: { type: 'use_composio_managed_auth' },
@@ -41,7 +41,7 @@ async function createMCPServer(apiKey: string, userId: string, authConfigId: str
   console.log('🔄 Creating new MCP Server for user:', userId);
   const response = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
     method: 'POST',
-    headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+    headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
       name: `${userId}-outlook-server`,
       serverConfig: [{ authConfigId, allowedTools: ['OUTLOOK_OUTLOOK_SEND_EMAIL'] }],
@@ -124,9 +124,9 @@ serve(async (req: Request) => {
           case 'get_connect_url': {
             if (!inputAuthConfigId) throw new Error('authConfigId is required for get_connect_url step');
             if (!redirectUrl) throw new Error('redirectUrl is required for get_connect_url step');
-            const connectResponse = await fetch(`https://backend.composio.dev/api/v3/auth-configs/${inputAuthConfigId}/connect`, {
+            const connectResponse = await fetch(`https://backend.composio.dev/api/v1/auth-configs/${inputAuthConfigId}/connect`, {
               method: 'POST',
-              headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
+              headers: { 'x-api-key': composioApiKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ redirect_uri: redirectUrl, entity: { id: userId } }),
             });
             if (!connectResponse.ok) {
@@ -178,9 +178,9 @@ serve(async (req: Request) => {
 
     // 5. Get the final connection URL from Composio
     console.log('🔐 Getting connection URL from Composio...');
-    const connectResponse = await fetch(`https://backend.composio.dev/api/v3/auth-configs/${authConfigId}/connect`, {
+    const connectResponse = await fetch(`https://backend.composio.dev/api/v1/auth-configs/${authConfigId}/connect`, {
       method: 'POST',
-      headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
+      headers: { 'x-api-key': composioApiKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({ redirect_uri: redirectUrl, entity: { id: userId } }),
     });
 
