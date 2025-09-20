@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Initiate Composio OAuth flow for Office365/Outlook
  */
 export const initiateComposioOAuth = async (emailAddress: string): Promise<void> => {
-  console.log('Starting Composio OAuth flow for:', emailAddress);
+  console.log('Starting Composio MCP OAuth flow for:', emailAddress);
   
   try {
     // Get current user
@@ -23,25 +23,29 @@ export const initiateComposioOAuth = async (emailAddress: string): Promise<void>
     const state = crypto.randomUUID();
     sessionStorage.setItem('composio_state', state);
     
-    // Call the Composio connect account edge function
-    const { data, error } = await supabase.functions.invoke('composio-connect-account', {
+    // Get the connection URL from our new, robust edge function
+    const { data, error } = await supabase.functions.invoke('get-or-create-mcp-connection', {
       body: {
-        redirectUrl,
+        userId: user.id,
         emailAddress,
+        redirectUrl,
       },
     });
-    
-    if (error || !data?.redirectUrl) {
-      console.error('Failed to initiate Composio OAuth:', error);
-      throw new Error(data?.error || 'Failed to initiate Composio OAuth connection');
+
+    if (error || !data?.success) {
+      console.error('Failed to get MCP connection URL:', error, data?.error);
+      throw new Error(data?.error || 'Failed to get MCP connection URL.');
+    }
+
+    if (data.redirectUrl) {
+      console.log('🔐 Redirecting to Composio OAuth URL...');
+      window.location.href = data.redirectUrl;
+    } else {
+      throw new Error('No redirect URL returned from connection function.');
     }
     
-    console.log('Redirecting to Composio OAuth URL...');
-    
-    // Redirect to the Composio-generated OAuth URL
-    window.location.href = data.redirectUrl;
   } catch (error) {
-    console.error('Error starting Composio OAuth flow:', error);
+    console.error('Error starting Composio MCP OAuth flow:', error);
     throw error;
   }
 };
@@ -49,7 +53,13 @@ export const initiateComposioOAuth = async (emailAddress: string): Promise<void>
 /**
  * Handle Composio OAuth callback and verify connection
  */
-export const handleComposioOAuthCallback = async (): Promise<{ success: boolean; data?: any; error?: string }> => {
+interface ComposioCallbackData {
+  emailAddress: string;
+  connectionType: 'composio';
+  message: string;
+}
+
+export const handleComposioOAuthCallback = async (): Promise<{ success: boolean; data?: ComposioCallbackData; error?: string }> => {
   try {
     console.log('Processing Composio OAuth callback...');
     
@@ -224,12 +234,23 @@ export const checkComposioConnection = async (emailAddress?: string): Promise<{ 
 /**
  * Handle Composio OAuth error
  */
-export const handleComposioOAuthError = (error: any): string => {
+export const handleComposioOAuthError = (error: unknown): string => {
   console.error('Composio OAuth error:', error);
-  
+
   if (typeof error === 'string') return error;
-  if (error?.message) return error.message;
-  if (error?.error_description) return error.error_description;
-  
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    if ('message' in error && typeof (error as { message: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+    if ('error_description' in error && typeof (error as { error_description: unknown }).error_description === 'string') {
+      return (error as { error_description: string }).error_description;
+    }
+  }
+
   return 'Composio authentication failed. Please try again.';
 };

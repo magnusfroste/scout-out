@@ -18,12 +18,21 @@ interface TestResult {
   timestamp: string;
 }
 
+interface DiagnosticStep {
+  name: string;
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
 const ComposioMCPTest = () => {
   const { user } = useAuth();
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [connectionResult, setConnectionResult] = useState<TestResult | null>(null);
-  const [emailResult, setEmailResult] = useState<TestResult | null>(null);
+    const [emailResult, setEmailResult] = useState<TestResult | null>(null);
+    const [diagnosticSteps, setDiagnosticSteps] = useState<DiagnosticStep[]>([]);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
   
   // Email test form
   const [recipientEmail, setRecipientEmail] = useState('');
@@ -62,17 +71,94 @@ const ComposioMCPTest = () => {
       } else {
         toast.error('❌ MCP server instance creation failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       console.error('Connection test error:', error);
       setConnectionResult({
         success: false,
         testType: 'connection',
-        error: error.message,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
-      toast.error('Connection test failed: ' + error.message);
+      toast.error('Connection test failed: ' + errorMessage);
     } finally {
       setIsTestingConnection(false);
+    }
+  };
+
+    const runDiagnostic = async () => {
+    if (!user) {
+      toast.error('Please log in to run diagnostics');
+      return;
+    }
+
+    setIsDiagnosing(true);
+    setDiagnosticSteps([]);
+    let authConfigId = '';
+
+    try {
+      // Step 1: Check DB
+      const { data: dbData, error: dbError } = await supabase.functions.invoke('get-or-create-mcp-connection', {
+        body: { step: 'check_db', userId: user.id, emailAddress: user.email! },
+      });
+                  const getErrorMessage = (error: any) => {
+        if (!error) return undefined;
+        // Supabase FunctionsHttpError has the detailed error in the context property
+        if (error.context && error.context.error) return error.context.error;
+        return error.message;
+      }
+
+      const dbResult = { name: 'Check Database', success: !dbError, data: dbData?.data, error: getErrorMessage(dbError) };
+      setDiagnosticSteps(prev => [...prev, dbResult]);
+      if (dbData?.data?.auth_config_id) {
+        authConfigId = dbData.data.auth_config_id;
+      }
+
+      // Step 2: Create Auth Config
+      if (!authConfigId) {
+        const { data: authData, error: authError } = await supabase.functions.invoke('get-or-create-mcp-connection', {
+          body: { step: 'create_auth_config', userId: user.id, emailAddress: user.email! },
+        });
+                        const authResult = { name: 'Create Auth Config', success: !authError, data: authData?.data, error: getErrorMessage(authError) };
+        setDiagnosticSteps(prev => [...prev, authResult]);
+        if (authData?.data?.authConfigId) {
+          authConfigId = authData.data.authConfigId;
+        } else {
+          throw new Error('Failed to create or retrieve Auth Config ID.');
+        }
+      }
+
+      // Step 3: Create MCP Server
+      const { data: serverData, error: serverError } = await supabase.functions.invoke('get-or-create-mcp-connection', {
+        body: { step: 'create_mcp_server', userId: user.id, emailAddress: user.email!, authConfigId },
+      });
+                  const serverResult = { name: 'Create MCP Server', success: !serverError, data: serverData?.data, error: getErrorMessage(serverError) };
+      setDiagnosticSteps(prev => [...prev, serverResult]);
+      if (!serverData?.data?.mcpServerId) {
+        throw new Error('Failed to create or retrieve MCP Server ID.');
+      }
+
+      // Step 4: Get Connect URL
+      const { data: urlData, error: urlError } = await supabase.functions.invoke('get-or-create-mcp-connection', {
+        body: { 
+          step: 'get_connect_url', 
+          userId: user.id, 
+          emailAddress: user.email!, 
+          authConfigId, 
+          redirectUrl: window.location.href 
+        },
+      });
+                        const urlResult = { name: 'Get Connection URL', success: !urlError, data: urlData?.data, error: getErrorMessage(urlError) };
+      setDiagnosticSteps(prev => [...prev, urlResult]);
+
+      toast.success('Diagnostic complete!');
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error('Diagnostic failed: ' + errorMessage);
+      setDiagnosticSteps(prev => [...prev, { name: 'Overall Error', success: false, error: errorMessage }]);
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
@@ -116,15 +202,16 @@ const ComposioMCPTest = () => {
       } else {
         toast.error('❌ Email sending failed via MCP');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Email test error:', error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       setEmailResult({
         success: false,
         testType: 'email',
-        error: error.message,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
-      toast.error('Email test failed: ' + error.message);
+      toast.error('Email test failed: ' + errorMessage);
     } finally {
       setIsTestingEmail(false);
     }
@@ -162,6 +249,36 @@ const ComposioMCPTest = () => {
     );
   };
 
+    const renderDiagnosticSteps = () => {
+    if (diagnosticSteps.length === 0) return null;
+
+    return (
+      <div className="mt-4 space-y-2">
+        {diagnosticSteps.map((step, index) => (
+          <Card key={index} className="p-3">
+            <div className="flex items-center gap-2">
+              <h5 className="font-semibold">{index + 1}. {step.name}</h5>
+              <Badge variant={step.success ? 'default' : 'destructive'}>
+                {step.success ? 'Success' : 'Failed'}
+              </Badge>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {step.error ? (
+                <p className="text-red-600 font-mono">{step.error}</p>
+              ) : step.data ? (
+                <pre className="p-2 bg-gray-100 rounded text-xs overflow-auto max-h-24">
+                  {JSON.stringify(step.data, null, 2)}
+                </pre>
+              ) : (
+                <p>No data returned.</p>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -171,6 +288,21 @@ const ComposioMCPTest = () => {
           This validates MCP server creation and email delivery capabilities.
         </p>
       </div>
+
+      <Card className="p-4 border-blue-200 bg-blue-50">
+        <h4 className="font-semibold mb-2">0. Connection Setup Diagnostic</h4>
+        <p className="text-sm text-gray-600 mb-4">
+          Run a step-by-step test of the entire connection flow to diagnose issues.
+        </p>
+        <Button 
+          onClick={runDiagnostic}
+          disabled={isDiagnosing || !user}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          {!user ? 'Please Log In' : isDiagnosing ? 'Running Diagnostic...' : 'Run Connection Diagnostic'}
+        </Button>
+        {renderDiagnosticSteps()}
+      </Card>
 
       {/* Connection Test */}
       <Card className="p-4">

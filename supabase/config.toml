@@ -13,7 +13,7 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 import_map = "./functions/send-email/deno.json"
-entrypoint = "supabase/functions/send-email/index.ts"
+entrypoint = "./functions/send-email/index.ts"
 
 [functions.trigger-mybusiness-webhook]
 enabled = true
@@ -52,6 +52,10 @@ enabled = true
 verify_jwt = true
 
 [functions.create-user-mcp-server]
+enabled = true
+verify_jwt = true
+
+[functions.get-or-create-mcp-connection]
 enabled = true
 verify_jwt = true
 

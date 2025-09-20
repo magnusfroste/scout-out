@@ -12,6 +12,12 @@ interface CreateMCPServerRequest {
   redirectUrl: string;
 }
 
+interface ComposioAuthConfig {
+  id: string;
+  authMode: string;
+  // add other properties as needed
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -50,9 +56,10 @@ serve(async (req: Request) => {
 
     const { userId, emailAddress, redirectUrl }: CreateMCPServerRequest = await req.json();
 
-    console.log('🚀 Creating user-specific MCP server for:', userId);
+        console.log('🚀 [1/7] Creating user-specific MCP server for:', userId);
 
     // First, get or create auth config for Outlook
+        console.log('🔍 [2/7] Fetching Outlook auth configs from Composio...');
     const authConfigResponse = await fetch('https://backend.composio.dev/api/v1/apps/office365/auth-configs', {
       method: 'GET',
       headers: {
@@ -61,12 +68,14 @@ serve(async (req: Request) => {
       }
     });
 
-    if (!authConfigResponse.ok) {
-      throw new Error('Failed to fetch auth configs');
+        if (!authConfigResponse.ok) {
+      const errorText = await authConfigResponse.text();
+      console.error('❌ [2/7] Failed to fetch auth configs:', errorText);
+      throw new Error(`Failed to fetch auth configs: ${authConfigResponse.status} ${errorText}`);
     }
 
     const authConfigs = await authConfigResponse.json();
-    let outlookAuthConfig = authConfigs.find((config: any) => 
+        const outlookAuthConfig: ComposioAuthConfig | undefined = authConfigs.find((config: ComposioAuthConfig) => 
       config.authMode === 'OAUTH2'
     );
 
@@ -74,9 +83,10 @@ serve(async (req: Request) => {
       throw new Error('No Outlook OAuth2 auth config found. Please create one in Composio dashboard.');
     }
 
-    console.log('✅ Found Outlook auth config:', outlookAuthConfig.id);
+        console.log('✅ [3/7] Found Outlook auth config:', outlookAuthConfig.id);
 
     // Create user-specific MCP server using Composio SDK pattern
+        console.log('🔄 [4/7] Creating user-specific MCP server via Composio API...');
     const mcpServerResponse = await fetch('https://backend.composio.dev/api/v1/mcp/servers', {
       method: 'POST',
       headers: {
@@ -101,9 +111,10 @@ serve(async (req: Request) => {
     }
 
     const mcpServer = await mcpServerResponse.json();
-    console.log('✅ Created MCP server:', mcpServer.id);
+        console.log('✅ [4/7] Successfully created MCP server:', mcpServer.id);
 
     // Check user connection status
+        console.log('📊 [5/7] Checking user connection status...');
     const statusResponse = await fetch(`https://backend.composio.dev/api/v1/mcp/servers/${mcpServer.id}/users/${userId}/status`, {
       method: 'GET',
       headers: {
@@ -123,7 +134,7 @@ serve(async (req: Request) => {
 
     // If user not connected, initiate OAuth flow
     if (!userConnected) {
-      console.log('🔐 User not connected, initiating OAuth flow...');
+            console.log('🔐 [6/7] User not connected, initiating OAuth flow...');
       
       const connectResponse = await fetch(`https://backend.composio.dev/api/v1/auth/configs/${outlookAuthConfig.id}/connect`, {
         method: 'POST',
@@ -149,10 +160,11 @@ serve(async (req: Request) => {
 
       const connectResult = await connectResponse.json();
       authUrl = connectResult.redirectUrl;
-      console.log('✅ Generated OAuth URL');
+            console.log('✅ [6/7] Successfully generated OAuth URL');
     }
 
     // Store MCP server info in database
+        console.log('💾 [7/7] Storing MCP server info in database...');
     const { error: storeError } = await supabaseClient
       .from('oauth_connections')
       .upsert({
