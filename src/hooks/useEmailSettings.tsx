@@ -1,8 +1,13 @@
+/**
+ * Hook for managing email settings
+ * Uses the data layer for database operations
+ */
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmailSettings } from '@/types/email';
+import { emailSettingsRepository } from '@/data/emailSettingsRepository';
+import { EmailSettings } from '@/models/email';
 import { checkOAuthColumnsExist, verifyO365Auth } from '@/services/o365AuthService';
 
 interface CompleteEmailSettings extends EmailSettings {
@@ -118,22 +123,8 @@ export const useEmailSettings = () => {
         }
       }
       
-      const rls = await supabase.rpc('get_user_email_settings');
-      console.log('RLS function result:', rls);
-      
-      const { data, error } = await supabase
-        .from('user_email_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching email settings:', error);
-        throw error;
-      }
+      // Use repository to fetch settings
+      const data = await emailSettingsRepository.findByUserId(user.id);
       
       console.log('Fetched email settings:', data);
       

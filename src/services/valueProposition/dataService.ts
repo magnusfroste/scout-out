@@ -1,8 +1,14 @@
+/**
+ * Value Proposition Data Service
+ * Uses the data layer for database operations
+ */
 
 import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Saves value proposition data to the database
+ * Note: This uses direct Supabase call since it doesn't have user context
+ * and needs to work within webhook callbacks
  */
 export const saveValuePropositionData = async (
   searchId: string,
@@ -21,8 +27,7 @@ export const saveValuePropositionData = async (
         score,
         advice,
         introduction,
-        subject,
-        updated_at: new Date().toISOString()
+        subject
       })
       .eq('id', searchId);
       

@@ -1,8 +1,13 @@
+/**
+ * Hook for saving company data
+ * Uses the data layer for database operations
+ */
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CompanySearchRecord } from '@/types/company';
+import { useAuth } from '@/contexts/AuthContext';
+import { companyRepository } from '@/data/companyRepository';
+import { CompanySearchRecord } from '@/models/company';
 
 interface UseSaveCompanyDataProps {
   searchId: string;
@@ -36,9 +41,10 @@ export const useSaveCompanyData = ({
 }: UseSaveCompanyDataProps): UseSaveCompanyDataReturn => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSave = async () => {
-    if (!searchId || !companySearch) return;
+    if (!searchId || !companySearch || !user) return;
     
     setIsSaving(true);
     try {
@@ -46,8 +52,7 @@ export const useSaveCompanyData = ({
         score: displayScore,
         advice: displayAdvice,
         introduction: displayIntroduction,
-        subject: displaySubject,
-        updated_at: new Date().toISOString()
+        subject: displaySubject
       };
       
       // Clear localStorage items before updating to prevent stale data
@@ -55,16 +60,14 @@ export const useSaveCompanyData = ({
       localStorage.removeItem(`value_proposition_intro_${searchId}`);
       localStorage.removeItem(`value_proposition_advice_${searchId}`);
       
-      console.log('Saving to Supabase with data:', updateData);
+      console.log('Saving to database with data:', updateData);
       
-      const { error } = await supabase
-        .from('company_searches')
-        .update(updateData)
-        .eq('id', searchId);
-        
-      if (error) throw error;
+      // Use repository to update
+      const success = await companyRepository.update(searchId, user.id, updateData);
       
-      console.log('Supabase update successful');
+      if (!success) throw new Error('Update failed');
+      
+      console.log('Database update successful');
       
       // Update the initial values to match the currently saved values
       if (setInitialValues) {

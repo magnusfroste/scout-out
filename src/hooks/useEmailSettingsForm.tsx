@@ -1,9 +1,13 @@
+/**
+ * Hook for email settings form operations
+ * Uses the data layer for database operations
+ */
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { EmailSettings } from '@/types/email';
+import { emailSettingsRepository } from '@/data/emailSettingsRepository';
+import { EmailSettings, EmailSettingsUpdate } from '@/models/email';
 
 export const useEmailSettingsForm = (
   emailAddress: string,
@@ -100,29 +104,21 @@ export const useEmailSettingsForm = (
       
       console.log('Prepared Settings Data:', settingsData);
       
-      let result;
+      let success: boolean;
       if (existingSettings) {
         console.log('Updating Existing Settings');
-        result = await supabase
-          .from('user_email_settings')
-          .update(settingsData)
-          .eq('id', existingSettings.id)
-          .eq('user_id', user.id)
-          .select('*');
+        success = await emailSettingsRepository.update(existingSettings.id, user.id, settingsData as EmailSettingsUpdate);
       } else {
         console.log('Creating New Email Settings');
-        result = await supabase
-          .from('user_email_settings')
-          .insert(settingsData)
-          .select('*');
+        const created = await emailSettingsRepository.create(settingsData);
+        success = !!created;
       }
       
-      if (result.error) {
-        console.error('Supabase Error:', result.error);
-        throw result.error;
+      if (!success) {
+        throw new Error('Failed to save settings');
       }
       
-      console.log('Save Result:', result.data);
+      console.log('Save successful');
       
       toast({
         title: 'Success',
@@ -155,13 +151,9 @@ export const useEmailSettingsForm = (
     
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('user_email_settings')
-        .delete()
-        .eq('id', existingSettings.id)
-        .eq('user_id', user.id);
+      const success = await emailSettingsRepository.delete(existingSettings.id, user.id);
       
-      if (error) throw error;
+      if (!success) throw new Error('Delete failed');
       
       toast({
         title: 'Success',
