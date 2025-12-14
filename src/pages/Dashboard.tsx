@@ -38,13 +38,35 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   const { user, loading, userProfile } = useAuth();
-  const { showOnboarding, isLoaded, completeOnboarding } = useOnboarding();
 
   // Calculate workflow progress
   const businessProfileComplete = !!(userProfile?.business_data);
   const questionsComplete = questions.length > 0;
   const researchComplete = searches.length > 0;
   const valuePropositionComplete = searches.some(s => s.introduction || s.subject || s.advice);
+
+  const workflowProgress = {
+    businessProfileComplete,
+    questionsComplete,
+    researchComplete,
+    valuePropositionComplete,
+  };
+
+  const { 
+    showOnboarding, 
+    isLoaded, 
+    completeOnboarding, 
+    firstIncompleteStep,
+    completedStepCount,
+  } = useOnboarding(workflowProgress);
+
+  // Auto-navigate to first incomplete step on initial load
+  useEffect(() => {
+    if (isLoaded && !showOnboarding && firstIncompleteStep && activeTab === 'mybusiness') {
+      // Only auto-navigate if user hasn't manually selected a tab
+      setActiveTab(firstIncompleteStep);
+    }
+  }, [isLoaded, showOnboarding, firstIncompleteStep]);
 
   useEffect(() => {
     if (user) {
@@ -204,7 +226,18 @@ const Dashboard = () => {
       {isLoaded && (
         <OnboardingModal 
           open={showOnboarding} 
-          onComplete={completeOnboarding} 
+          onComplete={(navigateToStep) => {
+            completeOnboarding();
+            if (navigateToStep) {
+              setActiveTab(navigateToStep);
+            }
+          }}
+          businessProfileComplete={businessProfileComplete}
+          questionsComplete={questionsComplete}
+          researchComplete={researchComplete}
+          valuePropositionComplete={valuePropositionComplete}
+          firstIncompleteStep={firstIncompleteStep}
+          completedStepCount={completedStepCount}
         />
       )}
       
@@ -225,6 +258,8 @@ const Dashboard = () => {
               questionsComplete={questionsComplete}
               researchComplete={researchComplete}
               valuePropositionComplete={valuePropositionComplete}
+              activeStep={activeTab as any}
+              onStepClick={(step) => setActiveTab(step)}
             />
           </div>
           
