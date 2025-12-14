@@ -20,6 +20,9 @@ import CreditDisplay from '@/components/dashboard/CreditDisplay';
 import MyBusiness from '@/components/dashboard/MyBusiness';
 import CompanySearchComponent from '@/components/dashboard/CompanySearch';
 import ValuePropositionTab from '@/components/dashboard/ValuePropositionTab';
+import OnboardingModal from '@/components/onboarding/OnboardingModal';
+import WorkflowProgress from '@/components/onboarding/WorkflowProgress';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 type Question = {
   id: string;
@@ -35,6 +38,13 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   const { user, loading, userProfile } = useAuth();
+  const { showOnboarding, isLoaded, completeOnboarding } = useOnboarding();
+
+  // Calculate workflow progress
+  const businessProfileComplete = !!(userProfile?.business_data);
+  const questionsComplete = questions.length > 0;
+  const researchComplete = searches.length > 0;
+  const valuePropositionComplete = searches.some(s => s.introduction || s.subject || s.advice);
 
   useEffect(() => {
     if (user) {
@@ -190,14 +200,32 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       
+      {/* Onboarding Modal */}
+      {isLoaded && (
+        <OnboardingModal 
+          open={showOnboarding} 
+          onComplete={completeOnboarding} 
+        />
+      )}
+      
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-3xl font-bold">Workflow</h1>
             
             {userProfile && (
               <CreditDisplay credits={userProfile.credits} />
             )}
+          </div>
+
+          {/* Workflow Progress Tracker */}
+          <div className="mb-8">
+            <WorkflowProgress
+              businessProfileComplete={businessProfileComplete}
+              questionsComplete={questionsComplete}
+              researchComplete={researchComplete}
+              valuePropositionComplete={valuePropositionComplete}
+            />
           </div>
           
           <Tabs 
