@@ -1,7 +1,11 @@
+/**
+ * Hook for fetching company detail data
+ * Uses the data layer for database operations
+ */
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { CompanySearchRecord, CompanyQuestionAnswer } from '@/types/company';
+import { companyRepository } from '@/data/companyRepository';
+import { CompanySearchRecord, CompanyQuestionAnswer } from '@/models/company';
 
 interface FetchCompanyDataReturn {
   companySearch: CompanySearchRecord | null;
@@ -22,7 +26,7 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
   const [questionAnswers, setQuestionAnswers] = useState<CompanyQuestionAnswer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [initialValues, setInitialValues] = useState({
-    score: null,
+    score: null as number | null,
     advice: '',
     introduction: '',
     subject: ''
@@ -39,47 +43,19 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
     try {
       console.log('Fetching company search data for ID:', searchId);
       
-      // Fetch company search data with explicit columns selection
-      const { data: searchData, error: searchError } = await supabase
-        .from('company_searches')
-        .select(`
-          id, 
-          company_name, 
-          created_at, 
-          user_id, 
-          result, 
-          contact_info,
-          www, 
-          contact, 
-          email, 
-          phone,
-          role,
-          score,
-          advice,
-          introduction,
-          subject,
-          sent_email_at,
-          updated_at
-        `)
-        .eq('id', searchId)
-        .single();
-      
-      if (searchError) {
-        console.error('Error fetching company search data:', searchError.message, searchError.details);
-        throw searchError;
-      }
+      // Use repository to fetch company search
+      const searchData = await companyRepository.findById(searchId);
       
       if (!searchData) {
         console.error('Company search not found for ID:', searchId);
         throw new Error('Company search not found');
       }
       
-      console.log('Retrieved company search data from Supabase:', searchData);
+      console.log('Retrieved company search data:', searchData);
       console.log('Email sent timestamp:', searchData.sent_email_at);
       setCompanySearch(searchData);
       
       // Set initial values for value proposition fields
-      // Always use the database values, ensuring all fields are initialized with values from database
       const newInitialValues = {
         score: searchData.score || null,
         advice: searchData.advice || '',
@@ -89,7 +65,7 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
       
       setInitialValues(newInitialValues);
       
-      console.log('Set initial values from Supabase:', {
+      console.log('Set initial values from database:', {
         score: newInitialValues.score,
         advice: newInitialValues.advice ? `${newInitialValues.advice.substring(0, 20)}...` : null,
         introduction: newInitialValues.introduction ? `${newInitialValues.introduction.substring(0, 20)}...` : null,
@@ -97,33 +73,9 @@ export const useFetchCompanyData = (searchId: string): FetchCompanyDataReturn =>
         emailSent: searchData.sent_email_at
       });
       
-      // Fetch question answers
-      const { data: answersData, error: answersError } = await supabase
-        .from('company_question_answers')
-        .select(`
-          id,
-          answer,
-          question_id,
-          company_search_id,
-          created_at,
-          updated_at,
-          agent_questions (
-            id, 
-            question,
-            rationale
-          )
-        `)
-        .eq('company_search_id', searchId)
-        .order('created_at', { ascending: true });
-      
-      if (answersError) throw answersError;
-      
-      // Make sure we're setting an array that matches the CompanyQuestionAnswer type
-      if (answersData) {
-        setQuestionAnswers(answersData as CompanyQuestionAnswer[]);
-      } else {
-        setQuestionAnswers([]);
-      }
+      // Use repository to fetch question answers
+      const answersData = await companyRepository.findAnswersBySearchId(searchId);
+      setQuestionAnswers(answersData);
       
     } catch (error: any) {
       console.error('Error fetching company data:', error);
