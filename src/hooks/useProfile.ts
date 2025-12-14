@@ -1,6 +1,10 @@
+/**
+ * Hook for managing user profiles
+ */
 
 import { useState, useEffect, useCallback } from 'react';
-import { fetchUserProfile, updateUserProfile, UserProfile } from '@/services/profileService';
+import { fetchUserProfile, updateUserProfile } from '@/services/profileService';
+import { UserProfile } from '@/models/profile';
 import { toast } from '@/hooks/use-toast';
 
 export const useProfile = (userId: string | undefined) => {

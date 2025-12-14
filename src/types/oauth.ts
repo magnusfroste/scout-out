@@ -1,13 +1,6 @@
+/**
+ * OAuth types - Re-exports from models
+ * @deprecated Import directly from '@/models/email' instead
+ */
 
-export interface OAuth2Tokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-export interface EmailAuthSettings {
-  clientId: string;
-  clientSecret: string;
-  refreshToken: string;
-  redirectUri: string;
-}
+export type { OAuth2Tokens, EmailAuthSettings } from '@/models/email';
