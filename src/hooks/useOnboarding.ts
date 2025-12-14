@@ -1,8 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 const ONBOARDING_KEY = 'workflow_onboarding_completed';
 
-export const useOnboarding = () => {
+export type WorkflowStep = 'mybusiness' | 'questions' | 'search' | 'valueproposition';
+
+export interface WorkflowProgress {
+  businessProfileComplete: boolean;
+  questionsComplete: boolean;
+  researchComplete: boolean;
+  valuePropositionComplete: boolean;
+}
+
+export const useOnboarding = (workflowProgress?: WorkflowProgress) => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -25,11 +34,35 @@ export const useOnboarding = () => {
     setShowOnboarding(true);
   }, []);
 
+  // Calculate the first incomplete step based on workflow progress
+  const firstIncompleteStep = useMemo((): WorkflowStep | null => {
+    if (!workflowProgress) return 'mybusiness';
+    
+    if (!workflowProgress.businessProfileComplete) return 'mybusiness';
+    if (!workflowProgress.questionsComplete) return 'questions';
+    if (!workflowProgress.researchComplete) return 'search';
+    if (!workflowProgress.valuePropositionComplete) return 'valueproposition';
+    return null; // All complete
+  }, [workflowProgress]);
+
+  // Calculate completed step count
+  const completedStepCount = useMemo(() => {
+    if (!workflowProgress) return 0;
+    return [
+      workflowProgress.businessProfileComplete,
+      workflowProgress.questionsComplete,
+      workflowProgress.researchComplete,
+      workflowProgress.valuePropositionComplete,
+    ].filter(Boolean).length;
+  }, [workflowProgress]);
+
   return {
     showOnboarding,
     isLoaded,
     completeOnboarding,
     resetOnboarding,
+    firstIncompleteStep,
+    completedStepCount,
   };
 };
 
