@@ -1,26 +1,16 @@
+/**
+ * Hook for managing company searches
+ * Uses the data layer for database operations
+ */
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { companyRepository } from '@/data/companyRepository';
+import { CompanySearch, CompanySearchUpdate } from '@/models/company';
 
-export interface CompanySearch {
-  id: string;
-  company_name: string;
-  created_at: string;
-  user_id: string;
-  result: any;
-  answer_count: number;
-  www?: string;
-  contact?: string;
-  email?: string;
-  phone?: string;
-  role?: string;
-  score?: number;
-  advice?: string;
-  introduction?: string;
-  subject?: string;
-  sent_email_at?: string;
-}
+// Re-export type for backward compatibility
+export type { CompanySearch } from '@/models/company';
 
 export function useCompanySearches() {
   const [searches, setSearches] = useState<CompanySearch[]>([]);
@@ -35,21 +25,9 @@ export function useCompanySearches() {
     setIsLoading(true);
     try {
       console.log('Fetching searches for user:', user.id);
-      const { data, error } = await supabase
-        .from('company_searches')
-        .select('*, company_question_answers(id)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      const searchesWithCounts = data?.map(search => ({
-        ...search,
-        answer_count: search.company_question_answers?.length || 0
-      })) || [];
-      
-      console.log('Fetched searches:', searchesWithCounts);
-      setSearches(searchesWithCounts);
+      const data = await companyRepository.findAllByUserId(user.id);
+      console.log('Fetched searches:', data);
+      setSearches(data);
     } catch (error: any) {
       console.error('Error fetching company searches:', error);
       toast({
@@ -68,29 +46,7 @@ export function useCompanySearches() {
     setIsDeleting(id);
     try {
       console.log('Deleting company search with ID:', id, 'for user:', user.id);
-      
-      const { error: answersError } = await supabase
-        .from('company_question_answers')
-        .delete()
-        .eq('company_search_id', id);
-      
-      if (answersError) {
-        console.error('Error deleting related answers:', answersError);
-        throw answersError;
-      }
-      
-      console.log('Related answers deleted (if any)');
-
-      const { error } = await supabase
-        .from('company_searches')
-        .delete()
-        .match({ id: id, user_id: user.id });
-
-      if (error) {
-        console.error('Error deleting company search:', error);
-        throw error;
-      }
-      
+      await companyRepository.delete(id, user.id);
       console.log('Company search deleted successfully');
 
       setSearches(prevSearches => prevSearches.filter(search => search.id !== id));
@@ -117,18 +73,16 @@ export function useCompanySearches() {
     try {
       console.log('Updating search details with data:', data);
       
-      const { error } = await supabase
-        .from('company_searches')
-        .update({
-          score: data.score,
-          advice: data.advice,
-          introduction: data.introduction,
-          subject: data.subject
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const updates: CompanySearchUpdate = {
+        score: data.score,
+        advice: data.advice,
+        introduction: data.introduction,
+        subject: data.subject
+      };
 
-      if (error) throw error;
+      const success = await companyRepository.update(id, user.id, updates);
+
+      if (!success) throw new Error('Update failed');
 
       setSearches(prevSearches => 
         prevSearches.map(search => 

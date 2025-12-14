@@ -1,28 +1,13 @@
+/**
+ * Company Search Service - Business logic for storing company search results
+ */
 
-import { supabase } from '@/integrations/supabase/client';
-import { ContactInfo } from '@/types/company';
+import { companyRepository } from '@/data/companyRepository';
+import { ContactInfo, Answer, CompanySearchInsert, CompanyQuestionAnswerInsert } from '@/models/company';
 
-export type Answer = {
-  question_id: string;
-  answer: string;
-};
-
-export type CompanySearchRecord = {
-  user_id: string;
-  company_name: string;
-  result: any;
-  created_at: string;
-  contact_info?: ContactInfo | null;
-  www?: string | null;
-  contact?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  role?: string | null;
-  subject?: string | null;
-  score?: number | null;
-  advice?: string | null;
-  introduction?: string | null;
-};
+// Re-export types for backward compatibility
+export type { Answer, ContactInfo } from '@/models/company';
+export type { CompanySearchRecord } from '@/models/company';
 
 /**
  * Stores company search results in the database
@@ -42,69 +27,48 @@ export const storeSearchResults = async (
   try {
     console.log(`Storing search results for user ${userId} and company ${company}`);
     
-    // Store the company search
-    const searchRecord: CompanySearchRecord = {
+    // Build the search record
+    const searchRecord: CompanySearchInsert = {
       user_id: userId,
       company_name: company,
       result: responseData,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      contact_info: contactInfo || null,
+      www: contactInfo?.www || null,
+      contact: contactInfo?.contact || null,
+      email: contactInfo?.email || null,
+      phone: contactInfo?.phone || null,
+      role: contactInfo?.role || null
     };
     
-    // Add contact info if available
-    if (contactInfo) {
-      // Store the full contact info in the JSON field for backward compatibility
-      searchRecord.contact_info = contactInfo;
-      
-      // Store individual fields in their respective columns
-      searchRecord.www = contactInfo.www || null;
-      searchRecord.contact = contactInfo.contact || null;
-      searchRecord.email = contactInfo.email || null;
-      searchRecord.phone = contactInfo.phone || null;
-      searchRecord.role = contactInfo.role || null;
-    }
-    
     console.log('Inserting company search record:', JSON.stringify(searchRecord));
-    const { data: insertedRecord, error: searchError } = await supabase
-      .from('company_searches')
-      .insert(searchRecord)
-      .select('id')
-      .single();
+    const searchId = await companyRepository.create(searchRecord);
     
-    if (searchError) {
-      console.error('Error storing company search:', searchError.message, searchError.details);
-      return false;
-    }
-    
-    if (!insertedRecord || !insertedRecord.id) {
+    if (!searchId) {
       console.error('No search record ID returned after insert');
       return false;
     }
     
-    console.log('Company search stored with ID:', insertedRecord.id);
+    console.log('Company search stored with ID:', searchId);
     
     // Store individual answers if available
     if (processedResults && Array.isArray(processedResults) && processedResults.length > 0) {
-      const answersToInsert = processedResults
-        .filter(result => result.question_id && result.answer) // Only valid results
+      const now = new Date().toISOString();
+      const answersToInsert: CompanyQuestionAnswerInsert[] = processedResults
+        .filter(result => result.question_id && result.answer)
         .map(result => ({
-          company_search_id: insertedRecord.id,
+          company_search_id: searchId,
           question_id: result.question_id,
           answer: result.answer,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: now,
+          updated_at: now
         }));
       
       if (answersToInsert.length > 0) {
         console.log('Inserting answers:', JSON.stringify(answersToInsert));
+        const success = await companyRepository.createAnswers(answersToInsert);
         
-        const { error: answersError } = await supabase
-          .from('company_question_answers')
-          .insert(answersToInsert);
-        
-        if (answersError) {
-          console.error('Error storing answers:', answersError.message, answersError.details);
-          // Continue even if answer storage fails
-        } else {
+        if (success) {
           console.log('Successfully stored answers for all questions');
         }
       } else {

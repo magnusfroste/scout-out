@@ -1,10 +1,14 @@
+/**
+ * Question Service - Business logic for agent questions
+ */
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { questionRepository } from '@/data/questionRepository';
+import { QuestionResponse, AgentQuestionInsert } from '@/models/question';
 
-export interface QuestionResponse {
-  question: string;
-  rationale: string;
-}
+// Re-export types for backward compatibility
+export type { QuestionResponse } from '@/models/question';
 
 /**
  * Fetches questions from the questions webhook via Supabase Edge Function
@@ -37,14 +41,14 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
     }
 
     // Extract questions from the response - handle multiple response formats
-    let questions = null;
+    let questions: QuestionResponse[] | null = null;
     
     // Format 1: Direct output.questions structure (after edge function unwrapping)
     if (actualData && actualData.output && Array.isArray(actualData.output.questions)) {
       console.log('Parsing format: actualData.output.questions');
       questions = actualData.output.questions.map((q: any) => ({
         question: q.question,
-        rationale: q.explanation || q.rationale || '' // Map explanation to rationale
+        rationale: q.explanation || q.rationale || ''
       }));
     }
     // Format 2: Array with nested output.questions structure
@@ -52,7 +56,7 @@ export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<Que
       console.log('Parsing format: actualData[0].output.questions');
       questions = actualData[0].output.questions.map((q: any) => ({
         question: q.question,
-        rationale: q.explanation || q.rationale || '' // Map explanation to rationale
+        rationale: q.explanation || q.rationale || ''
       }));
     }
     // Format 3: Direct questions array
@@ -99,23 +103,20 @@ export const addMultipleQuestions = async (questions: string[], userId: string):
       return false;
     }
     
-    const questionsToInsert = questions.map(question => ({
+    const questionsToInsert: AgentQuestionInsert[] = questions.map(question => ({
       question,
       user_id: userId
     }));
     
-    const { data, error } = await supabase
-      .from('agent_questions')
-      .insert(questionsToInsert)
-      .select();
+    const createdQuestions = await questionRepository.createMany(questionsToInsert);
       
-    if (error) {
-      throw error;
+    if (createdQuestions.length === 0) {
+      throw new Error('Failed to create questions');
     }
     
     toast({
       title: "Success",
-      description: `${data.length} questions added successfully`,
+      description: `${createdQuestions.length} questions added successfully`,
     });
     
     return true;
