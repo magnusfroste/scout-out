@@ -4,15 +4,11 @@ import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CompanySearch } from '@/types/search';
-import { Building, ListChecks, Search, ArrowRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 
 import QuestionManager from '@/components/dashboard/QuestionManager';
 import SearchHistory from '@/components/dashboard/SearchHistory';
@@ -21,8 +17,8 @@ import MyBusiness from '@/components/dashboard/MyBusiness';
 import CompanySearchComponent from '@/components/dashboard/CompanySearch';
 import ValuePropositionTab from '@/components/dashboard/ValuePropositionTab';
 import OnboardingModal from '@/components/onboarding/OnboardingModal';
-import WorkflowProgress from '@/components/onboarding/WorkflowProgress';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import WorkflowStepper from '@/components/dashboard/WorkflowStepper';
+import { useOnboarding, WorkflowStep } from '@/hooks/useOnboarding';
 
 type Question = {
   id: string;
@@ -190,16 +186,9 @@ const Dashboard = () => {
     }
   };
 
-  const getProgressPercentage = () => {
-    switch (activeTab) {
-      case 'mybusiness': return 25;
-      case 'questions': return 50;
-      case 'search': return 75;
-      case 'valueproposition': return 100;
-      default: return 0;
-    }
+  const handleTabChange = (step: WorkflowStep) => {
+    setActiveTab(step);
   };
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -241,229 +230,39 @@ const Dashboard = () => {
         />
       )}
       
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
+      <main className="flex-grow container mx-auto px-4 py-6 md:py-12">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h1 className="text-3xl font-bold">Workflow</h1>
-            
+          {/* Header with credits */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Workflow</h1>
+              <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
+                Följ stegen för att hitta och engagera potentiella kunder
+              </p>
+            </div>
             {userProfile && (
               <CreditDisplay credits={userProfile.credits} />
             )}
           </div>
 
-          {/* Workflow Progress Tracker */}
-          <div className="mb-8">
-            <WorkflowProgress
+          {/* Unified Workflow Stepper */}
+          <div className="mb-6">
+            <WorkflowStepper
               businessProfileComplete={businessProfileComplete}
               questionsComplete={questionsComplete}
               researchComplete={researchComplete}
               valuePropositionComplete={valuePropositionComplete}
-              activeStep={activeTab as any}
-              onStepClick={(step) => setActiveTab(step)}
+              activeStep={activeTab as WorkflowStep}
+              onStepClick={handleTabChange}
             />
           </div>
           
           <Tabs 
             defaultValue="mybusiness" 
-            className="w-full mb-10"
-            onValueChange={setActiveTab}
+            className="w-full"
+            onValueChange={(value) => handleTabChange(value as WorkflowStep)}
             value={activeTab}
           >
-            <div className="mb-8 relative">
-              <div className="mb-6">
-                <Progress value={getProgressPercentage()} className="h-2" />
-              </div>
-              
-              <div className="flex items-center justify-between mb-4 relative">
-                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/60 -z-10"></div>
-                
-                <div className="flex flex-col items-center z-10">
-                  <button 
-                    onClick={() => setActiveTab('mybusiness')}
-                    className={cn(
-                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
-                      activeTab === 'mybusiness' 
-                        ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : activeTab === 'questions' || activeTab === 'search' || activeTab === 'valueproposition'
-                          ? "bg-primary/20 border-primary/30 text-primary" 
-                          : "bg-background border-muted hover:border-muted-foreground"
-                    )}
-                  >
-                    <Building className="h-6 w-6" />
-                  </button>
-                  <span className={cn(
-                    "text-sm font-semibold mb-1",
-                    activeTab === 'mybusiness' 
-                      ? "text-primary" 
-                      : activeTab === 'questions' || activeTab === 'search' || activeTab === 'valueproposition'
-                        ? "text-primary/70"
-                        : "text-muted-foreground"
-                  )}>
-                    Step 1
-                  </span>
-                  <span className={cn(
-                    "text-xs",
-                    activeTab === 'mybusiness' ? "font-medium" : ""
-                  )}>Business Profile</span>
-                </div>
-                
-                <div className={cn(
-                  "flex items-center transition-opacity duration-300",
-                  activeTab === 'questions' || activeTab === 'search' || activeTab === 'valueproposition' ? "text-primary" : "text-muted-foreground"
-                )}>
-                  <ArrowRight className="h-5 w-5" />
-                </div>
-                
-                <div className="flex flex-col items-center z-10">
-                  <button 
-                    onClick={() => setActiveTab('questions')}
-                    className={cn(
-                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
-                      activeTab === 'questions' 
-                        ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : activeTab === 'search' || activeTab === 'valueproposition'
-                          ? "bg-primary/20 border-primary/30 text-primary" 
-                          : "bg-background border-muted hover:border-muted-foreground"
-                    )}
-                  >
-                    <ListChecks className="h-6 w-6" />
-                  </button>
-                  <span className={cn(
-                    "text-sm font-semibold mb-1",
-                    activeTab === 'questions' 
-                      ? "text-primary" 
-                      : activeTab === 'search' || activeTab === 'valueproposition'
-                        ? "text-primary/70"
-                        : "text-muted-foreground"
-                  )}>
-                    Step 2
-                  </span>
-                  <span className={cn(
-                    "text-xs",
-                    activeTab === 'questions' ? "font-medium" : ""
-                  )}>Questions</span>
-                </div>
-                
-                <div className={cn(
-                  "flex items-center transition-opacity duration-300",
-                  activeTab === 'search' || activeTab === 'valueproposition' ? "text-primary" : "text-muted-foreground"
-                )}>
-                  <ArrowRight className="h-5 w-5" />
-                </div>
-                
-                <div className="flex flex-col items-center z-10">
-                  <button 
-                    onClick={() => setActiveTab('search')}
-                    className={cn(
-                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
-                      activeTab === 'search' 
-                        ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : activeTab === 'valueproposition'
-                          ? "bg-primary/20 border-primary/30 text-primary" 
-                          : "bg-background border-muted hover:border-muted-foreground"
-                    )}
-                  >
-                    <Search className="h-6 w-6" />
-                  </button>
-                  <span className={cn(
-                    "text-sm font-semibold mb-1",
-                    activeTab === 'search' 
-                      ? "text-primary" 
-                      : activeTab === 'valueproposition'
-                        ? "text-primary/70"
-                        : "text-muted-foreground"
-                  )}>
-                    Step 3
-                  </span>
-                  <span className={cn(
-                    "text-xs",
-                    activeTab === 'search' ? "font-medium" : ""
-                  )}>Research Company</span>
-                </div>
-                
-                <div className={cn(
-                  "flex items-center transition-opacity duration-300",
-                  activeTab === 'valueproposition' ? "text-primary" : "text-muted-foreground"
-                )}>
-                  <ArrowRight className="h-5 w-5" />
-                </div>
-                
-                <div className="flex flex-col items-center z-10">
-                  <button 
-                    onClick={() => setActiveTab('valueproposition')}
-                    className={cn(
-                      "flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 mb-3 shadow-md",
-                      activeTab === 'valueproposition' 
-                        ? "bg-primary text-primary-foreground border-primary scale-110" 
-                        : "bg-background border-muted hover:border-muted-foreground"
-                    )}
-                  >
-                    <Star className="h-6 w-6" />
-                  </button>
-                  <span className={cn(
-                    "text-sm font-semibold mb-1",
-                    activeTab === 'valueproposition' 
-                      ? "text-primary" 
-                      : "text-muted-foreground"
-                  )}>
-                    Step 4
-                  </span>
-                  <span className={cn(
-                    "text-xs",
-                    activeTab === 'valueproposition' ? "font-medium" : ""
-                  )}>Value Proposition</span>
-                </div>
-              </div>
-              
-              <div className={cn(
-                "p-5 rounded-lg text-sm border-l-4 shadow-sm transition-all duration-300",
-                activeTab === 'mybusiness' ? "bg-primary/5 border-primary" :
-                activeTab === 'questions' ? "bg-primary/5 border-primary" :
-                activeTab === 'search' ? "bg-primary/5 border-primary" :
-                "bg-primary/5 border-primary"
-              )}>
-                {activeTab === 'mybusiness' && (
-                  <div className="flex items-start">
-                    <Building className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <div>
-                      <h3 className="font-semibold text-base mb-1">Step 1: Set Up Your Business Profile</h3>
-                      <p className="text-muted-foreground">Your profile will be used by our AI agent when creating research questions.</p>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'questions' && (
-                  <div className="flex items-start">
-                    <ListChecks className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <div>
-                      <h3 className="font-semibold text-base mb-1">Step 2: Manage Your Questions</h3>
-                      <p className="text-muted-foreground">Create and organize questions to ask potential clients. Use the Magic button to generate questions based on your website.</p>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'search' && (
-                  <div className="flex items-start">
-                    <Search className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <div>
-                      <h3 className="font-semibold text-base mb-1">Step 3: Research Company</h3>
-                      <p className="text-muted-foreground">Gather insights about potential clients to discover opportunities for your business. Our AI analyzes companies to help you identify the best prospects and understand their needs.</p>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'valueproposition' && (
-                  <div className="flex items-start">
-                    <Star className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <div>
-                      <h3 className="font-semibold text-base mb-1">Step 4: Value Proposition</h3>
-                      <p className="text-muted-foreground">Review your researched companies, rate their potential, and prepare your value proposition to approach them effectively.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
             <TabsContent value="mybusiness">
               <MyBusiness />
             </TabsContent>
