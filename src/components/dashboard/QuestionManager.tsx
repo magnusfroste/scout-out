@@ -290,8 +290,40 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
         <CardContent>
           <div className="space-y-3 mt-4">
             {questions.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                No questions added yet. Add your first question or use the Magic button to generate questions.
+              <div className="flex flex-col items-center justify-center py-12 px-6 border border-dashed rounded-lg bg-muted/20">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Wand2 className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-center">Inga frågor ännu</h3>
+                <p className="text-muted-foreground text-center max-w-md mb-6">
+                  Frågor används för att samla in information om företag du researchar. 
+                  Lägg till egna frågor eller använd Magic-knappen för att generera smarta frågor automatiskt.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={() => setIsMagicDialogOpen(true)}
+                    size="sm"
+                  >
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Generera med Magic
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setEditingQuestion(null);
+                      setNewQuestion('');
+                      setNewRationale('');
+                      setIsQuestionDialogOpen(true);
+                    }}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Lägg till manuellt
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-6 text-center max-w-sm">
+                  Tips: Bra frågor fokuserar på kundens utmaningar, mål och nuvarande lösningar.
+                </p>
               </div>
             ) : (
               questions.map(question => (
