@@ -420,16 +420,17 @@ const MyBusiness = () => {
     
     if (!businessData) {
       return (
-        <div className="flex flex-col items-center justify-center space-y-6 p-12 border border-dashed rounded-lg bg-background/50">
-          <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <AlertCircle className="h-10 w-10 text-primary" />
+        <div className="flex flex-col items-center justify-center py-12 px-6 border border-dashed rounded-lg bg-muted/20">
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Globe className="h-8 w-8 text-primary" />
           </div>
-          <div className="text-center max-w-md">
-            <h3 className="text-xl font-medium mb-2">No Business Profile Yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Generate your business profile by entering your website URL and clicking "Generate Profile"
-            </p>
-          </div>
+          <h3 className="text-xl font-semibold mb-2 text-center">Skapa din företagsprofil</h3>
+          <p className="text-muted-foreground text-center max-w-md mb-6">
+            Ange din webbadress ovan och klicka på "Generera Profil" för att skapa en profil som hjälper AI:n förstå ditt företag och skapa bättre värdeerbjudanden.
+          </p>
+          <p className="text-xs text-muted-foreground text-center max-w-sm">
+            Tips: Din företagsprofil används för att skapa personliga och relevanta värdeerbjudanden till potentiella kunder.
+          </p>
         </div>
       );
     }
