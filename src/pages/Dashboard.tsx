@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -8,17 +7,19 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CompanySearch } from '@/types/search';
-import { cn } from '@/lib/utils';
 
 import QuestionManager from '@/components/dashboard/QuestionManager';
-import SearchHistory from '@/components/dashboard/SearchHistory';
-import CreditDisplay from '@/components/dashboard/CreditDisplay';
 import MyBusiness from '@/components/dashboard/MyBusiness';
 import CompanySearchComponent from '@/components/dashboard/CompanySearch';
 import ValuePropositionTab from '@/components/dashboard/ValuePropositionTab';
 import OnboardingModal from '@/components/onboarding/OnboardingModal';
 import WorkflowStepper from '@/components/dashboard/WorkflowStepper';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
+import Confetti from '@/components/ui/confetti';
 import { useOnboarding, WorkflowStep } from '@/hooks/useOnboarding';
+
+const CELEBRATION_KEY = 'workflow_celebration_shown';
 
 type Question = {
   id: string;
@@ -31,9 +32,17 @@ const Dashboard = () => {
   const [isLoadingSearches, setIsLoadingSearches] = useState(false);
   const [isDeletingSearch, setIsDeletingSearch] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('mybusiness');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevCompletedCount = useRef<number>(0);
   const { toast } = useToast();
 
   const { user, loading, userProfile } = useAuth();
+
+  // Extract first name from profile or email
+  const firstName = userProfile?.first_name || 
+    (user?.email?.split('@')[0]?.split('.')[0]?.charAt(0).toUpperCase() + 
+     user?.email?.split('@')[0]?.split('.')[0]?.slice(1)) || 
+    undefined;
 
   // Calculate workflow progress
   const businessProfileComplete = !!(userProfile?.business_data);
@@ -52,9 +61,26 @@ const Dashboard = () => {
     showOnboarding, 
     isLoaded, 
     completeOnboarding, 
+    showOnboardingAgain,
     firstIncompleteStep,
     completedStepCount,
   } = useOnboarding(workflowProgress);
+
+  // Celebration when all steps complete
+  useEffect(() => {
+    if (completedStepCount === 4 && prevCompletedCount.current < 4) {
+      const hasSeenCelebration = localStorage.getItem(CELEBRATION_KEY);
+      if (!hasSeenCelebration) {
+        setShowConfetti(true);
+        localStorage.setItem(CELEBRATION_KEY, 'true');
+        toast({
+          title: "🎉 Gratulerar!",
+          description: "Du har slutfört alla steg i workflowet!",
+        });
+      }
+    }
+    prevCompletedCount.current = completedStepCount;
+  }, [completedStepCount, toast]);
 
   // Auto-navigate to first incomplete step on initial load
   useEffect(() => {
@@ -193,10 +219,8 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
-        <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
-          </div>
+        <main className="flex-grow container mx-auto px-4 py-6 md:py-12">
+          <DashboardSkeleton />
         </main>
         <Footer />
       </div>
@@ -210,6 +234,9 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
+      
+      {/* Confetti celebration */}
+      <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
       
       {/* Onboarding Modal */}
       {isLoaded && (
@@ -232,18 +259,14 @@ const Dashboard = () => {
       
       <main className="flex-grow container mx-auto px-4 py-6 md:py-12">
         <div className="max-w-6xl mx-auto">
-          {/* Header with credits */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Workflow</h1>
-              <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
-                Följ stegen för att hitta och engagera potentiella kunder
-              </p>
-            </div>
-            {userProfile && (
-              <CreditDisplay credits={userProfile.credits} />
-            )}
-          </div>
+          {/* Personal Header */}
+          <DashboardHeader
+            firstName={firstName}
+            credits={userProfile?.credits}
+            firstIncompleteStep={firstIncompleteStep}
+            completedStepCount={completedStepCount}
+            onShowHelp={showOnboardingAgain}
+          />
 
           {/* Unified Workflow Stepper */}
           <div className="mb-6">

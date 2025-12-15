@@ -34,6 +34,10 @@ export const useOnboarding = (workflowProgress?: WorkflowProgress) => {
     setShowOnboarding(true);
   }, []);
 
+  const showOnboardingAgain = useCallback(() => {
+    setShowOnboarding(true);
+  }, []);
+
   // Calculate the first incomplete step based on workflow progress
   const firstIncompleteStep = useMemo((): WorkflowStep | null => {
     if (!workflowProgress) return 'mybusiness';
@@ -61,6 +65,7 @@ export const useOnboarding = (workflowProgress?: WorkflowProgress) => {
     isLoaded,
     completeOnboarding,
     resetOnboarding,
+    showOnboardingAgain,
     firstIncompleteStep,
     completedStepCount,
   };
