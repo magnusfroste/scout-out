@@ -74,8 +74,8 @@ const IntroductionTab: React.FC<IntroductionTabProps> = ({
       <div className="flex justify-between items-center mt-4">
         <div className="text-sm text-muted-foreground">
           {flags.emailModuleEnabled 
-            ? "Denna introduktion används i ditt email till företaget."
-            : "Kopiera texten och klistra in i Hubspot."
+            ? "This introduction is used in your email to the company."
+            : "Copy the text and paste it in Hubspot."
           }
         </div>
         <div className="flex space-x-2">

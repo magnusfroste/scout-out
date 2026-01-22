@@ -16,25 +16,25 @@ const CompanySearchesEmptyState: React.FC<CompanySearchesEmptyStateProps> = ({
       <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
         <Search className="h-8 w-8 text-primary" />
       </div>
-      <h3 className="text-xl font-semibold mb-2 text-center">Inga företag analyserade ännu</h3>
+      <h3 className="text-xl font-semibold mb-2 text-center">No companies analyzed yet</h3>
       <p className="text-muted-foreground text-center max-w-md mb-6">
-        Börja med att söka efter ett företag i Research-fliken. Dina analyserade företag visas här för vidare bearbetning.
+        Start by searching for a company in the Research tab. Your analyzed companies will appear here for further processing.
       </p>
       
       <div className="flex flex-col sm:flex-row gap-3">
         {onNavigateToSearch && (
           <Button onClick={onNavigateToSearch} size="lg">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Gå till Research
+            Go to Research
           </Button>
         )}
         <Button variant="outline" onClick={onRefresh} size="lg">
-          Uppdatera
+          Refresh
         </Button>
       </div>
       
       <p className="text-xs text-muted-foreground mt-6 text-center max-w-sm">
-        Tips: Ju fler frågor du har definierat, desto bättre research får du om varje företag.
+        Tip: The more questions you have defined, the better research you get on each company.
       </p>
     </div>
   );

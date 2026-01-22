@@ -18,13 +18,13 @@ const FeatureToggles: React.FC = () => {
     
     if (success) {
       toast({
-        title: "Inställning uppdaterad",
-        description: `${key === 'email_module_enabled' ? 'Email-modul' : 'Composio MCP'} är nu ${!currentValue ? 'aktiverad' : 'inaktiverad'}.`,
+        title: "Setting updated",
+        description: `${key === 'email_module_enabled' ? 'Email module' : 'Composio MCP'} is now ${!currentValue ? 'enabled' : 'disabled'}.`,
       });
     } else {
       toast({
-        title: "Fel",
-        description: "Kunde inte uppdatera inställningen.",
+        title: "Error",
+        description: "Could not update setting.",
         variant: "destructive"
       });
     }
@@ -45,7 +45,7 @@ const FeatureToggles: React.FC = () => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Dessa inställningar påverkar alla användare. När en modul är avstängd visas alternativa funktioner (t.ex. copy-paste för email).
+          These settings affect all users. When a module is disabled, alternative features are shown (e.g., copy-paste for email).
         </AlertDescription>
       </Alert>
 
@@ -60,10 +60,10 @@ const FeatureToggles: React.FC = () => {
                 </div>
                 <div>
                   <Label htmlFor="email-toggle" className="text-base font-medium">
-                    Email-modul
+                    Email Module
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Aktiverar email-integration, OAuth och SendEmailButton
+                    Enables email integration, OAuth and SendEmailButton
                   </p>
                 </div>
               </div>
@@ -81,7 +81,7 @@ const FeatureToggles: React.FC = () => {
             </div>
             {!flags.emailModuleEnabled && (
               <div className="mt-3 text-xs text-muted-foreground bg-muted rounded p-2">
-                När avstängd: Användare ser copy-paste-knappar istället för "Skicka email"-knappen.
+                When disabled: Users see copy-paste buttons instead of "Send email" button.
               </div>
             )}
           </CardContent>
@@ -100,7 +100,7 @@ const FeatureToggles: React.FC = () => {
                     Composio MCP
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Aktiverar Composio MCP-integration och testverktyg
+                    Enables Composio MCP integration and test tools
                   </p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ const FeatureToggles: React.FC = () => {
             </div>
             {!flags.composioMcpEnabled && (
               <div className="mt-3 text-xs text-muted-foreground bg-muted rounded p-2">
-                När avstängd: MCP Testing-fliken döljs från admin-inställningar.
+                When disabled: MCP Testing tab is hidden from admin settings.
               </div>
             )}
           </CardContent>

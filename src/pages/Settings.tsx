@@ -20,7 +20,7 @@ const Settings = () => {
         <Navigation />
         <main className="flex-grow container mx-auto px-4 py-8">
           <div className="flex justify-center items-center h-full">
-            <div className="animate-pulse text-muted-foreground">Laddar inställningar...</div>
+            <div className="animate-pulse text-muted-foreground">Loading settings...</div>
           </div>
         </main>
         <Footer />
@@ -38,8 +38,8 @@ const Settings = () => {
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Inställningar</h1>
-          <p className="text-muted-foreground mb-8">Hantera dina personliga inställningar</p>
+          <h1 className="text-3xl font-bold mb-2">Settings</h1>
+          <p className="text-muted-foreground mb-8">Manage your personal settings</p>
           
           <div className="space-y-6">
             {flags.emailModuleEnabled ? (
@@ -47,7 +47,7 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="h-5 w-5" />
-                    Email-integration
+                    Email Integration
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -59,15 +59,15 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="h-5 w-5" />
-                    Email (Inaktiverad)
+                    Email (Disabled)
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      Email-modulen är för närvarande inaktiverad. 
-                      Använd copy-paste för att skicka mail via Hubspot.
+                      The email module is currently disabled. 
+                      Use copy-paste to send emails via Hubspot.
                     </AlertDescription>
                   </Alert>
                   <HubspotLogging />
