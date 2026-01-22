@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SendEmailButton from '../../dashboard/SendEmailButton';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface IntroductionTabProps {
   companyId: string;
@@ -32,6 +32,7 @@ const IntroductionTab: React.FC<IntroductionTabProps> = ({
 }) => {
   const [copyToastShown, setCopyToastShown] = React.useState(false);
   const { toast } = useToast();
+  const { flags } = useFeatureFlags();
 
   const handleIntroductionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     onIntroductionChange(event.target.value);
@@ -72,7 +73,10 @@ const IntroductionTab: React.FC<IntroductionTabProps> = ({
       
       <div className="flex justify-between items-center mt-4">
         <div className="text-sm text-muted-foreground">
-          This introduction will be used in your email to the company.
+          {flags.emailModuleEnabled 
+            ? "Denna introduktion används i ditt email till företaget."
+            : "Kopiera texten och klistra in i Hubspot."
+          }
         </div>
         <div className="flex space-x-2">
           <Button
@@ -82,10 +86,10 @@ const IntroductionTab: React.FC<IntroductionTabProps> = ({
             disabled={!displayIntroduction}
           >
             <Copy className="mr-2 h-4 w-4" />
-            Copy
+            Kopiera
           </Button>
           
-          {companyEmail && (
+          {flags.emailModuleEnabled && companyEmail && (
             <SendEmailButton 
               recipientEmail={companyEmail}
               recipientName={companyName}

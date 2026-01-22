@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const HubspotLogging = () => {
+const HubspotLogging = () => {
   const [hubspotBccAddress, setHubspotBccAddress] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
@@ -152,3 +152,5 @@ export const HubspotLogging = () => {
     </Card>
   );
 };
+
+export default HubspotLogging;
