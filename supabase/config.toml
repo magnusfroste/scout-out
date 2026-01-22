@@ -1,1 +1,55 @@
 project_id = "ekimzuhtvgeytijllovs"
+
+[functions.composio-connect-account]
+verify_jwt = false
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.create-user-mcp-server]
+verify_jwt = false
+
+[functions.get-or-create-mcp-connection]
+verify_jwt = false
+
+[functions.get-shared-client-id]
+verify_jwt = false
+
+[functions.get-webhook-secrets]
+verify_jwt = false
+
+[functions.o365-auth]
+verify_jwt = false
+
+[functions.o365-auth-refresh]
+verify_jwt = false
+
+[functions.o365-auth-shared]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-graph-email]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.test-composio-mcp]
+verify_jwt = false
+
+[functions.trigger-company-research-webhook]
+verify_jwt = false
+
+[functions.trigger-mybusiness-webhook]
+verify_jwt = false
+
+[functions.trigger-n8n-workflow]
+verify_jwt = false
+
+[functions.trigger-questions-webhook]
+verify_jwt = false
+
+[functions.trigger-value-proposition-webhook]
+verify_jwt = false
