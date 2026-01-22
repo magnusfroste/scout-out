@@ -163,9 +163,23 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     setMagicQuestions([]);
     setSelectedMagicQuestions([]);
     
-    // Flatten business_data - extract from elevator_pitch if nested
+    // Flatten and format business_data for n8n consumption
     const rawBusinessData = userProfile?.business_data as any;
-    const businessData = rawBusinessData?.elevator_pitch || rawBusinessData || null;
+    const elevatorPitch = rawBusinessData?.elevator_pitch || rawBusinessData || {};
+    
+    // Format data to match n8n prompt expectations
+    const businessData = {
+      company_name: elevatorPitch.company_name || '',
+      about_us: elevatorPitch.about || '',
+      services: Array.isArray(elevatorPitch.services) 
+        ? elevatorPitch.services.map((s: any) => `${s.name}: ${s.description}`).join('\n')
+        : '',
+      delivered_value: elevatorPitch.value_proposition || '',
+      clients: Array.isArray(elevatorPitch.clients) 
+        ? elevatorPitch.clients.join(', ')
+        : ''
+    };
+    
     const newRequestBody = { url: websiteUrl, businessData };
     setRequestBody(newRequestBody);
 
