@@ -163,11 +163,14 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     setMagicQuestions([]);
     setSelectedMagicQuestions([]);
     
-    const newRequestBody = { url: websiteUrl };
+    // Include business_data from step 1 so n8n can use it directly
+    const businessData = userProfile?.business_data || null;
+    const newRequestBody = { url: websiteUrl, businessData };
     setRequestBody(newRequestBody);
 
     try {
-      const questions = await fetchQuestionsFromWebhook(websiteUrl);
+      // Pass business data to avoid duplicate Jina Reader calls in n8n
+      const questions = await fetchQuestionsFromWebhook(websiteUrl, businessData);
       
       if (questions && questions.length > 0) {
         setMagicQuestions(questions);

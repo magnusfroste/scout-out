@@ -89,6 +89,7 @@ Deno.serve(async (req) => {
     // Parse the request body once
     const requestData = await req.json();
     console.log('Request data:', requestData);
+    console.log('Business data included:', requestData.businessData ? 'yes' : 'no');
 
     // Get the webhook URL from Edge Function secrets
     const webhookUrl = Deno.env.get('QUESTIONS_WEBHOOK_URL');
