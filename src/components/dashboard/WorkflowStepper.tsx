@@ -24,15 +24,15 @@ interface WorkflowStepperProps {
 const setupSteps = [
   { 
     key: 'mybusiness' as WorkflowStep, 
-    label: 'Profil', 
+    label: 'Profile', 
     icon: Building, 
-    description: 'Beskriv ditt företag',
+    description: 'Describe your business',
   },
   { 
     key: 'questions' as WorkflowStep, 
-    label: 'Frågor', 
+    label: 'Questions', 
     icon: ListChecks, 
-    description: 'Kvalificeringsfrågor',
+    description: 'Qualification questions',
   },
 ];
 
@@ -41,13 +41,13 @@ const prospectingSteps = [
     key: 'search' as WorkflowStep, 
     label: 'Research', 
     icon: Search, 
-    description: 'Analysera prospekt',
+    description: 'Analyze prospects',
   },
   { 
     key: 'valueproposition' as WorkflowStep, 
-    label: 'Förslag', 
+    label: 'Proposal', 
     icon: Star, 
-    description: 'Skapa värdeförslag',
+    description: 'Create value proposition',
   },
 ];
 
@@ -137,11 +137,11 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                 {setupComplete ? (
                   <div className="flex items-center gap-1.5 text-primary">
                     <Check className="h-4 w-4" />
-                    <span className="text-xs font-medium">Setup klar</span>
+                    <span className="text-xs font-medium">Setup complete</span>
                   </div>
                 ) : (
                   <span className="text-xs font-medium text-muted-foreground">
-                    Fas 1: Setup (en gång)
+                    Phase 1: Setup (one-time)
                   </span>
                 )}
               </div>
@@ -186,7 +186,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                 <div className="flex items-center gap-2">
                   <RefreshCw className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground">
-                    Fas 2: Prospektera (upprepas)
+                    Phase 2: Prospect (repeatable)
                   </span>
                 </div>
                 
@@ -201,11 +201,11 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                         className="h-7 px-2 text-xs gap-1 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
                       >
                         <Plus className="h-3 w-3" />
-                        <span className="hidden sm:inline">Ny prospekt</span>
+                        <span className="hidden sm:inline">New prospect</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p>Starta research på ett nytt företag</p>
+                      <p>Start research on a new company</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -234,7 +234,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                 <div className="flex items-center gap-2 min-w-0">
                   <Sparkles className="h-4 w-4 text-primary shrink-0" />
                   <span className="text-sm truncate">
-                    <span className="text-muted-foreground">Skapa förslag för </span>
+                    <span className="text-muted-foreground">Create proposal for </span>
                     <span className="font-medium">{pendingProspect.companyName}</span>
                   </span>
                 </div>
@@ -243,7 +243,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                   onClick={() => onCreateProposal(pendingProspect.id)}
                   className="h-7 px-3 text-xs shrink-0"
                 >
-                  Skapa förslag
+                  Create proposal
                 </Button>
               </div>
             </div>
@@ -253,7 +253,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
           {!setupComplete && (
             <div className="mt-3 pt-3 border-t">
               <p className="text-xs text-muted-foreground text-center">
-                💡 Slutför din setup först – sen kan du researcha obegränsat antal prospekts!
+                💡 Complete your setup first – then you can research unlimited prospects!
               </p>
             </div>
           )}
