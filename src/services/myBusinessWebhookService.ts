@@ -5,109 +5,37 @@ import { supabase } from '@/integrations/supabase/client';
 export const callMyBusinessWebhook = async (webhookUrl: string, websiteUrl: string) => {
   try {
     console.log(`Calling MyBusiness webhook via Edge Function`);
-    console.log(`Original webhook URL (for reference only): ${webhookUrl}`);
     console.log(`With website URL: ${websiteUrl}`);
     
-    // Get the current user's session token for authentication
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
-    
-    if (!accessToken) {
-      throw new Error('Authentication required. Please sign in again.');
-    }
-    
-    // Call the Edge Function instead of the webhook directly
-    const edgeFunctionUrl = 'https://pqskutdrekcinpymvigm.supabase.co/functions/v1/trigger-mybusiness-webhook';
-    console.log(`Calling Edge Function URL: ${edgeFunctionUrl}`);
-    
-    const requestBody = { website: websiteUrl };
-    console.log(`Request body:`, requestBody);
-    
-    const response = await fetch(edgeFunctionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify(requestBody)
+    // Use supabase.functions.invoke which automatically handles the correct URL
+    const { data, error } = await supabase.functions.invoke('trigger-mybusiness-webhook', {
+      body: { website: websiteUrl }
     });
     
-    console.log(`Edge Function response status: ${response.status}`);
-    
-    // Check if the response is ok without consuming the body
-    if (!response.ok) {
-      let errorMessage = 'Service unavailable. Please try again later.';
-      
-      // Clone the response to avoid consuming the body stream
-      const errorResponse = response.clone();
-      
-      try {
-        const errorData = await errorResponse.json();
-        console.error('MyBusiness webhook error response:', errorData);
-        if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-        if (errorData.details) {
-          console.error('Error details:', errorData.details);
-          
-          // If the Edge Function couldn't reach the webhook, try direct call as fallback
-          if (errorData.message && errorData.message.includes('error sending request for url')) {
-            console.log('⚠️ Edge Function could not reach webhook. Attempting direct call as fallback...');
-            
-            // Make a direct call to the webhook as a fallback
-            const directResponse = await fetch(webhookUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ url: websiteUrl })
-            });
-            
-            if (directResponse.ok) {
-              console.log('✅ METHOD USED: Direct webhook call (fallback)');
-              return directResponse;
-            } else {
-              console.error('Direct webhook call also failed:', await directResponse.text());
-            }
-          }
-        }
-      } catch (e) {
-        console.error('MyBusiness webhook error (text):', await response.clone().text());
-      }
-      throw new Error(errorMessage);
+    if (error) {
+      console.error('Edge Function error:', error);
+      throw new Error(error.message || 'Service unavailable. Please try again later.');
     }
     
-    // Clone the response before using it
-    const responseClone = response.clone();
+    console.log('Edge Function response data:', data);
+    console.log('✅ METHOD USED: Edge Function via supabase.functions.invoke');
     
-    try {
-      // Check if the response has the expected format
-      const responseData = await response.json();
-      console.log('Edge Function response data:', responseData);
-      console.log('✅ METHOD USED: Edge Function');
-      
-      // If the Edge Function returns a nested response, extract the actual data
-      if (responseData.success && responseData.data) {
-        console.log('Extracting nested data from Edge Function response');
-        // Create a new response object with the nested data
-        return new Response(JSON.stringify(responseData.data), {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          status: 200
-        });
-      }
-      
-      // If the response doesn't have the expected format, return the cloned response
-      return responseClone;
-    } catch (parseError) {
-      console.error('Error parsing JSON response:', parseError);
-      // If JSON parsing fails, return the cloned response
-      return responseClone;
+    // If the Edge Function returns a nested response, extract the actual data
+    if (data?.success && data?.data) {
+      console.log('Extracting nested data from Edge Function response');
+      return new Response(JSON.stringify(data.data), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200
+      });
     }
+    
+    // Return the data as a Response object
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200
+    });
   } catch (error) {
     console.error('Error in callMyBusinessWebhook:', error);
-    // Let the calling component handle the toast to provide a better user experience
     throw error;
   }
 };
