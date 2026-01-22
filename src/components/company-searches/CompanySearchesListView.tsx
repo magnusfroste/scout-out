@@ -118,7 +118,7 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                     {search.company_name}
                     {index === 0 && (
                       <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 font-medium">
-                        NY
+                        NEW
                       </Badge>
                     )}
                   </div>
