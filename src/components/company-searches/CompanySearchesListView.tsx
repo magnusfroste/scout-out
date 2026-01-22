@@ -4,6 +4,7 @@ import { CompanySearch } from '@/hooks/useCompanySearches';
 import Button from '@/components/Button';
 import { Loader2, Trash2, Star, ChevronDown, ChevronRight, ChevronLeft, ExternalLink, Mail, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -91,7 +92,7 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {searches.map((search) => (
+          {searches.map((search, index) => (
             <React.Fragment key={search.id}>
               <TableRow 
                 className="hover:bg-muted/50 transition-colors cursor-pointer group"
@@ -112,7 +113,16 @@ const CompanySearchesListView: React.FC<CompanySearchesListViewProps> = ({
                     )}
                   </TableCell>
                 )}
-                <TableCell className="font-medium">{search.company_name}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {search.company_name}
+                    {index === 0 && (
+                      <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 font-medium">
+                        NY
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
                   {formatDate(search.created_at)}
                 </TableCell>
