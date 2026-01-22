@@ -12,13 +12,23 @@ export type { QuestionResponse } from '@/models/question';
 
 /**
  * Fetches questions from the questions webhook via Supabase Edge Function
+ * @param websiteUrl - The URL of the user's website
+ * @param businessData - Optional business data from My Business step (elevator pitch, services, etc.)
  */
-export const fetchQuestionsFromWebhook = async (websiteUrl: string): Promise<QuestionResponse[] | null> => {
+export const fetchQuestionsFromWebhook = async (
+  websiteUrl: string, 
+  businessData?: any
+): Promise<QuestionResponse[] | null> => {
   try {
     console.log('Fetching questions via edge function for:', websiteUrl);
+    console.log('Including business data:', businessData ? 'yes' : 'no');
 
     const { data, error } = await supabase.functions.invoke('trigger-questions-webhook', {
-      body: { websiteUrl }
+      body: { 
+        websiteUrl,
+        // Include business data from step 1 so n8n doesn't need to re-fetch
+        businessData: businessData || null
+      }
     });
 
     if (error) {
