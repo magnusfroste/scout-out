@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,9 @@ import IntroductionTab from './value-proposition/IntroductionTab';
 import SubjectTab from './value-proposition/SubjectTab';
 import MagicValuePropositionButton from './MagicValuePropositionButton';
 import SendEmailButton from '../dashboard/SendEmailButton';
+import CopyAllSection from './value-proposition/CopyAllSection';
 import { Copy, CheckCircle } from 'lucide-react';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface ValuePropositionSectionProps {
   companyId: string;
@@ -48,6 +49,7 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>('introduction');
   const [justCopied, setJustCopied] = useState(false);
+  const { flags } = useFeatureFlags();
   
   const handleCopy = () => {
     setJustCopied(true);
@@ -85,35 +87,39 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
         <h3 className="text-lg font-medium">Value Proposition</h3>
         
         <div className="flex gap-2">
-          <Button
-            onClick={handleCopy}
-            size="sm"
-            variant="secondary"
-          >
-            {justCopied ? (
-              <>
-                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="mr-2 h-4 w-4" />
-                Copy
-              </>
-            )}
-          </Button>
-          
-          {companyEmail && (
-            <SendEmailButton 
-              recipientEmail={companyEmail}
-              recipientName={null}
-              subject={displaySubject}
-              content={displayIntroduction}
-              disabled={!displayIntroduction || !displaySubject}
-              companyId={companyId}
-              onEmailSent={handleEmailSent}
-            />
-          )}
+          {flags.emailModuleEnabled ? (
+            <>
+              <Button
+                onClick={handleCopy}
+                size="sm"
+                variant="secondary"
+              >
+                {justCopied ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                    Kopierat!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Kopiera
+                  </>
+                )}
+              </Button>
+              
+              {companyEmail && (
+                <SendEmailButton 
+                  recipientEmail={companyEmail}
+                  recipientName={null}
+                  subject={displaySubject}
+                  content={displayIntroduction}
+                  disabled={!displayIntroduction || !displaySubject}
+                  companyId={companyId}
+                  onEmailSent={handleEmailSent}
+                />
+              )}
+            </>
+          ) : null}
           
           <MagicValuePropositionButton 
             companyId={companyId}
@@ -122,6 +128,16 @@ const ValuePropositionSection: React.FC<ValuePropositionSectionProps> = ({
           />
         </div>
       </div>
+      
+      {/* Show CopyAllSection when email module is disabled */}
+      {!flags.emailModuleEnabled && (
+        <CopyAllSection
+          recipientEmail={companyEmail}
+          recipientName={companyName}
+          subject={displaySubject}
+          introduction={displayIntroduction}
+        />
+      )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">

@@ -7,11 +7,15 @@ import EmailSettings from '@/components/dashboard/EmailSettings';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, Mail } from 'lucide-react';
 import ComposioMCPTest from '@/components/dashboard/ComposioMCPTest';
+import FeatureToggles from '@/components/dashboard/FeatureToggles';
+import HubspotLogging from '@/components/dashboard/email-settings/HubspotLogging';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 const Settings = () => {
   const { user, loading, userProfile } = useAuth();
+  const { flags, loading: flagsLoading } = useFeatureFlags();
 
   if (loading) {
     return (
@@ -42,25 +46,61 @@ const Settings = () => {
           
           <Tabs defaultValue="user">
             <TabsList className="mb-6">
-              <TabsTrigger value="user">User Settings</TabsTrigger>
+              <TabsTrigger value="user">Användarinställningar</TabsTrigger>
               {userProfile?.is_admin && (
-                <TabsTrigger value="admin">Admin Settings</TabsTrigger>
+                <TabsTrigger value="features">Funktioner</TabsTrigger>
               )}
               {userProfile?.is_admin && (
+                <TabsTrigger value="admin">Admin</TabsTrigger>
+              )}
+              {userProfile?.is_admin && flags.composioMcpEnabled && (
                 <TabsTrigger value="mcp-test">MCP Testing</TabsTrigger>
               )}
             </TabsList>
             
             <TabsContent value="user" className="space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Email Integration</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <EmailSettings />
-                </CardContent>
-              </Card>
+              {flags.emailModuleEnabled ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Email Integration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <EmailSettings />
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Email (Inaktiverad)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Email-modulen är för närvarande inaktiverad. Använd copy-paste för att skicka mail via Hubspot.
+                      </AlertDescription>
+                    </Alert>
+                    <HubspotLogging />
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
+            
+            {userProfile?.is_admin && (
+              <TabsContent value="features" className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Funktions-toggles</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FeatureToggles />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
             
             {userProfile?.is_admin && (
               <TabsContent value="admin" className="space-y-8">
@@ -99,7 +139,7 @@ const Settings = () => {
               </TabsContent>
             )}
             
-            {userProfile?.is_admin && (
+            {userProfile?.is_admin && flags.composioMcpEnabled && (
               <TabsContent value="mcp-test" className="space-y-8">
                 <Card>
                   <CardHeader>
