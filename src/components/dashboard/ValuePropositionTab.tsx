@@ -8,16 +8,25 @@ import GenerateAllButton from './value-proposition/GenerateAllButton';
 import { filterAndSortSearches } from './value-proposition/utils';
 import { useValuePropositionGenerator } from './value-proposition/ValuePropositionGenerator';
 
-const ValuePropositionTab = () => {
+interface ValuePropositionTabProps {
+  onDataChange?: () => void;
+}
+
+const ValuePropositionTab: React.FC<ValuePropositionTabProps> = ({ onDataChange }) => {
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('newest');
   const { searches, isLoading, isDeleting, handleDeleteSearch, fetchSearches } = useCompanySearches();
 
+  const handleSuccess = () => {
+    fetchSearches();
+    onDataChange?.(); // Notify parent to refresh its state
+  };
+
   const { generateAllPropositions } = useValuePropositionGenerator({
     onGenerateStart: () => setIsGeneratingAll(true),
     onGenerateEnd: () => setIsGeneratingAll(false),
-    onSuccess: fetchSearches
+    onSuccess: handleSuccess
   });
 
   const filteredAndSortedSearches = React.useMemo(() => 

@@ -310,7 +310,7 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="valueproposition">
-              <ValuePropositionTab />
+              <ValuePropositionTab onDataChange={fetchSearches} />
             </TabsContent>
           </Tabs>
         </div>
