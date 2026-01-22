@@ -80,8 +80,8 @@ const Dashboard = () => {
         setShowConfetti(true);
         localStorage.setItem(CELEBRATION_KEY, 'true');
         toast({
-          title: "🎉 Gratulerar!",
-          description: "Du har slutfört alla steg i workflowet!",
+          title: "🎉 Congratulations!",
+          description: "You have completed all steps in the workflow!",
         });
       }
     }

@@ -68,7 +68,7 @@ const Admin = () => {
         <Navigation />
         <main className="flex-grow container mx-auto px-4 py-8">
           <div className="flex justify-center items-center h-full">
-            <div className="animate-pulse text-muted-foreground">Laddar...</div>
+            <div className="animate-pulse text-muted-foreground">Loading...</div>
           </div>
         </main>
         <Footer />
@@ -91,11 +91,11 @@ const Admin = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">Admin</h1>
-          <p className="text-muted-foreground mb-8">Hantera applikationsinställningar och moduler</p>
+          <p className="text-muted-foreground mb-8">Manage application settings and modules</p>
           
           <Tabs defaultValue="modules">
             <TabsList className="mb-6">
-              <TabsTrigger value="modules">Moduler</TabsTrigger>
+              <TabsTrigger value="modules">Modules</TabsTrigger>
               <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
               {flags.composioMcpEnabled && (
                 <TabsTrigger value="mcp-test">MCP Testing</TabsTrigger>
@@ -105,7 +105,7 @@ const Admin = () => {
             <TabsContent value="modules" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Funktionsmoduler</CardTitle>
+                  <CardTitle>Feature Modules</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <FeatureToggles />
@@ -128,7 +128,7 @@ const Admin = () => {
                     ) : (
                       <RefreshCw className="h-4 w-4" />
                     )}
-                    <span className="ml-2">Uppdatera</span>
+                    <span className="ml-2">Refresh</span>
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">

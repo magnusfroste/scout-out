@@ -26,28 +26,28 @@ interface OnboardingModalProps {
 const getWelcomeContent = (completedCount: number, firstIncomplete: WorkflowStep | null) => {
   if (completedCount === 0) {
     return {
-      title: 'Välkommen till ditt Research Workflow!',
-      description: 'Låt oss guida dig genom de fyra stegen för att hitta och engagera potentiella kunder på ett smartare sätt.',
+      title: 'Welcome to your Research Workflow!',
+      description: 'Let us guide you through the four steps to find and engage potential customers in a smarter way.',
     };
   }
   
   if (completedCount === 4 || firstIncomplete === null) {
     return {
-      title: 'Bra jobbat! Alla steg är klara!',
-      description: 'Du har slutfört hela workflowen. Fortsätt att researcha fler företag och skapa värdeförslag.',
+      title: 'Great job! All steps complete!',
+      description: 'You have completed the entire workflow. Continue researching more companies and creating value propositions.',
     };
   }
   
   const stepNames: Record<WorkflowStep, string> = {
-    mybusiness: 'företagsprofilen',
-    questions: 'frågorna',
-    search: 'företagsresearch',
-    valueproposition: 'värdeförslagen',
+    mybusiness: 'business profile',
+    questions: 'questions',
+    search: 'company research',
+    valueproposition: 'value propositions',
   };
   
   return {
-    title: `Välkommen tillbaka! ${completedCount}/4 steg klara`,
-    description: `Du är på god väg! Fortsätt med ${stepNames[firstIncomplete]} för att komma vidare.`,
+    title: `Welcome back! ${completedCount}/4 steps complete`,
+    description: `You're on the right track! Continue with ${stepNames[firstIncomplete]} to move forward.`,
   };
 };
 
@@ -55,26 +55,26 @@ const workflowSteps = [
   {
     key: 'mybusiness' as WorkflowStep,
     icon: Building,
-    title: 'Steg 1: Skapa din företagsprofil',
-    description: 'Berätta om ditt företag så att vår AI kan skapa relevanta forskningsfrågor och anpassade värdeförslag.',
+    title: 'Step 1: Create your business profile',
+    description: 'Tell us about your business so our AI can create relevant research questions and tailored value propositions.',
   },
   {
     key: 'questions' as WorkflowStep,
     icon: ListChecks,
-    title: 'Steg 2: Hantera dina frågor',
-    description: 'Skapa eller generera automatiskt frågor som hjälper dig förstå potentiella kunders behov.',
+    title: 'Step 2: Manage your questions',
+    description: 'Create or automatically generate questions that help you understand potential customers\' needs.',
   },
   {
     key: 'search' as WorkflowStep,
     icon: Search,
-    title: 'Steg 3: Researcha företag',
-    description: 'Sök efter företag och låt vår AI analysera dem baserat på dina frågor för att identifiera möjligheter.',
+    title: 'Step 3: Research companies',
+    description: 'Search for companies and let our AI analyze them based on your questions to identify opportunities.',
   },
   {
     key: 'valueproposition' as WorkflowStep,
     icon: Star,
-    title: 'Steg 4: Skapa värdeförslag',
-    description: 'Generera personliga värdeförslag och förbered din approach till potentiella kunder.',
+    title: 'Step 4: Create value propositions',
+    description: 'Generate personalized value propositions and prepare your approach to potential customers.',
   },
 ];
 
@@ -158,7 +158,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-muted/50 text-muted-foreground border-muted hover:border-primary/50'
                   )}
-                  title={`Gå till ${step.title}`}
+                  title={`Go to ${step.title}`}
                 >
                   {stepCompletion[index] ? (
                     <Check className="h-5 w-5" />
@@ -182,10 +182,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               onClick={handleSkip}
               className="text-muted-foreground"
             >
-              Hoppa över
+              Skip
             </Button>
             <Button onClick={handleNext} className="gap-2">
-              Visa stegen
+              Show steps
               <ArrowRight className="h-4 w-4" />
             </Button>
           </DialogFooter>
@@ -220,7 +220,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </DialogTitle>
           <DialogDescription className="text-base pt-2">
             {isStepComplete 
-              ? 'Du har slutfört detta steg! Klicka för att fortsätta eller revidera.'
+              ? 'You have completed this step! Click to continue or revise.'
               : currentStepData.description
             }
           </DialogDescription>
@@ -280,23 +280,23 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             onClick={handleSkip}
             className="text-muted-foreground"
           >
-            Hoppa över
+            Skip
           </Button>
           <div className="flex gap-2">
             <Button 
               variant="outline"
               onClick={() => handleStartAtStep(currentStepData.key)}
             >
-              Gå hit
+              Go here
             </Button>
             <Button onClick={handleNext} className="gap-2">
               {currentStep < totalSteps - 1 ? (
                 <>
-                  Nästa
+                  Next
                   <ArrowRight className="h-4 w-4" />
                 </>
               ) : (
-                'Kom igång!'
+                'Get started!'
               )}
             </Button>
           </div>

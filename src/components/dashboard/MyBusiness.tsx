@@ -424,12 +424,12 @@ const MyBusiness = () => {
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Globe className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-xl font-semibold mb-2 text-center">Skapa din företagsprofil</h3>
+          <h3 className="text-xl font-semibold mb-2 text-center">Create your business profile</h3>
           <p className="text-muted-foreground text-center max-w-md mb-6">
-            Ange din webbadress ovan och klicka på "Generera Profil" för att skapa en profil som hjälper AI:n förstå ditt företag och skapa bättre värdeerbjudanden.
+            Enter your website URL above and click "Generate Profile" to create a profile that helps our AI understand your business and create better value propositions.
           </p>
           <p className="text-xs text-muted-foreground text-center max-w-sm">
-            Tips: Din företagsprofil används för att skapa personliga och relevanta värdeerbjudanden till potentiella kunder.
+            Tip: Your business profile is used to create personalized and relevant value propositions for potential customers.
           </p>
         </div>
       );

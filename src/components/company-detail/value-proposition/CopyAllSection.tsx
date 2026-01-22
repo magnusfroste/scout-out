@@ -23,8 +23,8 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
   const handleCopy = async (text: string, fieldName: string) => {
     if (!text) {
       toast({
-        title: "Inget att kopiera",
-        description: `${fieldName} är tomt.`,
+        title: "Nothing to copy",
+        description: `${fieldName} is empty.`,
         variant: "destructive"
       });
       return;
@@ -34,15 +34,15 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
       await navigator.clipboard.writeText(text);
       setCopiedField(fieldName);
       toast({
-        title: "Kopierat!",
-        description: `${fieldName} kopierad till urklipp.`,
+        title: "Copied!",
+        description: `${fieldName} copied to clipboard.`,
       });
       setTimeout(() => setCopiedField(null), 2000);
     } catch (error) {
       console.error('Copy failed:', error);
       toast({
-        title: "Kopieringsfel",
-        description: "Kunde inte kopiera till urklipp.",
+        title: "Copy error",
+        description: "Could not copy to clipboard.",
         variant: "destructive"
       });
     }
@@ -50,8 +50,8 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
 
   const handleCopyAll = async () => {
     const allText = [
-      recipientEmail ? `Till: ${recipientEmail}` : '',
-      `Ämne: ${subject}`,
+      recipientEmail ? `To: ${recipientEmail}` : '',
+      `Subject: ${subject}`,
       '',
       introduction
     ].filter(Boolean).join('\n');
@@ -60,15 +60,15 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
       await navigator.clipboard.writeText(allText);
       setCopiedField('all');
       toast({
-        title: "Allt kopierat!",
-        description: "All information kopierad till urklipp.",
+        title: "All copied!",
+        description: "All information copied to clipboard.",
       });
       setTimeout(() => setCopiedField(null), 2000);
     } catch (error) {
       console.error('Copy all failed:', error);
       toast({
-        title: "Kopieringsfel",
-        description: "Kunde inte kopiera till urklipp.",
+        title: "Copy error",
+        description: "Could not copy to clipboard.",
         variant: "destructive"
       });
     }
@@ -103,7 +103,7 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
       <CardContent className="pt-4 space-y-4">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Mail className="h-4 w-4" />
-          <span>Kopiera för Hubspot</span>
+          <span>Copy for Hubspot</span>
         </div>
 
         {/* Recipient */}
@@ -111,14 +111,14 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground w-16 shrink-0">
               <User className="h-4 w-4" />
-              <span>Till:</span>
+              <span>To:</span>
             </div>
             <div className="flex-1 bg-background rounded px-3 py-2 text-sm font-mono truncate border">
               {recipientEmail}
             </div>
             <CopyButton 
-              onClick={() => handleCopy(recipientEmail, 'email')}
-              isCopied={copiedField === 'email'}
+              onClick={() => handleCopy(recipientEmail, 'Email')}
+              isCopied={copiedField === 'Email'}
             />
           </div>
         )}
@@ -127,14 +127,14 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground w-16 shrink-0">
             <FileText className="h-4 w-4" />
-            <span>Ämne:</span>
+            <span>Subject:</span>
           </div>
           <div className="flex-1 bg-background rounded px-3 py-2 text-sm truncate border">
-            {subject || <span className="text-muted-foreground italic">Inget ämne</span>}
+            {subject || <span className="text-muted-foreground italic">No subject</span>}
           </div>
           <CopyButton 
-            onClick={() => handleCopy(subject, 'ämne')}
-            isCopied={copiedField === 'ämne'}
+            onClick={() => handleCopy(subject, 'Subject')}
+            isCopied={copiedField === 'Subject'}
             disabled={!subject}
           />
         </div>
@@ -144,11 +144,11 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <FileText className="h-4 w-4" />
-              <span>Brödtext:</span>
+              <span>Body:</span>
             </div>
             <CopyButton 
-              onClick={() => handleCopy(introduction, 'brödtext')}
-              isCopied={copiedField === 'brödtext'}
+              onClick={() => handleCopy(introduction, 'Body')}
+              isCopied={copiedField === 'Body'}
               disabled={!introduction}
             />
           </div>
@@ -156,7 +156,7 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
             {introduction ? (
               <p className="line-clamp-3 text-muted-foreground">{introduction}</p>
             ) : (
-              <span className="text-muted-foreground italic">Ingen brödtext</span>
+              <span className="text-muted-foreground italic">No body text</span>
             )}
           </div>
         </div>
@@ -171,19 +171,19 @@ const CopyAllSection: React.FC<CopyAllSectionProps> = ({
           {copiedField === 'all' ? (
             <>
               <Check className="mr-2 h-4 w-4 text-green-500" />
-              Kopierat!
+              Copied!
             </>
           ) : (
             <>
               <Copy className="mr-2 h-4 w-4" />
-              Kopiera allt
+              Copy all
             </>
           )}
         </Button>
 
         {/* Hubspot tip */}
         <div className="text-xs text-muted-foreground bg-background/50 rounded p-3 border border-dashed">
-          💡 <strong>Tips:</strong> Klistra in i Hubspot och glöm inte att BCC:a din Hubspot-adress för automatisk loggning.
+          💡 <strong>Tip:</strong> Paste in Hubspot and don't forget to BCC your Hubspot address for automatic logging.
         </div>
       </CardContent>
     </Card>
