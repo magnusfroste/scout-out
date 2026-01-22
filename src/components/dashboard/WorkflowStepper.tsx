@@ -1,9 +1,14 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Check, Building, ListChecks, Search, Star, RefreshCw, Plus } from 'lucide-react';
+import { Check, Building, ListChecks, Search, Star, RefreshCw, Plus, Sparkles } from 'lucide-react';
 import { WorkflowStep } from '@/hooks/useOnboarding';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+
+interface PendingProspect {
+  id: string;
+  companyName: string;
+}
 
 interface WorkflowStepperProps {
   businessProfileComplete: boolean;
@@ -12,6 +17,8 @@ interface WorkflowStepperProps {
   valuePropositionComplete: boolean;
   activeStep: WorkflowStep;
   onStepClick: (step: WorkflowStep) => void;
+  pendingProspect?: PendingProspect | null;
+  onCreateProposal?: (prospectId: string) => void;
 }
 
 const setupSteps = [
@@ -51,6 +58,8 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
   valuePropositionComplete,
   activeStep,
   onStepClick,
+  pendingProspect,
+  onCreateProposal,
 }) => {
   const setupComplete = businessProfileComplete && questionsComplete;
   const setupCompletion = [businessProfileComplete, questionsComplete];
@@ -217,6 +226,28 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Pending prospect quick action */}
+          {setupComplete && pendingProspect && onCreateProposal && (
+            <div className="mt-3 pt-3 border-t">
+              <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-accent/50">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-sm truncate">
+                    <span className="text-muted-foreground">Skapa förslag för </span>
+                    <span className="font-medium">{pendingProspect.companyName}</span>
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => onCreateProposal(pendingProspect.id)}
+                  className="h-7 px-3 text-xs shrink-0"
+                >
+                  Skapa förslag
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Current step hint - only show if setup not complete */}
           {!setupComplete && (

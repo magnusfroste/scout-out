@@ -50,6 +50,12 @@ const Dashboard = () => {
   const researchComplete = searches.length > 0;
   const valuePropositionComplete = searches.some(s => s.introduction || s.subject || s.advice);
 
+  // Find latest research without value proposition
+  const pendingProspect = React.useMemo(() => {
+    const pending = searches.find(s => s.result && !(s.introduction || s.subject || s.advice));
+    return pending ? { id: pending.id, companyName: pending.company_name } : null;
+  }, [searches]);
+
   const workflowProgress = {
     businessProfileComplete,
     questionsComplete,
@@ -277,6 +283,11 @@ const Dashboard = () => {
               valuePropositionComplete={valuePropositionComplete}
               activeStep={activeTab as WorkflowStep}
               onStepClick={handleTabChange}
+              pendingProspect={pendingProspect}
+              onCreateProposal={(prospectId) => {
+                setActiveTab('valueproposition');
+                // The ValuePropositionTab will handle showing the company
+              }}
             />
           </div>
           
