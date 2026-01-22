@@ -163,8 +163,9 @@ const QuestionManager: React.FC<QuestionManagerProps> = ({ questions, setQuestio
     setMagicQuestions([]);
     setSelectedMagicQuestions([]);
     
-    // Include business_data from step 1 so n8n can use it directly
-    const businessData = userProfile?.business_data || null;
+    // Flatten business_data - extract from elevator_pitch if nested
+    const rawBusinessData = userProfile?.business_data as any;
+    const businessData = rawBusinessData?.elevator_pitch || rawBusinessData || null;
     const newRequestBody = { url: websiteUrl, businessData };
     setRequestBody(newRequestBody);
 
