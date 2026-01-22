@@ -17,11 +17,11 @@ const logEnvironmentVariables = () => {
   try {
     // Check for specific environment variables without using keys()
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY');
     const webhookUrl = Deno.env.get('QUESTIONS_WEBHOOK_URL');
     
     console.log("SUPABASE_URL available:", !!supabaseUrl);
-    console.log("SUPABASE_ANON_KEY available:", !!supabaseAnonKey);
+    console.log("SUPABASE_ANON_KEY/PUBLISHABLE_KEY available:", !!supabaseAnonKey);
     console.log("QUESTIONS_WEBHOOK_URL available:", !!webhookUrl);
   } catch (error) {
     console.error("Error checking environment variables:", error.message);
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
 
     // Create a Supabase client with the user's JWT
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || '';
     
     console.log("Supabase URL available:", !!supabaseUrl);
     console.log("Supabase Anon Key available:", !!supabaseAnonKey);
