@@ -16,13 +16,13 @@ interface DashboardHeaderProps {
 const getNextStepMessage = (step: WorkflowStep | null): string => {
   switch (step) {
     case 'mybusiness':
-      return 'Skapa din företagsprofil';
+      return 'Create your business profile';
     case 'questions':
-      return 'Lägg till frågor för research';
+      return 'Add questions for research';
     case 'search':
-      return 'Sök efter ett företag';
+      return 'Search for a company';
     case 'valueproposition':
-      return 'Generera värdeproposition';
+      return 'Generate value proposition';
     default:
       return '';
   }
@@ -35,7 +35,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   completedStepCount,
   onShowHelp,
 }) => {
-  const greeting = firstName ? `Hej, ${firstName}!` : 'Välkommen!';
+  const greeting = firstName ? `Hi, ${firstName}!` : 'Welcome!';
   const isAllComplete = completedStepCount === 4;
   const nextStepMessage = getNextStepMessage(firstIncompleteStep);
 
@@ -46,9 +46,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <h1 className="text-2xl sm:text-3xl font-bold">{greeting}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isAllComplete ? (
-              <span className="text-primary font-medium">🎉 Alla steg klara!</span>
+              <span className="text-primary font-medium">🎉 All steps complete!</span>
             ) : (
-              <>Nästa: {nextStepMessage}</>
+              <>Next: {nextStepMessage}</>
             )}
           </p>
         </div>
@@ -65,7 +65,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Visa introduktion</p>
+              <p>Show introduction</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
