@@ -1,8 +1,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Check, Building, ListChecks, Search, Star, RefreshCw } from 'lucide-react';
+import { Check, Building, ListChecks, Search, Star, RefreshCw, Plus } from 'lucide-react';
 import { WorkflowStep } from '@/hooks/useOnboarding';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 
 interface WorkflowStepperProps {
   businessProfileComplete: boolean;
@@ -172,11 +173,33 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                   ? "bg-muted/30 border border-transparent"
                   : "bg-muted/20 border border-transparent opacity-60"
             )}>
-              <div className="flex items-center gap-2 mb-2">
-                <RefreshCw className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  Fas 2: Prospektera (upprepas)
-                </span>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Fas 2: Prospektera (upprepas)
+                  </span>
+                </div>
+                
+                {/* New Prospect Button - only show when setup is complete */}
+                {setupComplete && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onStepClick('search')}
+                        className="h-7 px-2 text-xs gap-1 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
+                      >
+                        <Plus className="h-3 w-3" />
+                        <span className="hidden sm:inline">Ny prospekt</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Starta research på ett nytt företag</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
               
               <div className="flex items-center gap-1">
