@@ -112,12 +112,18 @@ const Navigation = () => {
               )}
               {/* Show settings link for all users */}
               <Link to="/settings" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
-                Settings
+                Inställningar
               </Link>
+              {/* Show admin link for admins only */}
+              {userProfile?.is_admin && (
+                <Link to="/admin" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
+                  Admin
+                </Link>
+              )}
               {/* Show profile link on non-profile pages */}
               {location.pathname !== '/profile' && (
                 <Link to="/profile" className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent">
-                  Profile
+                  Profil
                 </Link>
               )}
               
@@ -130,12 +136,12 @@ const Navigation = () => {
               </Avatar>
               
               <Button variant="outline" onClick={handleSignOut}>
-                Sign Out
+                Logga ut
               </Button>
             </>
           ) : (
             <Link to="/auth" className="inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4">
-              Sign In
+              Logga in
             </Link>
           )}
         </div>
