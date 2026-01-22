@@ -40,8 +40,30 @@ const CompanySearchesList = ({
   onBack
 }: CompanySearchesListProps) => {
   const [selectedSearchId, setSelectedSearchId] = useState<string | null>(null);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => {
+    // Auto-expand the latest search (first in list, sorted by newest)
+    if (searches.length > 0) {
+      return new Set([searches[0].id]);
+    }
+    return new Set();
+  });
   const [expandedTips, setExpandedTips] = useState(false);
+
+  // Update expanded rows when searches change (e.g., new research added)
+  useEffect(() => {
+    if (searches.length > 0) {
+      setExpandedRows(prev => {
+        // If the latest search is not yet expanded, add it
+        const latestId = searches[0].id;
+        if (!prev.has(latestId)) {
+          const newSet = new Set(prev);
+          newSet.add(latestId);
+          return newSet;
+        }
+        return prev;
+      });
+    }
+  }, [searches]);
 
   const handleToggleRow = (id: string) => {
     const newExpandedRows = new Set(expandedRows);
