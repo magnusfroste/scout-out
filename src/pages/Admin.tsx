@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
@@ -6,14 +6,61 @@ import Footer from '@/components/Footer';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, ExternalLink } from 'lucide-react';
+import { Info, ExternalLink, CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ComposioMCPTest from '@/components/dashboard/ComposioMCPTest';
 import FeatureToggles from '@/components/dashboard/FeatureToggles';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { supabase } from '@/integrations/supabase/client';
+
+interface WebhookSecrets {
+  MYBUSINESS_WEBHOOK_URL: string | null;
+  QUESTIONS_WEBHOOK_URL: string | null;
+  COMPANY_RESEARCH_WEBHOOK_URL: string | null;
+  VALUE_PROPOSITION_WEBHOOK_URL: string | null;
+}
 
 const Admin = () => {
   const { user, loading, userProfile } = useAuth();
   const { flags, loading: flagsLoading } = useFeatureFlags();
+  const [webhookSecrets, setWebhookSecrets] = useState<WebhookSecrets | null>(null);
+  const [secretsLoading, setSecretsLoading] = useState(false);
+  const [secretsError, setSecretsError] = useState<string | null>(null);
+
+  const fetchWebhookSecrets = async () => {
+    setSecretsLoading(true);
+    setSecretsError(null);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session');
+      }
+
+      const response = await supabase.functions.invoke('get-webhook-secrets', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      setWebhookSecrets(response.data.secrets);
+    } catch (error) {
+      console.error('Error fetching webhook secrets:', error);
+      setSecretsError('Kunde inte hämta webhook-URLer');
+    } finally {
+      setSecretsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userProfile?.is_admin) {
+      fetchWebhookSecrets();
+    }
+  }, [userProfile?.is_admin]);
 
   if (loading) {
     return (
@@ -68,8 +115,21 @@ const Admin = () => {
             
             <TabsContent value="webhooks" className="space-y-6">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>n8n Webhook URLs</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchWebhookSecrets}
+                    disabled={secretsLoading}
+                  >
+                    {secretsLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Uppdatera</span>
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Alert>
@@ -80,26 +140,41 @@ const Admin = () => {
                     </AlertDescription>
                   </Alert>
                   
+                  {secretsError && (
+                    <Alert variant="destructive">
+                      <XCircle className="h-4 w-4" />
+                      <AlertDescription>{secretsError}</AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div className="space-y-4 mt-4">
                     <WebhookUrlItem 
                       label="Step 1: My Business"
                       secretName="MYBUSINESS_WEBHOOK_URL"
                       description="Skickar företagsinformation för analys"
+                      maskedUrl={webhookSecrets?.MYBUSINESS_WEBHOOK_URL}
+                      isLoading={secretsLoading}
                     />
                     <WebhookUrlItem 
                       label="Step 2: Questions"
                       secretName="QUESTIONS_WEBHOOK_URL"
                       description="Genererar anpassade frågor baserat på företagsprofil"
+                      maskedUrl={webhookSecrets?.QUESTIONS_WEBHOOK_URL}
+                      isLoading={secretsLoading}
                     />
                     <WebhookUrlItem 
                       label="Step 3: Company Research"
                       secretName="COMPANY_RESEARCH_WEBHOOK_URL"
                       description="Utför research på målföretag"
+                      maskedUrl={webhookSecrets?.COMPANY_RESEARCH_WEBHOOK_URL}
+                      isLoading={secretsLoading}
                     />
                     <WebhookUrlItem 
                       label="Step 4: Value Proposition"
                       secretName="VALUE_PROPOSITION_WEBHOOK_URL"
                       description="Genererar value proposition och email-innehåll"
+                      maskedUrl={webhookSecrets?.VALUE_PROPOSITION_WEBHOOK_URL}
+                      isLoading={secretsLoading}
                     />
                   </div>
                   
@@ -143,16 +218,41 @@ interface WebhookUrlItemProps {
   label: string;
   secretName: string;
   description: string;
+  maskedUrl?: string | null;
+  isLoading?: boolean;
 }
 
-const WebhookUrlItem = ({ label, secretName, description }: WebhookUrlItemProps) => (
+const WebhookUrlItem = ({ label, secretName, description, maskedUrl, isLoading }: WebhookUrlItemProps) => (
   <div className="p-4 rounded-lg border bg-muted/30">
     <div className="flex items-start justify-between gap-4">
-      <div className="space-y-1">
-        <h4 className="font-medium">{label}</h4>
+      <div className="space-y-1 flex-1">
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium">{label}</h4>
+          {!isLoading && (
+            maskedUrl ? (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : (
+              <XCircle className="h-4 w-4 text-destructive" />
+            )
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">{description}</p>
+        <div className="mt-2">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Hämtar...</span>
+            </div>
+          ) : maskedUrl ? (
+            <code className="text-xs bg-muted px-2 py-1 rounded text-foreground/80 block truncate">
+              {maskedUrl}
+            </code>
+          ) : (
+            <span className="text-xs text-destructive">Ej konfigurerad</span>
+          )}
+        </div>
       </div>
-      <code className="text-xs bg-muted px-2 py-1 rounded shrink-0">
+      <code className="text-xs bg-muted px-2 py-1 rounded shrink-0 h-fit">
         {secretName}
       </code>
     </div>
