@@ -14,11 +14,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-interface AgentQuestionsListProps {
+interface QualificationQuestionsListProps {
   onEditQuestion: (question: any) => void;
 }
 
-const AgentQuestionsList: React.FC<AgentQuestionsListProps> = ({
+const QualificationQuestionsList: React.FC<QualificationQuestionsListProps> = ({
   onEditQuestion,
 }) => {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -166,4 +166,4 @@ const AgentQuestionsList: React.FC<AgentQuestionsListProps> = ({
   );
 };
 
-export default AgentQuestionsList;
+export default QualificationQuestionsList;

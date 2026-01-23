@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import Button from '@/components/Button';
 import { Loader2 } from 'lucide-react';
 
-interface AgentQuestionFormProps {
+interface QualificationQuestionFormProps {
   editingQuestion?: any;
   onCancel: () => void;
 }
 
-const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
+const QualificationQuestionForm: React.FC<QualificationQuestionFormProps> = ({
   editingQuestion,
   onCancel,
 }) => {
@@ -130,4 +130,4 @@ const AgentQuestionForm: React.FC<AgentQuestionFormProps> = ({
   );
 };
 
-export default AgentQuestionForm;
+export default QualificationQuestionForm;
