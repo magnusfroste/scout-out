@@ -12,7 +12,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Agent Questions</CardTitle>
+        <CardTitle>Qualification Questions</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-sm text-muted-foreground mb-4">

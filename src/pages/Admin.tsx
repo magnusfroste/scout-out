@@ -50,7 +50,7 @@ const Admin = () => {
       setWebhookSecrets(response.data.secrets);
     } catch (error) {
       console.error('Error fetching webhook secrets:', error);
-      setSecretsError('Kunde inte hämta webhook-URLer');
+      setSecretsError('Could not fetch webhook URLs');
     } finally {
       setSecretsLoading(false);
     }
@@ -135,8 +135,8 @@ const Admin = () => {
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      Dessa webhook URLs är konfigurerade via Supabase Edge Function secrets. 
-                      De används för att kommunicera med n8n workflows.
+                      These webhook URLs are configured via Edge Function secrets. 
+                      They are used to communicate with n8n workflows.
                     </AlertDescription>
                   </Alert>
                   
@@ -149,30 +149,30 @@ const Admin = () => {
                   
                   <div className="space-y-4 mt-4">
                     <WebhookUrlItem 
-                      label="Step 1: My Business"
+                      label="Step 1: Profile"
                       secretName="MYBUSINESS_WEBHOOK_URL"
-                      description="Skickar företagsinformation för analys"
+                      description="Sends business information for analysis"
                       maskedUrl={webhookSecrets?.MYBUSINESS_WEBHOOK_URL}
                       isLoading={secretsLoading}
                     />
                     <WebhookUrlItem 
                       label="Step 2: Questions"
                       secretName="QUESTIONS_WEBHOOK_URL"
-                      description="Genererar anpassade frågor baserat på företagsprofil"
+                      description="Generates qualification questions based on profile"
                       maskedUrl={webhookSecrets?.QUESTIONS_WEBHOOK_URL}
                       isLoading={secretsLoading}
                     />
                     <WebhookUrlItem 
-                      label="Step 3: Company Research"
+                      label="Step 3: Research"
                       secretName="COMPANY_RESEARCH_WEBHOOK_URL"
-                      description="Utför research på målföretag"
+                      description="Performs deep research on prospects"
                       maskedUrl={webhookSecrets?.COMPANY_RESEARCH_WEBHOOK_URL}
                       isLoading={secretsLoading}
                     />
                     <WebhookUrlItem 
-                      label="Step 4: Value Proposition"
+                      label="Step 4: Proposal"
                       secretName="VALUE_PROPOSITION_WEBHOOK_URL"
-                      description="Genererar value proposition och email-innehåll"
+                      description="Generates proposals and outreach content"
                       maskedUrl={webhookSecrets?.VALUE_PROPOSITION_WEBHOOK_URL}
                       isLoading={secretsLoading}
                     />
@@ -186,7 +186,7 @@ const Admin = () => {
                       className="inline-flex items-center gap-2 text-primary hover:underline"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      Konfigurera secrets i Supabase Dashboard
+                      Configure secrets in Supabase Dashboard
                     </a>
                   </div>
                 </CardContent>
@@ -241,14 +241,14 @@ const WebhookUrlItem = ({ label, secretName, description, maskedUrl, isLoading }
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span>Hämtar...</span>
+              <span>Loading...</span>
             </div>
           ) : maskedUrl ? (
             <code className="text-xs bg-muted px-2 py-1 rounded text-foreground/80 block truncate">
               {maskedUrl}
             </code>
           ) : (
-            <span className="text-xs text-destructive">Ej konfigurerad</span>
+            <span className="text-xs text-destructive">Not configured</span>
           )}
         </div>
       </div>

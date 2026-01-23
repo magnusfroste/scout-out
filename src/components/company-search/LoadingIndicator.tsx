@@ -20,7 +20,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           <div>
             <h3 className="font-medium">{message}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Our AI agent is working on your request:
+              ScoutOut is researching your prospect:
             </p>
             <ul className="text-sm space-y-1 mt-2">
               <li className="flex items-center">

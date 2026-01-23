@@ -179,15 +179,15 @@ class MCPClient {
           resources: {}
         },
         clientInfo: {
-          name: 'MBA-Composio-Client',
+          name: 'ScoutOut-Composio-Client',
           version: '1.0.0'
         },
         // Include user context if provided
         ...(userId && { 
           meta: { 
             userId: userId,
-            context: 'MBA SaaS Application'
-          } 
+            context: 'ScoutOut Application'
+          }
         })
       }
     };
