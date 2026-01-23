@@ -406,7 +406,7 @@ const MyBusiness = () => {
       <div className="flex flex-col items-center justify-center space-y-4 p-12 border rounded-lg bg-background/50">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <div className="text-center">
-          <h3 className="text-lg font-medium">Analyzing Your Business</h3>
+          <h3 className="text-lg font-medium">ScoutOut is analyzing your business</h3>
           <p className="text-muted-foreground">This may take a minute or two...</p>
         </div>
       </div>
