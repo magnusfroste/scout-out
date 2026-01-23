@@ -1,32 +1,31 @@
-
 import React from 'react';
-import { Clock, Award, ArrowUpRight } from 'lucide-react';
+import { Clock, Target, Send } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Benefits: React.FC = () => {
   const benefits = [
     {
       icon: <Clock className="h-10 w-10" />,
-      title: "Save Valuable Time",
-      description: "Our AI Agent does the research for you, freeing up more time to focus on high-leverage sales activities that drive results."
+      title: "Scout in Minutes, Not Hours",
+      description: "ScoutOut's AI does deep prospect research instantly, freeing you to focus on building relationships."
     },
     {
-      icon: <Award className="h-10 w-10" />,
-      title: "Higher Quality Insights",
-      description: "Get more accurate and comprehensive information by leveraging multiple knowledge bases for deeper research."
+      icon: <Target className="h-10 w-10" />,
+      title: "Qualify with Confidence",
+      description: "Custom qualification questions help you identify the best opportunities and skip the wrong fits."
     },
     {
-      icon: <ArrowUpRight className="h-10 w-10" />,
-      title: "Make a Lasting First Impression",
-      description: "Our tailored introduction drafts ensure you make a strong impression on potential clients, increasing your success rate."
+      icon: <Send className="h-10 w-10" />,
+      title: "Reach Out with Impact",
+      description: "Personalized proposals and outreach messaging that resonate with each prospect's specific needs."
     }
   ];
 
   const deliverables = [
-    "Detailed answers to your sales questions",
-    "Strategic recommendations based on research findings",
-    "Verified contact details for potential clients",
-    "100% personalized introduction drafts tailored to each client"
+    "Deep research insights on company strategy and challenges",
+    "Decision-maker contacts with verified information",
+    "AI-generated qualification scores",
+    "Ready-to-send personalized outreach proposals"
   ];
 
   return (
@@ -34,9 +33,9 @@ const Benefits: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <p className="text-sm font-medium text-primary mb-3">Benefits</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Why Business Developers Choose Us</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Why Teams Choose ScoutOut</h2>
           <p className="text-xl text-muted-foreground">
-            ScoutOut gives you a competitive edge by providing the insights you need to close more deals.
+            Research smarter. Reach further. Close more deals.
           </p>
         </div>
         
@@ -61,9 +60,9 @@ const Benefits: React.FC = () => {
         
         <div className="flex flex-col md:flex-row items-center bg-secondary/20 rounded-xl p-8 shadow-lg">
           <div className="md:w-1/2 mb-8 md:mb-0 md:pr-8">
-            <h3 className="text-2xl font-bold mb-4">What You Get</h3>
+            <h3 className="text-2xl font-bold mb-4">What ScoutOut Delivers</h3>
             <p className="text-muted-foreground mb-6">
-              With ScoutOut, you'll receive everything you need to approach potential clients with confidence:
+              Everything you need to approach prospects with confidence:
             </p>
             <ul className="space-y-3">
               {deliverables.map((item, index) => (
@@ -79,19 +78,19 @@ const Benefits: React.FC = () => {
           <div className="md:w-1/2 bg-white p-6 rounded-lg shadow-md">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary mr-4">
-                <span className="text-lg font-semibold">A</span>
+                <Send className="h-5 w-5" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium">Introduction Example</h4>
-                <p className="text-sm text-muted-foreground">Personalized outreach</p>
+                <h4 className="font-medium">Outreach Example</h4>
+                <p className="text-sm text-muted-foreground">AI-generated proposal</p>
               </div>
             </div>
             <div className="border border-border rounded-md p-4 bg-gray-50">
-              <p className="text-sm text-muted-foreground mb-2">Subject: Enhancing [Company]'s Growth Strategy with Targeted Solutions</p>
-              <p className="text-sm mb-2">Dear [Name],</p>
-              <p className="text-sm mb-2">I'm reaching out after researching [Company]'s recent initiatives in [specific area]. I noticed your focus on [specific goal] and thought our solution might be of interest.</p>
-              <p className="text-sm mb-2">We specialize in helping companies like yours achieve [specific benefit] through our innovative approach to [solution area].</p>
-              <p className="text-sm text-muted-foreground">... continued with more personalized insights</p>
+              <p className="text-sm text-muted-foreground mb-2">Subject: Helping [Company] accelerate their digital transformation</p>
+              <p className="text-sm mb-2">Hi [Name],</p>
+              <p className="text-sm mb-2">I noticed [Company]'s focus on [specific initiative] and thought our experience with [relevant solution] could be valuable.</p>
+              <p className="text-sm mb-2">We've helped similar companies achieve [specific outcome] – would love to explore if there's a fit.</p>
+              <p className="text-sm text-muted-foreground">... personalized based on research insights</p>
             </div>
           </div>
         </div>
