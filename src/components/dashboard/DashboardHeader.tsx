@@ -16,13 +16,13 @@ interface DashboardHeaderProps {
 const getNextStepMessage = (step: WorkflowStep | null): string => {
   switch (step) {
     case 'mybusiness':
-      return 'Create your business profile';
+      return 'Set up your profile';
     case 'questions':
-      return 'Add questions for research';
+      return 'Add qualification questions';
     case 'search':
-      return 'Search for a company';
+      return 'Research a prospect';
     case 'valueproposition':
-      return 'Generate value proposition';
+      return 'Create a proposal';
     default:
       return '';
   }

@@ -26,23 +26,23 @@ interface OnboardingModalProps {
 const getWelcomeContent = (completedCount: number, firstIncomplete: WorkflowStep | null) => {
   if (completedCount === 0) {
     return {
-      title: 'Welcome to your Research Workflow!',
-      description: 'Let us guide you through the four steps to find and engage potential customers in a smarter way.',
+      title: 'Welcome to ScoutOut!',
+      description: 'Let us guide you through the workflow to scout prospects and reach out with confidence.',
     };
   }
   
   if (completedCount === 4 || firstIncomplete === null) {
     return {
       title: 'Great job! All steps complete!',
-      description: 'You have completed the entire workflow. Continue researching more companies and creating value propositions.',
+      description: 'You have completed the entire workflow. Continue researching more prospects and creating proposals.',
     };
   }
   
   const stepNames: Record<WorkflowStep, string> = {
-    mybusiness: 'business profile',
+    mybusiness: 'profile',
     questions: 'questions',
-    search: 'company research',
-    valueproposition: 'value propositions',
+    search: 'research',
+    valueproposition: 'proposal',
   };
   
   return {
@@ -55,26 +55,26 @@ const workflowSteps = [
   {
     key: 'mybusiness' as WorkflowStep,
     icon: Building,
-    title: 'Step 1: Create your business profile',
-    description: 'Tell us about your business so our AI can create relevant research questions and tailored value propositions.',
+    title: 'Step 1: Profile',
+    description: 'Describe your business so we can tailor research and proposals to your offerings.',
   },
   {
     key: 'questions' as WorkflowStep,
     icon: ListChecks,
-    title: 'Step 2: Manage your questions',
-    description: 'Create or automatically generate questions that help you understand potential customers\' needs.',
+    title: 'Step 2: Questions',
+    description: 'Set up qualification questions to understand prospect needs and identify opportunities.',
   },
   {
     key: 'search' as WorkflowStep,
     icon: Search,
-    title: 'Step 3: Research companies',
-    description: 'Search for companies and let our AI analyze them based on your questions to identify opportunities.',
+    title: 'Step 3: Research',
+    description: 'Scout and analyze prospects using AI-powered research based on your questions.',
   },
   {
     key: 'valueproposition' as WorkflowStep,
     icon: Star,
-    title: 'Step 4: Create value propositions',
-    description: 'Generate personalized value propositions and prepare your approach to potential customers.',
+    title: 'Step 4: Proposal',
+    description: 'Generate personalized proposals and prepare your outreach to prospects.',
   },
 ];
 
