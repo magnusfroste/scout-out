@@ -21,8 +21,8 @@ const ToggleAuthMode: React.FC<ToggleAuthModeProps> = ({
         disabled={disabled}
       >
         {isSignUp 
-          ? 'Already have an account? Sign In' 
-          : 'Don\'t have an account? Sign Up'}
+          ? 'Already scouting? Sign In' 
+          : 'New to ScoutOut? Start Free'}
       </button>
     </div>
   );
