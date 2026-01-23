@@ -1,39 +1,38 @@
-
 import React from 'react';
-import { ArrowRight, Layers, Zap, Shield, Users, BarChart, Search, Database, Bot, Mail } from 'lucide-react';
+import { ArrowRight, Search, Target, Send, Sparkles, Users, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Features: React.FC = () => {
   const featureCards = [
     {
       icon: <Search className="h-6 w-6" />,
-      title: 'Advanced Research',
-      description: 'Leverage AI to conduct comprehensive research on potential clients, uncovering insights you might otherwise miss.'
+      title: 'Deep Prospect Research',
+      description: 'AI-powered scouting that digs deep into company strategy, growth plans, and business challenges.'
     },
     {
-      icon: <Bot className="h-6 w-6" />,
-      title: 'Intelligent Questions',
-      description: 'Our AI automatically generates relevant sales questions by analyzing your web presence and industry.'
-    },
-    {
-      icon: <Database className="h-6 w-6" />,
-      title: 'Multiple Knowledge Bases',
-      description: 'Access information from various sources to ensure you have the most comprehensive view of potential clients.'
+      icon: <Target className="h-6 w-6" />,
+      title: 'Smart Qualification',
+      description: 'Custom qualification questions that identify high-potential prospects matching your ideal customer profile.'
     },
     {
       icon: <Users className="h-6 w-6" />,
       title: 'Contact Discovery',
-      description: 'Identify the right decision-makers and get verified contact information to reach out directly.'
+      description: 'Find decision-makers and key contacts with verified information for direct outreach.'
     },
     {
-      icon: <BarChart className="h-6 w-6" />,
-      title: 'Strategic Insights',
-      description: 'Get recommendations on how to approach each prospect based on their specific business challenges and goals.'
+      icon: <Sparkles className="h-6 w-6" />,
+      title: 'AI-Generated Insights',
+      description: 'Get actionable recommendations on how to approach each prospect based on their specific needs.'
     },
     {
-      icon: <Mail className="h-6 w-6" />,
-      title: 'Email Drafting',
-      description: 'Receive personalized email templates that highlight relevant pain points and solutions for each prospect.'
+      icon: <FileText className="h-6 w-6" />,
+      title: 'Personalized Proposals',
+      description: 'Generate tailored value propositions that highlight how your solutions address prospect pain points.'
+    },
+    {
+      icon: <Send className="h-6 w-6" />,
+      title: 'Ready-to-Send Outreach',
+      description: 'Craft personalized email subjects, introductions, and talking points for confident outreach.'
     }
   ];
   
@@ -42,9 +41,9 @@ const Features: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <p className="text-sm font-medium text-primary mb-3">Features</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Everything You Need to Close More Deals</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Scout Smarter, Reach Further</h2>
           <p className="text-xl text-muted-foreground">
-            Our platform provides powerful tools to help you research, connect with, and convert potential clients more effectively.
+            Everything you need to research prospects and reach out with confidence.
           </p>
         </div>
         
