@@ -33,7 +33,7 @@ const AgentQuestions = () => {
         <TabsContent value="list">
           <Card>
             <CardHeader>
-              <CardTitle>Your Agent Questions</CardTitle>
+              <CardTitle>Your Qualification Questions</CardTitle>
             </CardHeader>
             <CardContent>
               <AgentQuestionsList onEditQuestion={handleEditQuestion} />
