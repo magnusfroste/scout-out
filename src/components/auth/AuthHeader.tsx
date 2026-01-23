@@ -1,5 +1,5 @@
-
 import React from 'react';
+import ScoutOutLogo from '@/components/ScoutOutLogo';
 
 interface AuthHeaderProps {
   isSignUp: boolean;
@@ -8,13 +8,16 @@ interface AuthHeaderProps {
 const AuthHeader: React.FC<AuthHeaderProps> = ({ isSignUp }) => {
   return (
     <div className="text-center mb-8">
+      <div className="flex justify-center mb-4">
+        <ScoutOutLogo size="lg" />
+      </div>
       <h1 className="text-3xl font-bold">
-        {isSignUp ? 'Create an Account' : 'Welcome Back'}
+        {isSignUp ? 'Start Scouting' : 'Welcome Back'}
       </h1>
       <p className="text-muted-foreground mt-2">
         {isSignUp 
-          ? 'Sign up to get started with our platform' 
-          : 'Sign in to your account to continue'}
+          ? 'Create your account to research smarter and reach further' 
+          : 'Sign in to continue your prospect research'}
       </p>
     </div>
   );
