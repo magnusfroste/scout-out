@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface Testimonial {
@@ -11,19 +10,19 @@ interface Testimonial {
 const Testimonials: React.FC = () => {
   const testimonials: Testimonial[] = [
     {
-      quote: "This tool has revolutionized our business development process. We've increased our success rate by 40% and cut research time in half. The AI-powered insights help us connect with prospects in a much more meaningful way.",
+      quote: "ScoutOut has transformed how we find and approach prospects. The AI research saves us hours, and the personalized proposals help us connect in ways that actually resonate.",
       author: "Michael Chen",
       role: "Head of Sales",
       company: "GrowthForce"
     },
     {
-      quote: "The automated research and personalized outreach capabilities have transformed how we approach potential clients. What used to take hours now takes minutes, and our response rates have improved dramatically.",
+      quote: "The deep research capabilities are incredible. ScoutOut uncovers insights we'd never find manually, and the outreach suggestions are spot-on. Our response rates have doubled.",
       author: "Sarah Martinez",
       role: "Business Development Director",
       company: "ScaleUp Solutions"
     },
     {
-      quote: "Game-changer for our sales team. The AI-generated insights and value propositions are spot-on, helping us establish meaningful connections quickly. Our conversion rate has increased by 35% since we started using it.",
+      quote: "Finally, a tool that gets prospecting right. ScoutOut's qualification questions help us focus on the right opportunities, and the proposals practically write themselves.",
       author: "James Wilson",
       role: "Sales Operations Manager",
       company: "NextLevel Tech"
@@ -41,9 +40,9 @@ const Testimonials: React.FC = () => {
       <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <p className="text-sm font-medium text-primary mb-3">Testimonials</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Trusted by innovators worldwide</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Trusted by Sales Teams Everywhere</h2>
           <p className="text-xl text-muted-foreground">
-            Don't just take our word for it. Here's what our customers have to say about their experience.
+            See how ScoutOut helps teams research smarter and reach further.
           </p>
         </div>
         
@@ -79,7 +78,7 @@ const Testimonials: React.FC = () => {
         </div>
         
         <div className="mt-16 text-center">
-          <p className="text-muted-foreground mb-2">Trusted by 2,000+ companies worldwide</p>
+          <p className="text-muted-foreground mb-2">Trusted by growing sales teams worldwide</p>
           <div className="flex flex-wrap justify-center gap-8 mt-6">
             {[...Array(5)].map((_, i) => (
               <div 
