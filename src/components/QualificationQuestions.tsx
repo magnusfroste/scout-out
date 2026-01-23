@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import AgentQuestionForm from './AgentQuestionForm';
-import AgentQuestionsList from './AgentQuestionsList';
+import QualificationQuestionForm from './QualificationQuestionForm';
+import QualificationQuestionsList from './QualificationQuestionsList';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const AgentQuestions = () => {
+const QualificationQuestions = () => {
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -36,7 +36,7 @@ const AgentQuestions = () => {
               <CardTitle>Your Qualification Questions</CardTitle>
             </CardHeader>
             <CardContent>
-              <AgentQuestionsList onEditQuestion={handleEditQuestion} />
+              <QualificationQuestionsList onEditQuestion={handleEditQuestion} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -49,7 +49,7 @@ const AgentQuestions = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AgentQuestionForm
+              <QualificationQuestionForm
                 editingQuestion={editingQuestion}
                 onCancel={handleCancelEdit}
               />
@@ -61,4 +61,4 @@ const AgentQuestions = () => {
   );
 };
 
-export default AgentQuestions;
+export default QualificationQuestions;
