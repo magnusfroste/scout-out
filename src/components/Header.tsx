@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Menu, X, User, Settings, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import ScoutOutLogo from './ScoutOutLogo';
 
 const Header = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -85,11 +86,9 @@ const Header = () => {
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold">
-            <Link to="/" className="hover:text-primary transition-colors" onClick={closeMobileMenu}>
-              ScoutOut
-            </Link>
-          </h1>
+          <Link to="/" className="hover:opacity-80 transition-opacity" onClick={closeMobileMenu}>
+            <ScoutOutLogo size="md" />
+          </Link>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex ml-10">

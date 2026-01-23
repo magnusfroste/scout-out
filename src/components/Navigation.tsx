@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ScoutOutLogo from './ScoutOutLogo';
 
 const Navigation = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -64,9 +65,9 @@ const Navigation = () => {
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="mr-6 font-bold text-2xl">
-          <Link to="/" className="hover:text-primary transition-colors">
-            ScoutOut
+        <div className="mr-6">
+          <Link to="/" className="hover:opacity-80 transition-opacity">
+            <ScoutOutLogo size="sm" />
           </Link>
         </div>
         
