@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Check } from 'lucide-react';
 import Button from './Button';
@@ -6,45 +5,47 @@ import Button from './Button';
 const plans = [
   {
     name: '5 Credits',
-    description: 'Ideal for occasional use, freelancers, or as a quick top-up.',
+    description: 'Perfect for trying ScoutOut or occasional prospecting.',
     price: 5,
     credits: 5,
     features: [
-      'Valid for any search',
+      '5 prospect researches',
+      'AI-powered insights',
+      'Personalized proposals',
       'No expiration',
-      '1 credit = 10 questions/search',
     ],
-    ctaText: 'Buy 5 Credits – €5',
+    ctaText: 'Get 5 Credits – €5',
     highlight: false,
-    action: () => window.location.href = '/profile', // Send user to purchase
+    action: () => window.location.href = '/profile',
   },
   {
     name: '25 Credits',
-    description: 'Best value—recommended for power users and teams.',
+    description: 'Best value for active prospecting and sales teams.',
     price: 20,
     credits: 25,
     features: [
-      'Valid for any search',
+      '25 prospect researches',
+      'AI-powered insights',
+      'Personalized proposals',
       'No expiration',
-      '1 credit = 10 questions/search',
-      'Great for recurring use or teams'
+      'Save 20%',
     ],
-    ctaText: 'Buy 25 Credits – €20',
+    ctaText: 'Get 25 Credits – €20',
     highlight: true,
-    action: () => window.location.href = '/profile', // Send user to purchase
+    action: () => window.location.href = '/profile',
   },
   {
     name: 'Custom',
-    description: 'Need more than 25 credits or tailored solutions?',
+    description: 'For teams with high-volume prospecting needs.',
     features: [
       'Custom credit packages',
+      'Priority support',
+      'Team onboarding',
       'Custom integrations',
-      'Personalized onboarding',
-      'Dedicated support',
     ],
-    ctaText: 'Contact Sales',
+    ctaText: 'Contact Us',
     highlight: false,
-    action: () => window.location.href = 'mailto:sales@yoursite.com', // Replace with your actual sales address
+    action: () => window.location.href = 'mailto:hello@scoutout.com',
   }
 ];
 
@@ -54,9 +55,9 @@ const Pricing: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <p className="text-sm font-medium text-primary mb-3">Pricing</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Simple, transparent credit pricing</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">Simple Credit-Based Pricing</h2>
           <p className="text-xl text-muted-foreground mb-10">
-            Buy credits—no subscriptions required. Only pay for what you use.
+            Pay only for what you use. No subscriptions, no commitments.
           </p>
         </div>
         
@@ -72,7 +73,7 @@ const Pricing: React.FC = () => {
             >
               {plan.highlight && (
                 <div className="absolute top-0 left-0 right-0 py-2 text-center text-xs font-medium text-primary-foreground bg-primary">
-                  Most Popular
+                  Best Value
                 </div>
               )}
               <div className={`p-6 ${plan.highlight ? 'pt-10' : ''}`}>
@@ -84,7 +85,7 @@ const Pricing: React.FC = () => {
                       €{plan.price}
                     </span>
                     <span className="text-muted-foreground ml-2">
-                      / one time
+                      one-time
                     </span>
                   </div>
                 )}
@@ -116,9 +117,7 @@ const Pricing: React.FC = () => {
         </div>
         <div className="mt-16 max-w-3xl mx-auto text-center">
           <p className="text-muted-foreground">
-            Credits never expire. 1 credit = up to 10 questions per search. 
-            <br />
-            Need a larger or custom solution? <a href="mailto:sales@yoursite.com" className="text-primary hover:underline">Contact our sales team</a>.
+            Credits never expire. Each credit powers one complete prospect research with AI insights and proposal generation.
           </p>
         </div>
       </div>
