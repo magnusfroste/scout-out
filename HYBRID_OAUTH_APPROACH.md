@@ -36,7 +36,7 @@ Users must:
 5. Automatic token storage
 
 **Implementation Details:**
-- Uses MBA's Azure app registration
+- Uses ScoutOut's Azure app registration
 - Shared credentials stored in Supabase secrets
 - Separate edge function for security isolation
 - Same token storage mechanism as individual flow
@@ -164,11 +164,11 @@ CHECK (connection_type IN ('individual', 'shared'));
 
 ### Supabase Secrets
 ```
-SHARED_O365_CLIENT_ID = "your-mba-client-id"
-SHARED_O365_CLIENT_SECRET = "your-mba-client-secret"
+SHARED_O365_CLIENT_ID = "your-scoutout-client-id"
+SHARED_O365_CLIENT_SECRET = "your-scoutout-client-secret"
 ```
 
-### Azure App Registration (MBA Shared App)
+### Azure App Registration (ScoutOut Shared App)
 - **Redirect URIs:** `https://your-domain.com/simple-connect`
 - **Permissions:** Same as individual apps
 - **Multi-tenant:** Yes (to support any O365 organization)

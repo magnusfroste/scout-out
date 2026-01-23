@@ -26,13 +26,13 @@ const MyBusinessWebhookForm: React.FC<MyBusinessWebhookFormProps> = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="myBusinessWebhookUrl">My Business Webhook URL</Label>
+        <Label htmlFor="profileWebhookUrl">Profile Webhook URL</Label>
         <div className="flex gap-2">
           <Input
-            id="myBusinessWebhookUrl"
+            id="profileWebhookUrl"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter your My Business webhook URL"
+            placeholder="Enter your profile webhook URL"
             disabled={isDisabled}
             className="flex-1"
           />
@@ -45,7 +45,7 @@ const MyBusinessWebhookForm: React.FC<MyBusinessWebhookFormProps> = ({
         </div>
         {showDescription && (
           <p className="text-xs text-muted-foreground">
-            Enter the URL for your My Business webhook endpoint. This is used for analyzing business websites.
+            Enter the URL for your profile webhook endpoint. This is used for analyzing your business website.
           </p>
         )}
       </div>

@@ -1,5 +1,5 @@
 
-# Simplification Plan for Master Business Agent
+# Simplification Plan for ScoutOut
 
 ## Current Architecture
 
