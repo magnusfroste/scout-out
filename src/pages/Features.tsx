@@ -1,101 +1,104 @@
-
 import React, { useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { ArrowRight, CheckCircle, Zap, Shield, Users, BarChart, Globe, Layers, Clock, Code, Server, Puzzle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Target, Send, Sparkles, Users, FileText, Building, ListChecks, Star, Zap } from 'lucide-react';
 import Button from '@/components/Button';
+import { Link } from 'react-router-dom';
 
 const Features = () => {
-  // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
   
   const mainFeatures = [
     {
-      icon: <Layers className="h-10 w-10" />,
-      title: 'Intuitive Dashboard',
-      description: 'Command your data with a clean, thoughtfully designed interface that puts everything at your fingertips.',
+      icon: <Search className="h-10 w-10" />,
+      title: 'Deep Prospect Research',
+      description: 'AI-powered scouting that goes beyond surface-level data to uncover real business insights.',
       points: [
-        'Simple and intuitive user interface',
-        'Customizable widgets and layouts',
-        'Real-time data visualization',
-        'User-friendly navigation system'
+        'Analyze company strategy, growth plans, and challenges',
+        'Discover recent news, investments, and initiatives',
+        'Identify pain points that match your solutions',
+        'Get comprehensive research in minutes, not hours'
       ]
     },
     {
-      icon: <Zap className="h-10 w-10" />,
-      title: 'Lightning Fast',
-      description: 'Experience remarkable speed with our optimized platform that responds instantly to every interaction.',
+      icon: <Target className="h-10 w-10" />,
+      title: 'Smart Qualification',
+      description: 'Custom qualification questions that help you focus on the right opportunities.',
       points: [
-        'Optimized performance across all devices',
-        'Instant loading times',
-        'Efficient data processing',
-        'Background synchronization'
-      ]
-    },
-    {
-      icon: <Shield className="h-10 w-10" />,
-      title: 'Enterprise Security',
-      description: 'Rest easy with bank-level encryption, regular security audits, and comprehensive compliance measures.',
-      points: [
-        'End-to-end encryption for all data',
-        'Multi-factor authentication',
-        'Regular security audits',
-        'Compliance with industry standards'
+        'Create questions tailored to your ideal customer',
+        'AI generates qualification scores for each prospect',
+        'Identify high-potential opportunities instantly',
+        'Skip bad fits and prioritize your pipeline'
       ]
     },
     {
       icon: <Users className="h-10 w-10" />,
-      title: 'Team Collaboration',
-      description: 'Work together seamlessly with intuitive sharing tools, real-time updates, and role-based permissions.',
+      title: 'Contact Discovery',
+      description: 'Find the right people to talk to with verified contact information.',
       points: [
-        'Real-time collaboration capabilities',
-        'Fine-grained permission controls',
-        'Activity audit logs',
-        'Document versioning and history'
+        'Identify decision-makers and key stakeholders',
+        'Get verified email addresses and phone numbers',
+        'Understand reporting structures and roles',
+        'Connect with the people who can say yes'
       ]
     },
     {
-      icon: <BarChart className="h-10 w-10" />,
-      title: 'Advanced Analytics',
-      description: 'Make data-driven decisions with customizable reports and insightful visualizations of your metrics.',
+      icon: <Sparkles className="h-10 w-10" />,
+      title: 'AI-Generated Insights',
+      description: 'Actionable recommendations based on deep analysis of each prospect.',
       points: [
-        'Custom report builder',
-        'Interactive data visualizations',
-        'Trend analysis tools',
-        'Automated reporting schedule'
+        'Understand what matters most to each prospect',
+        'Get strategic approach recommendations',
+        'Identify talking points that resonate',
+        'Leverage insights competitors don\'t have'
       ]
     },
     {
-      icon: <Globe className="h-10 w-10" />,
-      title: 'Global Scaling',
-      description: 'Grow without limits using our infrastructure designed to handle worldwide traffic with minimal latency.',
+      icon: <FileText className="h-10 w-10" />,
+      title: 'Personalized Proposals',
+      description: 'Generate tailored value propositions that speak directly to prospect needs.',
       points: [
-        'Global CDN for fast content delivery',
-        'Distributed database architecture',
-        'Auto-scaling resources',
-        'High availability infrastructure'
+        'AI-crafted proposals based on research insights',
+        'Highlight how your solutions address their challenges',
+        'Customize messaging for each prospect',
+        'Stand out from generic sales pitches'
+      ]
+    },
+    {
+      icon: <Send className="h-10 w-10" />,
+      title: 'Ready-to-Send Outreach',
+      description: 'Craft personalized emails and messages ready for confident outreach.',
+      points: [
+        'Personalized email subjects that get opened',
+        'Tailored introductions that build rapport',
+        'Talking points based on prospect research',
+        'Follow-up advice and next steps'
       ]
     }
   ];
   
-  const additionalFeatures = [
+  const workflowSteps = [
     {
-      icon: <Clock className="h-5 w-5" />,
-      title: 'Automation'
+      icon: <Building className="h-5 w-5" />,
+      title: 'Profile',
+      description: 'Set up your business profile'
     },
     {
-      icon: <Code className="h-5 w-5" />,
-      title: 'API Access'
+      icon: <ListChecks className="h-5 w-5" />,
+      title: 'Questions',
+      description: 'Define qualification criteria'
     },
     {
-      icon: <Server className="h-5 w-5" />,
-      title: 'Data Migration'
+      icon: <Search className="h-5 w-5" />,
+      title: 'Research',
+      description: 'Scout and analyze prospects'
     },
     {
-      icon: <Puzzle className="h-5 w-5" />,
-      title: 'Integrations'
+      icon: <Star className="h-5 w-5" />,
+      title: 'Proposal',
+      description: 'Generate personalized outreach'
     }
   ];
   
@@ -108,13 +111,45 @@ const Features = () => {
         <section className="py-16 md:py-24 bg-secondary/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Powerful features to power your business</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">Scout Smarter. Reach Further.</h1>
               <p className="text-xl text-muted-foreground mb-8">
-                Discover all the tools and features that make our platform the preferred choice for businesses worldwide.
+                Everything you need to research prospects and reach out with confidence – powered by AI.
               </p>
-              <Button size="lg">
-                Start Free Trial
-              </Button>
+              <Link to="/auth">
+                <Button size="lg">
+                  Start Scouting <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+        
+        {/* Workflow overview */}
+        <section className="py-16 border-b">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Simple 4-Step Workflow</h2>
+              <p className="text-muted-foreground">
+                From profile setup to personalized outreach in four easy steps.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              {workflowSteps.map((step, index) => (
+                <div 
+                  key={index}
+                  className="relative bg-white rounded-xl p-6 text-center shadow-subtle border border-border"
+                >
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                    {index + 1}
+                  </div>
+                  <div className="w-12 h-12 mx-auto flex items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                    {step.icon}
+                  </div>
+                  <h3 className="font-semibold mb-1">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -122,6 +157,13 @@ const Features = () => {
         {/* Feature details */}
         <section className="py-20 md:py-32">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Capabilities</h2>
+              <p className="text-xl text-muted-foreground">
+                Every feature designed to help you find, qualify, and connect with ideal prospects.
+              </p>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 lg:gap-24">
               {mainFeatures.map((feature, index) => (
                 <div key={index} className="relative">
@@ -142,49 +184,26 @@ const Features = () => {
                       </li>
                     ))}
                   </ul>
-                  
-                  <div className="mt-8">
-                    <a 
-                      href="#" 
-                      className="inline-flex items-center text-primary hover:text-primary/80 transition-colors font-medium"
-                    >
-                      Learn more <ArrowRight className="h-4 w-4 ml-1" />
-                    </a>
-                  </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
         
-        {/* Additional features */}
-        <section className="py-16 md:py-24 bg-secondary/30">
+        {/* CTA section */}
+        <section className="py-16 md:py-24 bg-primary/5">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">And much more...</h2>
-              <p className="text-xl text-muted-foreground">
-                Our platform is packed with features designed to help your business succeed.
+            <div className="max-w-3xl mx-auto text-center">
+              <Zap className="h-12 w-12 text-primary mx-auto mb-6" />
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Scout Smarter?</h2>
+              <p className="text-xl text-muted-foreground mb-8">
+                Join sales teams who research prospects in minutes, not hours.
               </p>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-              {additionalFeatures.map((feature, index) => (
-                <div 
-                  key={index}
-                  className="bg-white rounded-xl p-6 text-center shadow-subtle border border-border hover:shadow-glossy transition-all duration-300"
-                >
-                  <div className="w-12 h-12 mx-auto flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-16 text-center">
-              <Button size="lg">
-                View All Features
-              </Button>
+              <Link to="/auth">
+                <Button size="lg">
+                  Get Started Free <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
