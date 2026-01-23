@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ScoutOutLogo from './ScoutOutLogo';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -42,8 +43,8 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="inline-block">
-              <span className="font-semibold text-xl tracking-tight">ScoutOut</span>
+            <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+              <ScoutOutLogo size="sm" />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
               Research smarter, reach further.
