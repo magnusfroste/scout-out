@@ -36,8 +36,8 @@ const ComposioMCPTest = () => {
   
   // Email test form
   const [recipientEmail, setRecipientEmail] = useState('');
-  const [subject, setSubject] = useState('MBA SaaS - Composio MCP Test');
-  const [body, setBody] = useState('This is a test email sent through Composio MCP from MBA SaaS application.');
+  const [subject, setSubject] = useState('ScoutOut - Composio MCP Test');
+  const [body, setBody] = useState('This is a test email sent through Composio MCP from ScoutOut.');
 
   const testConnection = async () => {
     if (!user) {

@@ -36,7 +36,7 @@ export function createEmailTemplate(content: string, recipientName: string, send
     td,th,div,p,a {font-family: Arial, sans-serif; line-height: normal;}
   </style>
   <![endif]-->
-  <title>Message from Master Business Agent</title>
+  <title>Message from ScoutOut</title>
   <style>
     @media screen and (max-width: 640px) {
       .container {
@@ -80,7 +80,7 @@ export function createEmailTemplate(content: string, recipientName: string, send
                 <table role="presentation" style="width:100%;border-top:1px solid #dddddd;">
                   <tr>
                     <td style="padding-top:20px;font-size:13px;line-height:1.4;color:#777777;" class="footer">
-                      <p style="margin:0;">This email was sent via Master Business Agent</p>
+                      <p style="margin:0;">This email was sent via ScoutOut</p>
                       <p style="margin:8px 0 0 0;">For any questions, please reply directly to this email at <a href="mailto:${senderEmail}" style="color:#2563eb;text-decoration:none;">${senderEmail}</a></p>
                       <p style="margin:12px 0 0 0;font-size:11px;line-height:1.3;">Please note this is a sent email, not an automated email. If you believe this was sent to you by mistake, simply reply to this email.</p>
                     </td>

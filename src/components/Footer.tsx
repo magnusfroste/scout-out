@@ -43,10 +43,10 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="inline-block">
-              <span className="font-semibold text-xl tracking-tight">Master Business Agent</span>
+              <span className="font-semibold text-xl tracking-tight">ScoutOut</span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-              Works Smarter, not harder!
+              Research smarter, reach further.
             </p>
           </div>
           
@@ -73,7 +73,7 @@ const Footer: React.FC = () => {
         
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} MBA Platform. All rights reserved.
+            © {currentYear} ScoutOut. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6">
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors">

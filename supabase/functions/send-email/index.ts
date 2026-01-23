@@ -164,9 +164,9 @@ Deno.serve(async (req) => {
       console.log("Sending email to:", emailRequest.to);
       
       // Create a friendly display name for the sender
-      // Format: "Name via Master Business Agent <email@example.com>"
+      // Format: "Name via ScoutOut <email@example.com>"
       const senderName = emailRequest.sender_settings.email.split('@')[0];
-      const formattedSender = `${senderName} via Master Business Agent <${emailRequest.sender_settings.email}>`;
+      const formattedSender = `${senderName} via ScoutOut <${emailRequest.sender_settings.email}>`;
       
       const emailParams = {
         from: formattedSender,
