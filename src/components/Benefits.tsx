@@ -36,7 +36,7 @@ const Benefits: React.FC = () => {
           <p className="text-sm font-medium text-primary mb-3">Benefits</p>
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">Why Business Developers Choose Us</h2>
           <p className="text-xl text-muted-foreground">
-            Master Business Agent gives you a competitive edge by providing the insights you need to close more deals.
+            ScoutOut gives you a competitive edge by providing the insights you need to close more deals.
           </p>
         </div>
         
@@ -63,7 +63,7 @@ const Benefits: React.FC = () => {
           <div className="md:w-1/2 mb-8 md:mb-0 md:pr-8">
             <h3 className="text-2xl font-bold mb-4">What You Get</h3>
             <p className="text-muted-foreground mb-6">
-              With Master Business Agent, you'll receive everything you need to approach potential clients with confidence:
+              With ScoutOut, you'll receive everything you need to approach potential clients with confidence:
             </p>
             <ul className="space-y-3">
               {deliverables.map((item, index) => (

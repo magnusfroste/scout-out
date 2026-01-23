@@ -66,7 +66,7 @@ const Navigation = () => {
       <div className="container flex h-14 items-center">
         <div className="mr-6 font-bold text-2xl">
           <Link to="/" className="hover:text-primary transition-colors">
-            Master Business Agent
+            ScoutOut
           </Link>
         </div>
         

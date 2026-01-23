@@ -87,7 +87,7 @@ const Header = () => {
         <div className="flex items-center">
           <h1 className="text-xl font-bold">
             <Link to="/" className="hover:text-primary transition-colors" onClick={closeMobileMenu}>
-              Master Business Agent
+              ScoutOut
             </Link>
           </h1>
           
