@@ -654,6 +654,7 @@ export type Database = {
           first_name: string | null
           id: string
           is_admin: boolean
+          is_demo: boolean
           last_name: string | null
           updated_at: string | null
           website_url: string | null
@@ -665,6 +666,7 @@ export type Database = {
           first_name?: string | null
           id: string
           is_admin?: boolean
+          is_demo?: boolean
           last_name?: string | null
           updated_at?: string | null
           website_url?: string | null
@@ -676,6 +678,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           is_admin?: boolean
+          is_demo?: boolean
           last_name?: string | null
           updated_at?: string | null
           website_url?: string | null
@@ -839,6 +842,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      reset_demo_credits: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
