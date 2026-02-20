@@ -75,7 +75,7 @@ const About = () => {
         </section>
         
         {/* Values section */}
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-card">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-6">What We Believe</h2>
@@ -130,7 +130,7 @@ const About = () => {
               <p className="text-muted-foreground mb-8">
                 Questions? Feedback? We'd love to hear from you.
               </p>
-              <a href="mailto:hello@scoutout.com">
+              <a href="mailto:scoutout@liteit.se">
                 <Button variant="outline">
                   Contact Us
                 </Button>
