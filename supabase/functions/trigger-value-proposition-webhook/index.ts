@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         success: false,
         message: `Error calling webhook: ${error.message}`,
         details: {
-          webhookUrl: webhookUrl.replace(/\/\/([^:\/]+:[^@\/]+)@/, '//***:***@'), // Mask any credentials in URL
+          webhookUrl: webhookUrl.replace(/\/\/([^:/]+:[^@/]+)@/, '//***:***@'), // Mask any credentials in URL
           error: error.toString()
         }
       }), {

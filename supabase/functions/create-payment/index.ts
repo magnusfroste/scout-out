@@ -39,7 +39,7 @@ serve(async (req) => {
     let productName = "";
     let productDescription = "";
     let unitAmount = 0;
-    let currency = "eur";
+    const currency = "eur";
     
     if (priceId === "price_1RGoUuHTXSpIB5InGhmQ7gdn") {
       productName = "5 Credits Package";

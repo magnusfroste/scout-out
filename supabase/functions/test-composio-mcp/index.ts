@@ -24,7 +24,7 @@ interface MCPMessage {
 
 interface MCPClientCapabilities {
   roots?: { listChanged?: boolean };
-  sampling?: {};
+  sampling?: Record<string, never>;
 }
 
 // MCP Protocol Implementation
@@ -384,7 +384,7 @@ const handler = async (req: Request): Promise<Response> => {
             message: `No email accounts are connected to the MCP server. Please connect an Outlook account first.`,
             troubleshooting: {
               step1: 'Go to Settings -> Email Integration',
-              step2: 'Click \"Connect Office 365\" and follow the prompts',
+              step2: 'Click "Connect Office 365" and follow the prompts',
               step3: 'Ensure the account has proper permissions'
             }
           },

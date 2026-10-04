@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /admin
+
+Sitemap: https://scoutout.liteit.se/sitemap.xml
