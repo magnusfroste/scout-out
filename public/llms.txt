@@ -1,0 +1,14 @@
+# ScoutOut
+
+> AI-powered prospect research and personalized outreach platform for B2B sales.
+
+ScoutOut helps sales teams, founders and consultants research prospects before making contact. It scouts companies with AI, qualifies them against your own criteria, finds the right contacts, and generates tailored value propositions and ready-to-send outreach messages.
+
+Built for people who prefer one well-researched prospect over ten cold leads.
+
+## Key pages
+
+- [Home](https://scoutout.liteit.se/)
+- [Features](https://scoutout.liteit.se/features)
+- [Pricing](https://scoutout.liteit.se/pricing)
+- [About](https://scoutout.liteit.se/about)
