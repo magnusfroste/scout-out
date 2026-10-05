@@ -1,110 +1,26 @@
-# Welcome to your Lovable project
+# ScoutOut — Research & Outreach
 
-## Project info
+> **Now part of [Flowwink](https://www.flowwink.com).** ScoutOut was the prototype that proved the concept; it lives on as the **Outreach** module in Flowwink, the open-source Business Operating System — operable by any agent. New work happens there: [github.com/magnusfroste/flowwink](https://github.com/magnusfroste/flowwink).
 
-**URL**: https://lovable.dev/projects/c02ac9cd-325b-41bb-9a1b-ee8766efe98b
+ScoutOut tested one question: can AI take a salesperson from *"who is this company?"* to *"here is a message worth sending"* in minutes?
 
-## How can I edit this code?
+- **Prospect research** — AI-generated company research, discovery questions and value propositions
+- **Personalized outreach** — tailored emails sent from your own mailbox (Microsoft 365 / Graph)
+- **Workflow automation** — research and proposal steps orchestrated through n8n webhooks and MCP connections
 
-There are several ways of editing your application.
+What worked became the Outreach module in Flowwink, where an autonomous agent can run the same flow end to end.
 
-**Use Lovable**
+## Run the prototype
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c02ac9cd-325b-41bb-9a1b-ee8766efe98b) and start prompting.
+React · TypeScript · Vite · Supabase
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Set `VITE_USE_MOCK_DATA=true` in `.env.development` to use the built-in mock company data (`src/mocks/companySearchMock.ts`) instead of paid API calls. Webhook formats are documented in [WEBHOOK_API_SPECIFICATION.md](WEBHOOK_API_SPECIFICATION.md).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## License
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## Development Features
-
-### Mock Data for Company Search
-
-To reduce API costs during development and testing, the application includes a mock data system for company searches.
-
-#### How to Enable Mock Data
-
-1. Set the environment variable `VITE_USE_MOCK_DATA` to `true` in your `.env.development` file:
-   ```
-   VITE_USE_MOCK_DATA=true
-   ```
-
-2. The mock system will automatically be used when:
-   - The application is running in development mode (`import.meta.env.DEV` is true)
-   - The `VITE_USE_MOCK_DATA` environment variable is set to `true`
-
-#### Available Mock Companies
-
-The mock system includes pre-defined responses for the following companies:
-- Apple
-- Microsoft
-- Tesla
-- Google
-
-For any other company name, a default mock response will be provided.
-
-#### Testing Error Handling
-
-To test error handling, include the word "error" in the company name (e.g., "Error Corp"). This will simulate a failed API response.
-
-#### Customizing Mock Data
-
-You can add or modify mock company data by editing the `src/mocks/companySearchMock.ts` file.
-
-## Webhook API Integration
-
-This project integrates with external webhooks for various features like question generation, company research, and value proposition creation. For detailed information about webhook response formats and integration requirements, see:
-
-📄 **[WEBHOOK_API_SPECIFICATION.md](./WEBHOOK_API_SPECIFICATION.md)** - Complete webhook API documentation
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c02ac9cd-325b-41bb-9a1b-ee8766efe98b) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+MIT
